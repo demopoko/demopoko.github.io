@@ -74,6 +74,10 @@ html, body { height: 100%; margin: 0; }
   align-items: center;
   justify-content: center;
   position: relative;
+  width: 100%;
+  max-width: 512px;
+  aspect-ratio: 1;
+  margin: 0 auto;
 }
 
 .btn-primary {
@@ -157,7 +161,7 @@ html, body { height: 100%; margin: 0; }
      </div>
     </div><!-- Editor Section (hidden until image loaded) -->
     <div id="editorSection" class="hidden">
-     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><!-- Left: Canvas -->
+     <div class="grid grid-cols-1 gap-6"><!-- Canvas -->
       <div class="lg:col-span-2">
        <div class="canvas-container" style="min-height: 360px;" id="canvasContainer">
         <canvas id="mainCanvas" style="image-rendering: pixelated;"></canvas>
@@ -959,5 +963,5 @@ if (window.elementSdk) {
 buildUI();
 lucide.createIcons();
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fb24db935564f02',t:'MTc3ODY4MjAyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fb28334732c4f02',t:'MTc3ODY4NDIxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
