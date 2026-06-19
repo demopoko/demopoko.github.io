@@ -1,967 +1,1073 @@
-<!doctype html>
-<html lang="bn" class="h-full">
- <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pixel Art Studio</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=Noto+Sans+Bengali:wght@400;600;700&amp;display=swap" rel="stylesheet">
-  <style>
-html, body { height: 100%; margin: 0; }
-* { box-sizing: border-box; }
+  <title>404 Punks Lab • Identity Registry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
 
-.pixel-font { font-family: 'Press Start 2P', monospace; }
-.bengali-font { font-family: 'Noto Sans Bengali', sans-serif; }
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, orderBy, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-.studio-wrapper {
-  height: 100%;
-  width: 100%;
-  overflow: auto;
-  background: #0a0a0f;
-  color: #e8e8e8;
-}
-
-.grid-bg {
-  background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 16px 16px;
-}
-
-.style-card {
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: rgba(255,255,255,0.03);
-  text-align: center;
-}
-.style-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
-.style-card.active { border-color: #ff6b9d; background: rgba(255,107,157,0.1); box-shadow: 0 0 20px rgba(255,107,157,0.15); }
-
-.anim-card {
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: rgba(255,255,255,0.03);
-  text-align: center;
-}
-.anim-card:hover { border-color: rgba(255,255,255,0.2); }
-.anim-card.active { border-color: #6bffb8; background: rgba(107,255,184,0.08); }
-
-.upload-zone {
-  border: 3px dashed rgba(255,255,255,0.15);
-  border-radius: 16px;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-.upload-zone:hover, .upload-zone.dragover {
-  border-color: #ff6b9d;
-  background: rgba(255,107,157,0.05);
-}
-
-.canvas-container {
-  background: repeating-conic-gradient(#1a1a2e 0% 25%, #12121f 0% 50%) 50% / 16px 16px;
-  border-radius: 12px;
-  border: 2px solid rgba(255,255,255,0.08);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 100%;
-  max-width: 512px;
-  aspect-ratio: 1;
-  margin: 0 auto;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #ff6b9d, #c44dff);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,107,157,0.3); }
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-.btn-secondary {
-  background: rgba(255,255,255,0.08);
-  color: #e8e8e8;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-secondary:hover { background: rgba(255,255,255,0.12); }
-
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
-  background: #1e1e2e; border: 1px solid rgba(255,255,255,0.1);
-  color: #e8e8e8; padding: 12px 24px; border-radius: 12px;
-  z-index: 1000; transition: transform 0.4s ease; font-size: 14px;
-}
-.toast.show { transform: translateX(-50%) translateY(0); }
-
-.progress-bar {
-  height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
-}
-.progress-fill {
-  height: 100%; background: linear-gradient(90deg, #ff6b9d, #c44dff);
-  transition: width 0.3s;
-}
-
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-@keyframes glitch {
-  0%,100% { transform: translate(0); filter: none; }
-  20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
-  40% { transform: translate(2px, -2px); filter: hue-rotate(180deg); }
-  60% { transform: translate(-1px, -1px); filter: hue-rotate(270deg); }
-}
-</style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full">
-  <div class="studio-wrapper grid-bg bengali-font" id="appWrapper"><!-- Toast -->
-   <div class="toast" id="toast"></div><!-- Header -->
-   <header class="px-4 py-4 border-b border-white/5" style="background: linear-gradient(180deg, rgba(255,107,157,0.06), transparent);">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #ff6b9d, #c44dff);"><span class="pixel-font text-white text-xs">P</span>
-      </div>
-      <div>
-       <h1 class="pixel-font text-sm" id="appTitle" style="color: #ff6b9d;">PIXEL ART STUDIO</h1>
-       <p class="text-xs mt-1 opacity-50">স্টাইল • অ্যানিমেশন • GIF</p>
-      </div>
-     </div>
-    </div>
-   </header><!-- Main -->
-   <main class="max-w-6xl mx-auto px-4 py-6"><!-- Upload Section -->
-    <div id="uploadSection">
-     <div class="upload-zone p-8 text-center" id="dropZone" onclick="document.getElementById('fileInput').click()"><input type="file" id="fileInput" accept="image/*" class="hidden" aria-label="Upload pixel art">
-      <div style="animation: float 3s ease-in-out infinite;"><i data-lucide="image-plus" style="width:48px;height:48px;color:#ff6b9d;" class="mx-auto"></i>
-      </div>
-      <p class="mt-4 text-lg font-bold" id="uploadText">পিক্সেল আর্ট আপলোড করুন</p>
-      <p class="text-sm opacity-40 mt-2">PNG, JPG, GIF — ড্র্যাগ এন্ড ড্রপ বা ক্লিক করুন</p>
-     </div>
-    </div><!-- Editor Section (hidden until image loaded) -->
-    <div id="editorSection" class="hidden">
-     <div class="grid grid-cols-1 gap-6"><!-- Canvas -->
-      <div class="lg:col-span-2">
-       <div class="canvas-container" style="min-height: 360px;" id="canvasContainer">
-        <canvas id="mainCanvas" style="image-rendering: pixelated;"></canvas>
-       </div>
-       <div class="flex gap-3 mt-4 flex-wrap"><button class="btn-primary flex items-center gap-2" onclick="downloadPNG()" id="btnDownloadPNG"> <i data-lucide="download" style="width:16px;height:16px;"></i> PNG ডাউনলোড </button> <button class="btn-primary flex items-center gap-2" onclick="startGifExport()" id="btnDownloadGIF"> <i data-lucide="film" style="width:16px;height:16px;"></i> GIF ডাউনলোড </button> <button class="btn-secondary flex items-center gap-2" onclick="resetEditor()"> <i data-lucide="rotate-ccw" style="width:16px;height:16px;"></i> রিসেট </button> <button class="btn-secondary flex items-center gap-2" onclick="document.getElementById('fileInput').click()"> <i data-lucide="upload" style="width:16px;height:16px;"></i> নতুন ছবি </button>
-       </div>
-       <div class="progress-bar mt-3 hidden" id="progressBar">
-        <div class="progress-fill" id="progressFill" style="width:0%"></div>
-       </div>
-       <p class="text-xs opacity-40 mt-1 hidden" id="progressText"></p>
-      </div><!-- Right: Controls -->
-      <div class="space-y-5"><!-- Styles -->
-       <div>
-        <h3 class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="palette" style="width:16px;height:16px;color:#ff6b9d;"></i> আর্ট স্টাইল</h3>
-        <div class="grid grid-cols-2 gap-2" id="styleGrid"></div>
-       </div><!-- Animations -->
-       <div>
-        <h3 class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="sparkles" style="width:16px;height:16px;color:#6bffb8;"></i> অ্যানিমেশন</h3>
-        <div class="grid grid-cols-2 gap-2" id="animGrid"></div>
-       </div><!-- Speed Control -->
-       <div><label class="text-sm font-bold flex items-center gap-2"> <i data-lucide="gauge" style="width:16px;height:16px;color:#ffda6b;"></i> গতি </label> <input type="range" id="speedSlider" min="1" max="10" value="5" class="w-full mt-2 accent-pink-500" aria-label="Animation speed">
-        <div class="flex justify-between text-xs opacity-40">
-         <span>ধীর</span><span>দ্রুত</span>
-        </div>
-       </div><!-- Scale -->
-       <div><label class="text-sm font-bold flex items-center gap-2"> <i data-lucide="maximize" style="width:16px;height:16px;color:#9d6bff;"></i> স্কেল </label>
-        <div class="flex gap-2 mt-2"><button class="btn-secondary text-xs flex-1" onclick="setScale(1)">1x</button> <button class="btn-secondary text-xs flex-1" onclick="setScale(2)">2x</button> <button class="btn-secondary text-xs flex-1" onclick="setScale(4)">4x</button> <button class="btn-secondary text-xs flex-1" onclick="setScale(8)">8x</button>
-        </div>
-       </div>
-      </div>
-     </div>
-    </div>
-   </main>
-  </div>
-  <script>
-// ==================== STATE ====================
-let originalImage = null;
-let currentStyle = 'none';
-let currentAnim = 'none';
-let scale = 4;
-let animFrame = 0;
-let animLoop = null;
-const canvas = document.getElementById('mainCanvas');
-const ctx = canvas.getContext('2d');
-
-// ==================== STYLES ====================
-const STYLES = [
-  { id: 'none', name: 'অরিজিনাল', emoji: '🎨', desc: 'মূল ছবি' },
-  { id: 'risograph', name: 'Risograph', emoji: '🖨️', desc: 'গ্রেইন টেক্সচার' },
-  { id: 'pop', name: 'Pop Art', emoji: '💥', desc: 'বোল্ড কালার' },
-  { id: 'vaporwave', name: 'Vaporwave', emoji: '🌴', desc: 'রেট্রো ভাইব' },
-  { id: 'gameboy', name: 'Game Boy', emoji: '🎮', desc: '4 কালার' },
-  { id: 'neon', name: 'Neon Glow', emoji: '✨', desc: 'নিয়ন আলো' },
-  { id: 'sepia', name: 'Sepia', emoji: '📜', desc: 'ভিনটেজ' },
-  { id: 'blueprint', name: 'Blueprint', emoji: '📐', desc: 'ব্লুপ্রিন্ট' },
-  { id: 'thermal', name: 'Thermal', emoji: '🌡️', desc: 'হিট ম্যাপ' },
-  { id: 'comic', name: 'Comic', emoji: '💬', desc: 'কমিক বুক' },
-];
-
-const ANIMS = [
-  { id: 'none', name: 'স্থির', emoji: '⏸️' },
-  { id: 'float', name: 'ভাসমান', emoji: '🎈' },
-  { id: 'pulse', name: 'পালস', emoji: '💓' },
-  { id: 'shake', name: 'কম্পন', emoji: '📳' },
-  { id: 'glitch', name: 'গ্লিচ', emoji: '⚡' },
-  { id: 'rainbow', name: 'রেইনবো', emoji: '🌈' },
-  { id: 'scan', name: 'স্ক্যানলাইন', emoji: '📺' },
-  { id: 'pixelate', name: 'পিক্সেলেট', emoji: '🔲' },
-];
-
-// ==================== BUILD UI ====================
-function buildUI() {
-  const sg = document.getElementById('styleGrid');
-  sg.innerHTML = STYLES.map(s => `
-    <div class="style-card ${s.id === currentStyle ? 'active' : ''}" onclick="selectStyle('${s.id}')">
-      <div class="text-xl">${s.emoji}</div>
-      <div class="text-xs font-bold mt-1">${s.name}</div>
-      <div class="text-[10px] opacity-40">${s.desc}</div>
-    </div>
-  `).join('');
-
-  const ag = document.getElementById('animGrid');
-  ag.innerHTML = ANIMS.map(a => `
-    <div class="anim-card ${a.id === currentAnim ? 'active' : ''}" onclick="selectAnim('${a.id}')">
-      <div class="text-lg">${a.emoji}</div>
-      <div class="text-xs font-bold mt-1">${a.name}</div>
-    </div>
-  `).join('');
-}
-
-// ==================== FILE HANDLING ====================
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
-
-function handleFile(file) {
-  if(!file || !file.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      originalImage = img;
-      document.getElementById('uploadSection').classList.add('hidden');
-      document.getElementById('editorSection').classList.remove('hidden');
-      buildUI();
-      renderCanvas();
-      startAnimLoop();
+    // ══════════════════════════════════════════════
+    // FIREBASE CONFIG — replace with your own config
+    // ══════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyCBNIbhfjXXAW2gDD8gB-Fq3C-rGjbi6-Y",
+      authDomain: "ai-agents-wl.firebaseapp.com",
+      projectId: "ai-agents-wl",
+      storageBucket: "ai-agents-wl.firebasestorage.app",
+      messagingSenderId: "57986370816",
+      appId: "1:57986370816:web:3288075b985bdb794ef7e5"
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
 
-// ==================== STYLE APPLICATION ====================
-function applyStyle(imageData, style) {
-  const d = imageData.data;
-  const w = imageData.width;
+    const ADMIN_EMAIL = "burnovaart@gmail.com"; // ← set your admin Gmail
 
-  switch(style) {
-    case 'risograph': {
-      // Risograph: limited palette, grain texture, slight misregistration feel
-      for(let i = 0; i < d.length; i += 4) {
-        // Quantize to risograph palette
-        let r = d[i], g = d[i+1], b = d[i+2];
-        // Add grain
-        const grain = (Math.random() - 0.5) * 50;
-        r = Math.min(255, Math.max(0, r + grain));
-        g = Math.min(255, Math.max(0, g + grain));
-        b = Math.min(255, Math.max(0, b + grain));
-        // Push toward riso ink colors (pink/teal duotone)
-        const lum = 0.299*r + 0.587*g + 0.114*b;
-        d[i]   = Math.min(255, lum * 0.4 + 230 * (1 - lum/255) * 0.8);
-        d[i+1] = Math.min(255, lum * 0.6 + 80 * (1 - lum/255) * 0.5);
-        d[i+2] = Math.min(255, lum * 0.3 + 180 * (1 - lum/255) * 0.7);
-        // Quantize
-        d[i]   = Math.round(d[i] / 32) * 32;
-        d[i+1] = Math.round(d[i+1] / 32) * 32;
-        d[i+2] = Math.round(d[i+2] / 32) * 32;
-      }
-      break;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    window.__fb = { db, auth, provider, ADMIN_EMAIL,
+      collection, addDoc, getDocs, doc, updateDoc, query, where, orderBy, getDoc, setDoc, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider };
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --win-bg: #008080;
+      --win-gray: #c0c0c0;
+      --win-dark: #808080;
+      --win-light: #ffffff;
+      --win-blue: #000080;
+      --win-blue2: #1084d0;
+      --win-black: #000;
+      --win-green: #006400;
+      --gold: #ffd700;
+      --pixel: 'Press Start 2P', monospace;
+      --vt: 'VT323', monospace;
     }
-    case 'pop': {
-      // Pop Art: extreme contrast, bold primary colors
-      for(let i = 0; i < d.length; i += 4) {
-        let r = d[i], g = d[i+1], b = d[i+2];
-        // Boost saturation extremely
-        const gray = 0.299*r + 0.587*g + 0.114*b;
-        r = Math.min(255, Math.max(0, gray + (r - gray) * 3));
-        g = Math.min(255, Math.max(0, gray + (g - gray) * 3));
-        b = Math.min(255, Math.max(0, gray + (b - gray) * 3));
-        // Posterize to 3 levels
-        d[i]   = r < 85 ? 0 : r < 170 ? 128 : 255;
-        d[i+1] = g < 85 ? 0 : g < 170 ? 128 : 255;
-        d[i+2] = b < 85 ? 0 : b < 170 ? 128 : 255;
-        // Add halftone dot pattern
-        const px = ((i/4) % w);
-        const py = Math.floor((i/4) / w);
-        if ((px + py) % 3 === 0) {
-          d[i] = Math.min(255, d[i] + 40);
-        }
-      }
-      break;
+
+    body {
+      font-family: var(--pixel);
+      background: var(--win-bg);
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(0,0,80,.18) 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(0,80,80,.18) 0%, transparent 60%);
+      min-height: 100vh;
+      color: var(--win-black);
     }
-    case 'vaporwave': {
-      for(let i = 0; i < d.length; i += 4) {
-        const lum = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-        const py = Math.floor((i/4) / w);
-        const t = py / (imageData.height || 1);
-        d[i]   = Math.min(255, lum * 0.3 + 255 * t * 0.7);
-        d[i+1] = Math.min(255, lum * 0.2 + 100 * (1-t) * 0.8);
-        d[i+2] = Math.min(255, lum * 0.3 + 255 * (1-t) * 0.9);
-      }
-      break;
+
+    /* CRT scanlines overlay */
+    body::after {
+      content: '';
+      position: fixed; top:0;left:0;right:0;bottom:0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px);
+      pointer-events: none;
+      z-index: 99999;
     }
-    case 'gameboy': {
-      const gb = [[15,56,15],[48,98,48],[139,172,15],[155,188,15]];
-      for(let i = 0; i < d.length; i += 4) {
-        const lum = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-        const idx = Math.min(3, Math.floor(lum / 64));
-        d[i] = gb[idx][0]; d[i+1] = gb[idx][1]; d[i+2] = gb[idx][2];
-      }
-      break;
+
+    /* ═══════ TASKBAR ═══════ */
+    #taskbar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 36px;
+      background: var(--win-gray);
+      border-top: 2px solid var(--win-light);
+      display: flex; align-items: center; gap: 6px; padding: 0 6px;
+      z-index: 9999;
+      box-shadow: 0 -1px 0 var(--win-dark);
     }
-    case 'neon': {
-      for(let i = 0; i < d.length; i += 4) {
-        const lum = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-        // Dark background with neon edges
-        const edge = Math.abs(d[i] - (d[i+4]||0)) + Math.abs(d[i+1] - (d[i+5]||0));
-        if (edge > 30) {
-          d[i] = 255; d[i+1] = 50; d[i+2] = 255; // neon magenta edges
-        } else {
-          d[i] = lum * 0.1; d[i+1] = lum * 0.05; d[i+2] = lum * 0.15;
-        }
-      }
-      break;
+    .start-btn {
+      background: var(--win-gray);
+      border: 2px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 3px 10px;
+      font-family: var(--pixel); font-size: 8px; font-weight: bold;
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
     }
-    case 'sepia': {
-      for(let i = 0; i < d.length; i += 4) {
-        const r=d[i], g=d[i+1], b=d[i+2];
-        d[i]   = Math.min(255, r*0.393 + g*0.769 + b*0.189);
-        d[i+1] = Math.min(255, r*0.349 + g*0.686 + b*0.168);
-        d[i+2] = Math.min(255, r*0.272 + g*0.534 + b*0.131);
-        // Add slight grain
-        const grain = (Math.random() - 0.5) * 20;
-        d[i] = Math.min(255, Math.max(0, d[i] + grain));
-        d[i+1] = Math.min(255, Math.max(0, d[i+1] + grain));
-        d[i+2] = Math.min(255, Math.max(0, d[i+2] + grain));
-      }
-      break;
+    .start-btn:active {
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
     }
-    case 'blueprint': {
-      for(let i = 0; i < d.length; i += 4) {
-        const lum = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-        const px = ((i/4) % w), py = Math.floor((i/4) / w);
-        const grid = (px % 8 === 0 || py % 8 === 0) ? 30 : 0;
-        d[i]   = Math.min(255, 20 + grid);
-        d[i+1] = Math.min(255, 40 + lum * 0.4 + grid);
-        d[i+2] = Math.min(255, 80 + lum * 0.7 + grid);
-      }
-      break;
+    .taskbar-divider { width: 2px; height: 26px; background: var(--win-dark); border-right: 1px solid var(--win-light); margin: 0 2px; }
+    .taskbar-btn {
+      background: var(--win-gray);
+      border: 2px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 3px 10px; font-family: var(--pixel); font-size: 7px;
+      cursor: pointer; white-space: nowrap;
     }
-    case 'thermal': {
-      for(let i = 0; i < d.length; i += 4) {
-        const lum = (0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]) / 255;
-        if (lum < 0.25) { d[i]=0; d[i+1]=0; d[i+2]=Math.floor(lum*4*255); }
-        else if (lum < 0.5) { d[i]=0; d[i+1]=Math.floor((lum-0.25)*4*255); d[i+2]=255; }
-        else if (lum < 0.75) { d[i]=Math.floor((lum-0.5)*4*255); d[i+1]=255; d[i+2]=255-Math.floor((lum-0.5)*4*255); }
-        else { d[i]=255; d[i+1]=255-Math.floor((lum-0.75)*4*255); d[i+2]=0; }
-      }
-      break;
+    .taskbar-btn.active {
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
     }
-    case 'comic': {
-      for(let i = 0; i < d.length; i += 4) {
-        // High contrast + halftone
-        let r=d[i], g=d[i+1], b=d[i+2];
-        r = r < 128 ? 0 : 255;
-        g = g < 128 ? 0 : 255;
-        b = b < 128 ? 0 : 255;
-        const px = ((i/4) % w), py = Math.floor((i/4) / w);
-        if ((px % 4 < 2) && (py % 4 < 2)) {
-          r = Math.min(255, r + 60);
-          g = Math.min(255, g + 60);
-          b = Math.min(255, b + 60);
-        }
-        // Bold outline feel
-        const edge = Math.abs(d[i] - (i > 4 ? d[i-4] : 0));
-        if (edge > 50) { r = 0; g = 0; b = 0; }
-        d[i] = r; d[i+1] = g; d[i+2] = b;
-      }
-      break;
+    .taskbar-clock {
+      margin-left: auto;
+      border: 2px solid;
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
+      padding: 4px 10px; font-family: var(--pixel); font-size: 8px;
     }
+
+    /* ═══════ LOADING SCREEN ═══════ */
+    #loading-screen {
+      position: fixed; top:0;left:0;width:100%;height:100%;
+      background: var(--win-bg);
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(0,0,80,.18) 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(0,80,80,.18) 0%, transparent 60%);
+      z-index: 100000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .loading-window {
+      background: var(--win-gray);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      width: 500px; max-width: 92vw;
+      box-shadow: 4px 4px 0 var(--win-black);
+    }
+    .loading-titlebar {
+      background: linear-gradient(90deg, var(--win-blue) 0%, var(--win-blue2) 100%);
+      color: #fff; padding: 6px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--pixel); font-size: 9px; user-select: none;
+    }
+    .loading-close-btn {
+      background: var(--win-gray); color: var(--win-black);
+      border: 2px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      width: 18px; height: 16px; font-size: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .loading-body { padding: 22px 24px 20px; background: var(--win-gray); text-align: center; }
+    .loading-gif {
+      width: 80px; height: 80px; image-rendering: pixelated;
+      margin: 0 auto 12px; border: 2px inset var(--win-dark); display: block;
+    }
+    .loading-signal-text { font-family: var(--pixel); font-size: 9px; color: var(--win-blue); margin-bottom: 14px; letter-spacing: 1px; }
+    .loading-msg { font-family: var(--vt); font-size: 17px; color: var(--win-black); min-height: 22px; margin-bottom: 4px; }
+    .loading-bar-outer {
+      width: 100%; height: 26px;
+      border: 2px solid;
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
+      background: var(--win-light); padding: 2px; margin: 10px 0 6px;
+    }
+    .loading-bar-inner {
+      height: 100%;
+      background: repeating-linear-gradient(90deg, var(--win-green) 0, var(--win-green) 14px, #004400 14px, #004400 18px);
+      width: 0%; transition: width .45s ease;
+    }
+    .loading-detail { font-family: var(--vt); font-size: 14px; color: #555; min-height: 18px; }
+    .loading-pct { font-family: var(--pixel); font-size: 8px; color: var(--win-blue); margin-top: 8px; }
+
+    /* ═══════ MAIN CONTENT ═══════ */
+    #main-content { display: none; padding: 20px 20px 60px; max-width: 1100px; margin: 0 auto; }
+
+    /* ═══════ WIN WINDOW ═══════ */
+    .win-window {
+      background: var(--win-gray);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      box-shadow: 4px 4px 0 var(--win-black);
+      margin-bottom: 20px;
+    }
+    .win-titlebar {
+      background: linear-gradient(90deg, var(--win-blue) 0%, var(--win-blue2) 100%);
+      color: #fff; padding: 6px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--pixel); font-size: 9px; user-select: none;
+    }
+    .win-titlebar-btns { display: flex; gap: 3px; }
+    .win-btn {
+      background: var(--win-gray); color: var(--win-black);
+      border: 2px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      width: 18px; height: 16px; font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-family: var(--pixel);
+    }
+    .win-body { padding: 16px; }
+
+    /* ═══════ HERO BANNER ═══════ */
+    .hero-banner {
+      text-align: center; padding: 30px 16px;
+      background: var(--win-blue);
+      border-bottom: 4px solid var(--win-black);
+    }
+    .hero-logo {
+      font-family: var(--pixel); font-size: clamp(14px,3vw,22px);
+      color: var(--gold); text-shadow: 3px 3px 0 #000; letter-spacing: 2px;
+      margin-bottom: 8px; line-height: 1.6;
+    }
+    .hero-sub { font-family: var(--vt); font-size: 22px; color: #adf; margin-bottom: 16px; }
+    .hero-tux {
+      font-size: clamp(50px,10vw,90px); line-height: 1;
+      filter: drop-shadow(4px 4px 0 #000); display: block; margin: 0 auto 10px;
+    }
+
+    /* ═══════ STATS ROW ═══════ */
+    .stats-row {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+    }
+    .stat-box {
+      flex: 1 1 160px;
+      background: var(--win-gray);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 12px; text-align: center;
+    }
+    .stat-num { font-family: var(--pixel); font-size: 20px; color: var(--win-blue); }
+    .stat-label { font-family: var(--vt); font-size: 16px; color: #333; margin-top: 4px; }
+
+    /* ═══════ FORM STYLES ═══════ */
+    .win-label { font-family: var(--pixel); font-size: 8px; display: block; margin-bottom: 5px; color: var(--win-black); }
+    .win-input, .win-select, .win-textarea {
+      width: 100%; padding: 6px 8px;
+      border: 2px solid;
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
+      background: var(--win-light);
+      font-family: var(--vt); font-size: 16px;
+      outline: none; color: var(--win-black);
+      margin-bottom: 12px;
+    }
+    .win-input:focus, .win-textarea:focus { background: #ffffc0; }
+    .win-checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .win-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--win-blue); }
+    .win-checkbox-label { font-family: var(--pixel); font-size: 8px; line-height: 1.6; }
+
+    .win-submit-btn {
+      background: var(--win-gray); color: var(--win-black);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 10px 24px; font-family: var(--pixel); font-size: 9px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .win-submit-btn:active {
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
+      padding: 11px 23px 9px 25px;
+    }
+    .win-submit-btn.primary { background: var(--win-blue); color: #fff; }
+
+    .win-link-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--win-gray);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 8px 14px; font-family: var(--pixel); font-size: 8px;
+      cursor: pointer; text-decoration: none; color: var(--win-black);
+      margin-right: 8px; margin-bottom: 8px;
+    }
+
+    /* ═══════ REFER BOX ═══════ */
+    .refer-box {
+      background: var(--win-light);
+      border: 2px solid;
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-light); border-bottom-color: var(--win-light);
+      padding: 10px; margin-top: 16px;
+    }
+    .refer-label { font-family: var(--pixel); font-size: 8px; color: var(--win-blue); margin-bottom: 6px; }
+    .refer-link { font-family: var(--vt); font-size: 15px; word-break: break-all; color: #000; }
+    .refer-copy-btn {
+      margin-top: 6px;
+      background: var(--win-gray);
+      border: 2px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 4px 10px; font-family: var(--pixel); font-size: 7px; cursor: pointer;
+    }
+
+    /* ═══════ USER CARD ═══════ */
+    .user-card {
+      background: var(--win-gray);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 16px; margin-bottom: 14px;
+      position: relative;
+    }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .card-x { font-family: var(--pixel); font-size: 11px; color: var(--win-blue); }
+    .card-x a { color: var(--win-blue); text-decoration: none; }
+    .card-x a:hover { text-decoration: underline; }
+    .card-status { padding: 3px 8px; font-family: var(--pixel); font-size: 8px; border: 2px solid; }
+    .status-pending { background: #ffff99; border-color: #aaaa00; color: #555500; }
+    .status-approved { background: #ccffcc; border-color: var(--win-green); color: var(--win-green); }
+    .status-rejected { background: #ffcccc; border-color: #cc0000; color: #cc0000; }
+    .card-detail { font-family: var(--vt); font-size: 15px; color: #333; margin-bottom: 4px; }
+    .card-roles { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .role-badge {
+      padding: 3px 8px; font-family: var(--pixel); font-size: 7px;
+      border: 2px solid; background: var(--win-blue); color: #fff; border-color: #000080;
+    }
+    .role-og { background: #7c4700; border-color: #3d2300; }
+    .role-gdt { background: #006400; border-color: #003200; }
+    .role-wl { background: #800080; border-color: #400040; }
+    .role-top { background: #8b0000; border-color: #450000; }
+    .role-early { background: #00008b; border-color: #00004a; }
+
+    /* ═══════ SEARCH BOX ═══════ */
+    .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-row .win-input { margin-bottom: 0; flex: 1 1 200px; }
+
+    /* ═══════ LEADERBOARD ═══════ */
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th, .lb-table td {
+      padding: 7px 10px;
+      border: 2px solid;
+      border-color: var(--win-dark);
+      text-align: left; font-family: var(--vt); font-size: 16px;
+    }
+    .lb-table th { font-family: var(--pixel); font-size: 8px; background: var(--win-blue); color: #fff; }
+    .lb-table tr:nth-child(even) td { background: #e0e0e0; }
+    .lb-rank { font-family: var(--pixel); font-size: 10px; color: var(--win-blue); }
+    .rank-1 { color: var(--gold); }
+    .rank-2 { color: #aaa; }
+    .rank-3 { color: #cd7f32; }
+
+    /* ═══════ ADMIN PANEL ═══════ */
+    #admin-panel { display: none; }
+    .admin-card {
+      background: var(--win-gray);
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+      padding: 16px; margin-bottom: 16px;
+    }
+    .admin-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .admin-role-toggle { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .role-check-label { font-family: var(--pixel); font-size: 7px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+    /* ═══════ TABS ═══════ */
+    .tab-row { display: flex; gap: 2px; margin-bottom: -3px; flex-wrap: wrap; }
+    .tab-btn {
+      background: #b0b0b0;
+      border: 3px solid;
+      border-top-color: var(--win-light); border-left-color: var(--win-light);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-gray);
+      padding: 6px 14px; font-family: var(--pixel); font-size: 8px; cursor: pointer;
+      position: relative; bottom: -1px;
+    }
+    .tab-btn.active {
+      background: var(--win-gray); z-index: 1;
+      border-bottom-color: var(--win-gray);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ═══════ NOTICE BOX ═══════ */
+    .notice {
+      background: #ffffc0; padding: 10px 14px;
+      border: 2px solid #aaaa00;
+      font-family: var(--vt); font-size: 16px;
+      margin-bottom: 14px;
+    }
+
+    /* ═══════ SECTION DIVIDER ═══════ */
+    .pixel-hr { height: 3px; background: repeating-linear-gradient(90deg, var(--win-dark) 0, var(--win-dark) 6px, transparent 6px, transparent 10px); margin: 18px 0; }
+
+    /* ═══════ RESPONSIVE ═══════ */
+    @media (max-width: 600px) {
+      #main-content { padding: 10px 10px 60px; }
+      .hero-logo { font-size: 11px; }
+      .win-body { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     LOADING SCREEN
+══════════════════════════════════════════════════════════ -->
+<div id="loading-screen">
+  <div class="loading-window">
+    <div class="loading-titlebar">
+      <span>📡 404 Punks Lab • Identity Registry v3.0</span>
+      <div class="loading-close-btn">✕</div>
+    </div>
+    <div class="loading-body">
+      <img class="loading-gif"
+        src="https://raw.githubusercontent.com/robosym/roborym.github.io/main/gif/1.gif"
+        alt="signal"
+        onerror="this.style.display='none'">
+      <div class="loading-signal-text">404 SIGNAL DETECTED</div>
+      <div class="loading-msg" id="loading-text">Bootstrapping IPFS gateway...</div>
+      <div class="loading-bar-outer">
+        <div class="loading-bar-inner" id="loading-bar"></div>
+      </div>
+      <div class="loading-detail" id="loading-detail">Resolving on-chain identity registry...</div>
+      <div class="loading-pct" id="loading-pct">0%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════════════════ -->
+<div id="main-content">
+
+  <!-- HERO -->
+  <div class="win-window">
+    <div class="win-titlebar">
+      <span>🖥️ 404PUNKS.LAB — Identity Registry</span>
+      <div class="win-titlebar-btns">
+        <div class="win-btn">_</div>
+        <div class="win-btn">□</div>
+        <div class="win-btn">✕</div>
+      </div>
+    </div>
+    <div class="hero-banner">
+      <span class="hero-tux">🐧</span>
+      <div class="hero-logo">404 PUNKS LAB</div>
+      <div class="hero-sub">Identity Registry v3.0 — Join the Whitelist</div>
+    </div>
+    <div class="win-body">
+      <!-- STATS -->
+      <div class="stats-row" id="global-stats">
+        <div class="stat-box"><div class="stat-num" id="stat-verified">—</div><div class="stat-label">✅ Verified</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-pending">—</div><div class="stat-label">⏳ Pending</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-rejected">—</div><div class="stat-label">❌ Rejected</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-total">—</div><div class="stat-label">📋 Total Entries</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('tab-register')">📝 Register</button>
+    <button class="tab-btn" onclick="switchTab('tab-lookup')">🔍 My Status</button>
+    <button class="tab-btn" onclick="switchTab('tab-leaderboard')">🏆 Leaderboard</button>
+    <button class="tab-btn" onclick="switchTab('tab-admin')">🔐 Admin</button>
+  </div>
+
+  <!-- ══ TAB: REGISTER ══ -->
+  <div id="tab-register" class="tab-content active">
+    <div class="win-window">
+      <div class="win-titlebar">
+        <span>📋 Register — Step 1 of 1</span>
+        <div class="win-titlebar-btns"><div class="win-btn">✕</div></div>
+      </div>
+      <div class="win-body">
+        <div class="notice">⚠️ Complete ALL steps before submitting. Each wallet may only register once.</div>
+
+        <!-- STEP 1: FOLLOW -->
+        <div style="margin-bottom:16px">
+          <div class="win-label">STEP 1 — Follow & Engage on X</div>
+          <a class="win-link-btn" href="https://x.com/404punklab" target="_blank">🐦 Follow @404punklab</a>
+          <a class="win-link-btn" href="https://x.com/404punklab" target="_blank">❤️ Like</a>
+          <a class="win-link-btn" href="https://x.com/404punklab" target="_blank">🔁 Retweet</a>
+          <div class="notice" style="margin-top:8px;font-size:14px;">After following, liking & retweeting, complete the form below.</div>
+        </div>
+
+        <div class="pixel-hr"></div>
+
+        <!-- ETH ADDRESS -->
+        <label class="win-label" for="eth-addr">STEP 2 — Your ETH Wallet Address *</label>
+        <input class="win-input" id="eth-addr" type="text" placeholder="0x..." maxlength="42">
+
+        <!-- HOLDER CHECK -->
+        <div class="win-checkbox-row">
+          <input class="win-checkbox" type="checkbox" id="is-holder" onchange="toggleHolderCount()">
+          <label class="win-checkbox-label" for="is-holder">I AM A 404 PUNKS NFT HOLDER</label>
+        </div>
+        <div id="holder-count-box" style="display:none;margin-bottom:12px">
+          <label class="win-label" for="nft-count">How many 404 Punks NFTs do you hold?</label>
+          <input class="win-input" id="nft-count" type="number" min="1" placeholder="e.g. 5">
+        </div>
+
+        <!-- X USERNAME -->
+        <label class="win-label" for="x-username">STEP 3 — Your X (Twitter) Username *</label>
+        <input class="win-input" id="x-username" type="text" placeholder="@YourXUsername">
+
+        <!-- RETWEET LINK -->
+        <label class="win-label" for="rt-link">STEP 4 — Paste Your Retweet Link *</label>
+        <input class="win-input" id="rt-link" type="text" placeholder="https://x.com/...">
+
+        <!-- REFER CODE -->
+        <label class="win-label" for="ref-code">Referral Code (optional)</label>
+        <input class="win-input" id="ref-code" type="text" placeholder="e.g. ref_abc123">
+
+        <div class="pixel-hr"></div>
+
+        <button class="win-submit-btn primary" onclick="submitForm()">
+          ⚡ SUBMIT REGISTRATION
+        </button>
+
+        <!-- REFER LINK OUTPUT -->
+        <div id="refer-section" style="display:none">
+          <div class="pixel-hr"></div>
+          <div class="win-label">🔗 YOUR PERSONAL REFERRAL LINK</div>
+          <div class="refer-box">
+            <div class="refer-label">Share this link to earn refer points!</div>
+            <div class="refer-link" id="refer-link-text">—</div>
+            <button class="refer-copy-btn" onclick="copyReferLink()">📋 COPY LINK</button>
+          </div>
+        </div>
+
+        <div id="form-msg" style="margin-top:14px;font-family:var(--vt);font-size:17px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: LOOKUP ══ -->
+  <div id="tab-lookup" class="tab-content">
+    <div class="win-window">
+      <div class="win-titlebar">
+        <span>🔍 Check My Status</span>
+        <div class="win-titlebar-btns"><div class="win-btn">✕</div></div>
+      </div>
+      <div class="win-body">
+        <div class="notice">Search by your ETH address or X username to view your registration card.</div>
+        <div class="search-row" style="margin-bottom:12px">
+          <input class="win-input" id="search-input" type="text" placeholder="0x... or @username">
+          <button class="win-submit-btn" onclick="searchUser()">🔍 SEARCH</button>
+        </div>
+        <div id="lookup-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: LEADERBOARD ══ -->
+  <div id="tab-leaderboard" class="tab-content">
+    <div class="win-window">
+      <div class="win-titlebar">
+        <span>🏆 Leaderboard</span>
+        <div class="win-titlebar-btns"><div class="win-btn">✕</div></div>
+      </div>
+      <div class="win-body">
+        <div class="tab-row" style="margin-bottom:14px">
+          <button class="tab-btn active" id="lb-tab-nft" onclick="switchLbTab('nft')">🎨 NFT Holders</button>
+          <button class="tab-btn" id="lb-tab-ref" onclick="switchLbTab('ref')">🔗 Top Referrers</button>
+        </div>
+        <div id="lb-nft-content">
+          <table class="lb-table" id="lb-nft-table">
+            <thead><tr><th>#</th><th>X Username</th><th>NFTs Held</th><th>Status</th></tr></thead>
+            <tbody id="lb-nft-body"><tr><td colspan="4" style="font-family:var(--vt);font-size:16px;color:#999">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="lb-ref-content" style="display:none">
+          <table class="lb-table">
+            <thead><tr><th>#</th><th>X Username</th><th>Referrals</th><th>Status</th></tr></thead>
+            <tbody id="lb-ref-body"><tr><td colspan="4" style="font-family:var(--vt);font-size:16px;color:#999">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: ADMIN ══ -->
+  <div id="tab-admin" class="tab-content">
+    <div id="admin-login-section">
+      <div class="win-window">
+        <div class="win-titlebar">
+          <span>🔐 Admin Login</span>
+          <div class="win-titlebar-btns"><div class="win-btn">✕</div></div>
+        </div>
+        <div class="win-body" style="text-align:center;padding:30px">
+          <div style="font-family:var(--pixel);font-size:9px;margin-bottom:20px;color:var(--win-blue)">ADMIN ACCESS ONLY<br><br>Sign in with authorized Gmail</div>
+          <button class="win-submit-btn primary" onclick="adminLogin()">🔑 SIGN IN WITH GOOGLE</button>
+          <div id="admin-login-msg" style="margin-top:14px;font-family:var(--vt);font-size:16px;color:#c00"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-panel" style="display:none">
+      <div class="win-window">
+        <div class="win-titlebar">
+          <span>🛡️ Admin Dashboard — 404 Punks Lab</span>
+          <div class="win-titlebar-btns">
+            <div class="win-btn" onclick="adminLogout()" title="Sign Out">✕</div>
+          </div>
+        </div>
+        <div class="win-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+            <div style="font-family:var(--pixel);font-size:8px;color:var(--win-blue)">LOGGED IN AS ADMIN</div>
+            <button class="win-submit-btn" onclick="adminLogout()">🚪 SIGN OUT</button>
+          </div>
+
+          <!-- Admin Filter -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="win-submit-btn" onclick="loadAdminData('all')">ALL</button>
+            <button class="win-submit-btn" onclick="loadAdminData('pending')">⏳ PENDING</button>
+            <button class="win-submit-btn" onclick="loadAdminData('approved')">✅ APPROVED</button>
+            <button class="win-submit-btn" onclick="loadAdminData('rejected')">❌ REJECTED</button>
+          </div>
+          <div id="admin-cards-container">
+            <div style="font-family:var(--vt);font-size:17px;color:#999">Loading entries...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#main-content -->
+
+<!-- ══════════════════════════════════════════════════════════
+     TASKBAR
+══════════════════════════════════════════════════════════ -->
+<div id="taskbar">
+  <button class="start-btn">🐧 Start</button>
+  <div class="taskbar-divider"></div>
+  <button class="taskbar-btn active" onclick="switchTab('tab-register')">📝 Register</button>
+  <button class="taskbar-btn" onclick="switchTab('tab-lookup')">🔍 Status</button>
+  <button class="taskbar-btn" onclick="switchTab('tab-leaderboard')">🏆 Board</button>
+  <button class="taskbar-btn" onclick="switchTab('tab-admin')">🔐 Admin</button>
+  <div class="taskbar-clock" id="taskbar-clock">00:00</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ─── LOADING ──────────────────────────────────────────────
+(function startLoadingSequence() {
+  const steps = [
+    [15,  "Bootstrapping IPFS gateway...",        "Resolving on-chain identity registry"],
+    [30,  "Loading metadata registry...",          "Fetching CID shard mappings"],
+    [50,  "Calibrating NFT rotator...",            "Setting entropy stream handlers"],
+    [70,  "Rendering identity gallery...",         "Preparing first 500 shards"],
+    [85,  "Finalizing contract interface...",      "Establishing on-chain link"],
+    [100, "Portal active!",                         "All subsystems nominal — ready"]
+  ];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i >= steps.length) { clearInterval(iv); return; }
+    const [pct, txt, det] = steps[i++];
+    document.getElementById('loading-bar').style.width = pct + '%';
+    document.getElementById('loading-text').textContent = txt;
+    document.getElementById('loading-detail').textContent = det;
+    document.getElementById('loading-pct').textContent = pct + '%';
+    if (pct >= 100) {
+      clearInterval(iv);
+      setTimeout(() => {
+        const ls = document.getElementById('loading-screen');
+        ls.style.transition = 'opacity 0.4s ease'; ls.style.opacity = '0';
+        setTimeout(() => {
+          ls.style.display = 'none';
+          document.getElementById('main-content').style.display = 'block';
+          onAppReady();
+        }, 420);
+      }, 400);
+    }
+  }, 280);
+})();
+
+// ─── CLOCK ────────────────────────────────────────────────
+(function updateClock() {
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('taskbar-clock').textContent = h + ':' + m;
   }
-  return imageData;
+  tick(); setInterval(tick, 10000);
+})();
+
+// ─── TABS ─────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // match taskbar
+  document.querySelectorAll('.taskbar-btn').forEach(el => el.classList.remove('active'));
+
+  if (id === 'tab-leaderboard') loadLeaderboard();
+  if (id === 'tab-lookup') {}
 }
 
-// ==================== ANIMATION RENDERING ====================
-function renderCanvas() {
-  if (!originalImage) return;
-  const w = originalImage.width;
-  const h = originalImage.height;
-  canvas.width = w * scale;
-  canvas.height = h * scale;
-  ctx.imageSmoothingEnabled = false;
+function switchLbTab(which) {
+  document.getElementById('lb-nft-content').style.display = which === 'nft' ? '' : 'none';
+  document.getElementById('lb-ref-content').style.display = which === 'ref' ? '' : 'none';
+  document.getElementById('lb-tab-nft').classList.toggle('active', which === 'nft');
+  document.getElementById('lb-tab-ref').classList.toggle('active', which === 'ref');
+}
 
-  // Draw original at 1:1 to offscreen
-  const off = document.createElement('canvas');
-  off.width = w; off.height = h;
-  const octx = off.getContext('2d');
-  octx.imageSmoothingEnabled = false;
-  octx.drawImage(originalImage, 0, 0, w, h);
+// ─── HOLDER TOGGLE ────────────────────────────────────────
+function toggleHolderCount() {
+  const checked = document.getElementById('is-holder').checked;
+  document.getElementById('holder-count-box').style.display = checked ? '' : 'none';
+}
 
-  // Apply style
-  let imgData = octx.getImageData(0, 0, w, h);
-  if (currentStyle !== 'none') {
-    imgData = applyStyle(imgData, currentStyle);
-    octx.putImageData(imgData, 0, 0);
+// ─── COPY REFER LINK ──────────────────────────────────────
+function copyReferLink() {
+  const txt = document.getElementById('refer-link-text').textContent;
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('Copied!'));
+}
+
+// ─── GENERATE REFER CODE ──────────────────────────────────
+function genReferCode(xUser) {
+  const safe = xUser.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0,10);
+  const rand = Math.random().toString(36).slice(2,6);
+  return 'ref_' + safe + '_' + rand;
+}
+
+// ─── FORM SUBMIT ──────────────────────────────────────────
+async function submitForm() {
+  const msg = document.getElementById('form-msg');
+  const ethAddr = document.getElementById('eth-addr').value.trim();
+  const isHolder = document.getElementById('is-holder').checked;
+  const nftCount = isHolder ? parseInt(document.getElementById('nft-count').value) || 0 : 0;
+  const xUser = document.getElementById('x-username').value.trim().replace(/^@/, '');
+  const rtLink = document.getElementById('rt-link').value.trim();
+  const refCode = document.getElementById('ref-code').value.trim();
+
+  if (!ethAddr || !xUser || !rtLink) {
+    msg.innerHTML = '<span style="color:#c00">⚠️ Please fill all required fields.</span>'; return;
+  }
+  if (!/^0x[a-fA-F0-9]{40}$/.test(ethAddr)) {
+    msg.innerHTML = '<span style="color:#c00">⚠️ Invalid ETH address format.</span>'; return;
   }
 
-  // Apply animation frame effects
-  applyAnimFrame(octx, w, h, animFrame);
+  msg.innerHTML = '<span style="color:#000080">⏳ Submitting...</span>';
 
-  // Scale up with pixelated rendering
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(off, 0, 0, w, h, 0, 0, w * scale, h * scale);
-}
-
-function applyAnimFrame(octx, w, h, frame) {
-  const speed = parseInt(document.getElementById('speedSlider').value);
-  const t = frame * speed * 0.02;
-
-  switch(currentAnim) {
-    case 'rainbow': {
-      const imgData = octx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-      for(let i = 0; i < d.length; i += 4) {
-        if (d[i+3] > 0) {
-          const shift = (t * 30) % 360;
-          const [r,g,b] = hslToRgb((shift + d[i]) % 360, 80, 50);
-          d[i] = (d[i] + r) / 2;
-          d[i+1] = (d[i+1] + g) / 2;
-          d[i+2] = (d[i+2] + b) / 2;
-        }
-      }
-      octx.putImageData(imgData, 0, 0);
-      break;
-    }
-    case 'scan': {
-      const lineY = Math.floor(t * 3) % h;
-      const imgData = octx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-      for(let y = 0; y < h; y++) {
-        const dist = Math.abs(y - lineY);
-        if (dist < 3) {
-          for(let x = 0; x < w; x++) {
-            const i = (y * w + x) * 4;
-            d[i] = Math.min(255, d[i] + 100);
-            d[i+1] = Math.min(255, d[i+1] + 100);
-            d[i+2] = Math.min(255, d[i+2] + 100);
-          }
-        }
-        // CRT line effect
-        if (y % 2 === 0) {
-          for(let x = 0; x < w; x++) {
-            const i = (y * w + x) * 4;
-            d[i] *= 0.85; d[i+1] *= 0.85; d[i+2] *= 0.85;
-          }
-        }
-      }
-      octx.putImageData(imgData, 0, 0);
-      break;
-    }
-    case 'pixelate': {
-      const blockSize = Math.max(2, Math.floor(Math.abs(Math.sin(t * 0.5)) * 6) + 1);
-      const imgData = octx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-      for(let y = 0; y < h; y += blockSize) {
-        for(let x = 0; x < w; x += blockSize) {
-          const i = (y * w + x) * 4;
-          const r = d[i], g = d[i+1], b = d[i+2], a = d[i+3];
-          for(let dy = 0; dy < blockSize && y+dy < h; dy++) {
-            for(let dx = 0; dx < blockSize && x+dx < w; dx++) {
-              const j = ((y+dy) * w + (x+dx)) * 4;
-              d[j] = r; d[j+1] = g; d[j+2] = b; d[j+3] = a;
-            }
-          }
-        }
-      }
-      octx.putImageData(imgData, 0, 0);
-      break;
-    }
-    case 'glitch': {
-      const imgData = octx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-      // Random horizontal shifts
-      if (Math.random() < 0.3) {
-        const sliceY = Math.floor(Math.random() * h);
-        const sliceH = Math.floor(Math.random() * 5) + 1;
-        const shift = Math.floor((Math.random() - 0.5) * 8);
-        for(let y = sliceY; y < Math.min(h, sliceY + sliceH); y++) {
-          const row = new Uint8ClampedArray(w * 4);
-          for(let x = 0; x < w; x++) {
-            const sx = ((x + shift) % w + w) % w;
-            const si = (y * w + sx) * 4;
-            const di = x * 4;
-            row[di] = d[si]; row[di+1] = d[si+1]; row[di+2] = d[si+2]; row[di+3] = d[si+3];
-          }
-          for(let x = 0; x < w; x++) {
-            const i = (y * w + x) * 4;
-            d[i] = row[x*4]; d[i+1] = row[x*4+1]; d[i+2] = row[x*4+2]; d[i+3] = row[x*4+3];
-          }
-        }
-        // Color channel shift
-        if (Math.random() < 0.5) {
-          for(let i = 0; i < d.length; i += 4) {
-            d[i] = d[Math.min(i + 8, d.length - 4)] || d[i];
-          }
-        }
-      }
-      octx.putImageData(imgData, 0, 0);
-      break;
-    }
-    case 'float': {
-      // Apply via canvas transform
-      const offY = Math.sin(t) * 3;
-      const tempData = octx.getImageData(0, 0, w, h);
-      octx.clearRect(0, 0, w, h);
-      octx.putImageData(tempData, 0, Math.round(offY));
-      break;
-    }
-    case 'pulse': {
-      const alpha = 0.5 + 0.5 * Math.sin(t * 2);
-      const imgData = octx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-      for(let i = 3; i < d.length; i += 4) {
-        d[i] = Math.floor(d[i] * (0.4 + alpha * 0.6));
-      }
-      octx.putImageData(imgData, 0, 0);
-      break;
-    }
-    case 'shake': {
-      const offX = Math.round((Math.random() - 0.5) * 3);
-      const offY = Math.round((Math.random() - 0.5) * 3);
-      const tempData = octx.getImageData(0, 0, w, h);
-      octx.clearRect(0, 0, w, h);
-      octx.putImageData(tempData, offX, offY);
-      break;
-    }
-  }
-}
-
-function hslToRgb(h, s, l) {
-  s /= 100; l /= 100;
-  const c = (1 - Math.abs(2*l - 1)) * s;
-  const x = c * (1 - Math.abs((h/60)%2 - 1));
-  const m = l - c/2;
-  let r, g, b;
-  if (h < 60) { r=c; g=x; b=0; }
-  else if (h < 120) { r=x; g=c; b=0; }
-  else if (h < 180) { r=0; g=c; b=x; }
-  else if (h < 240) { r=0; g=x; b=c; }
-  else if (h < 300) { r=x; g=0; b=c; }
-  else { r=c; g=0; b=x; }
-  return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
-}
-
-function startAnimLoop() {
-  if (animLoop) cancelAnimationFrame(animLoop);
-  function loop() {
-    animFrame++;
-    renderCanvas();
-    animLoop = requestAnimationFrame(loop);
-  }
-  if (currentAnim !== 'none') loop();
-}
-
-// ==================== SELECTIONS ====================
-function selectStyle(id) {
-  currentStyle = id;
-  buildUI();
-  renderCanvas();
-}
-
-function selectAnim(id) {
-  currentAnim = id;
-  buildUI();
-  if (animLoop) cancelAnimationFrame(animLoop);
-  animFrame = 0;
-  if (currentAnim === 'none') {
-    renderCanvas();
-  } else {
-    startAnimLoop();
-  }
-}
-
-function setScale(s) {
-  scale = s;
-  renderCanvas();
-}
-
-function resetEditor() {
-  currentStyle = 'none';
-  currentAnim = 'none';
-  scale = 4;
-  animFrame = 0;
-  if (animLoop) cancelAnimationFrame(animLoop);
-  buildUI();
-  renderCanvas();
-}
-
-// ==================== DOWNLOADS ====================
-function downloadPNG() {
-  if (!originalImage) return;
-  const link = document.createElement('a');
-  link.download = 'pixel-art-styled.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  showToast('✅ PNG ডাউনলোড হচ্ছে!');
-}
-
-async function startGifExport() {
-  if (!originalImage) return;
-  const btn = document.getElementById('btnDownloadGIF');
-  btn.disabled = true;
-  btn.innerHTML = '<span style="animation:spin 1s linear infinite;display:inline-block;">⏳</span> তৈরি হচ্ছে...';
-
-  const pb = document.getElementById('progressBar');
-  const pf = document.getElementById('progressFill');
-  const pt = document.getElementById('progressText');
-  pb.classList.remove('hidden');
-  pt.classList.remove('hidden');
-
-  const frames = 30;
-  const delay = Math.max(30, 150 - parseInt(document.getElementById('speedSlider').value) * 12);
-  const savedAnim = currentAnim === 'none' ? 'float' : currentAnim;
-  const savedAnimOrig = currentAnim;
-  currentAnim = savedAnim;
-
-  // Collect frames as data URLs
-  const frameDataURLs = [];
-  const w = originalImage.width * scale;
-  const h = originalImage.height * scale;
-
-  for (let i = 0; i < frames; i++) {
-    animFrame = i * 2;
-    renderCanvas();
-    frameDataURLs.push(canvas.toDataURL('image/png'));
-    pf.style.width = ((i + 1) / frames * 70) + '%';
-    pt.textContent = `ফ্রেম ${i+1}/${frames} ক্যাপচার হচ্ছে...`;
-    await new Promise(r => setTimeout(r, 10));
-  }
-
-  pt.textContent = 'GIF এনকোডিং হচ্ছে...';
-  pf.style.width = '80%';
-
-  // Simple GIF encoder (binary)
   try {
-    const gif = await encodeGIF(frameDataURLs, w, h, delay);
-    const blob = new Blob([gif], { type: 'image/gif' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = 'pixel-art-animated.gif';
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
-    showToast('✅ GIF ডাউনলোড হচ্ছে!');
-  } catch(e) {
-    showToast('❌ GIF তৈরি করতে সমস্যা হয়েছে');
-  }
+    const { db, collection, addDoc, getDocs, query, where, serverTimestamp } = window.__fb;
 
-  currentAnim = savedAnimOrig;
-  animFrame = 0;
-  if (currentAnim !== 'none') startAnimLoop(); else renderCanvas();
-
-  pf.style.width = '100%';
-  pt.textContent = 'সম্পন্ন!';
-  btn.disabled = false;
-  btn.innerHTML = '<i data-lucide="film" style="width:16px;height:16px;"></i> GIF ডাউনলোড';
-  lucide.createIcons();
-  setTimeout(() => { pb.classList.add('hidden'); pt.classList.add('hidden'); }, 2000);
-}
-
-// Minimal GIF89a encoder
-async function encodeGIF(frameURLs, width, height, delay) {
-  // Get pixel data from frames
-  const offCanvas = document.createElement('canvas');
-  offCanvas.width = width;
-  offCanvas.height = height;
-  const offCtx = offCanvas.getContext('2d');
-
-  const allFramePixels = [];
-  for (const url of frameURLs) {
-    const img = await loadImage(url);
-    offCtx.clearRect(0, 0, width, height);
-    offCtx.drawImage(img, 0, 0);
-    const imgData = offCtx.getImageData(0, 0, width, height);
-    allFramePixels.push(imgData.data);
-  }
-
-  // Build global color table from quantized colors
-  const colorMap = new Map();
-  const colors = [];
-
-  function getColorIndex(r, g, b) {
-    // Quantize to 6 bits per channel for 216 color cube
-    const qr = Math.round(r / 51) * 51;
-    const qg = Math.round(g / 51) * 51;
-    const qb = Math.round(b / 51) * 51;
-    const key = (qr << 16) | (qg << 8) | qb;
-    if (colorMap.has(key)) return colorMap.get(key);
-    if (colors.length < 256) {
-      const idx = colors.length;
-      colors.push([qr, qg, qb]);
-      colorMap.set(key, idx);
-      return idx;
+    // Check duplicate
+    const q = query(collection(db, 'registrations'), where('ethAddress', '==', ethAddr));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      msg.innerHTML = '<span style="color:#c00">⚠️ This wallet is already registered.</span>'; return;
     }
-    // Find nearest
-    let best = 0, bestDist = Infinity;
-    for (let i = 0; i < colors.length; i++) {
-      const dr = colors[i][0]-qr, dg = colors[i][1]-qg, db = colors[i][2]-qb;
-      const dist = dr*dr + dg*dg + db*db;
-      if (dist < bestDist) { bestDist = dist; best = i; }
+
+    // Check duplicate X
+    const qx = query(collection(db, 'registrations'), where('xUsername', '==', xUser));
+    const snapx = await getDocs(qx);
+    if (!snapx.empty) {
+      msg.innerHTML = '<span style="color:#c00">⚠️ This X username is already registered.</span>'; return;
     }
-    colorMap.set(key, best);
-    return best;
-  }
 
-  // Pre-index all frames
-  const indexedFrames = allFramePixels.map(pixels => {
-    const indices = new Uint8Array(width * height);
-    for (let i = 0; i < width * height; i++) {
-      indices[i] = getColorIndex(pixels[i*4], pixels[i*4+1], pixels[i*4+2]);
-    }
-    return indices;
-  });
+    const myRefCode = genReferCode(xUser);
+    const domain = window.location.origin + window.location.pathname;
+    const myRefLink = domain + '?ref=' + myRefCode;
 
-  // Pad color table to power of 2
-  while (colors.length < 256) colors.push([0, 0, 0]);
-  const colorTableSize = 7; // 2^(7+1) = 256
+    const docData = {
+      ethAddress: ethAddr,
+      isHolder, nftCount,
+      xUsername: xUser,
+      retweetLink: rtLink,
+      referCode: myRefCode,
+      referredBy: refCode || null,
+      referLink: myRefLink,
+      status: 'pending',
+      roles: [],
+      adminNftCount: nftCount,
+      referralCount: 0,
+      createdAt: serverTimestamp()
+    };
 
-  // Build GIF binary
-  const bytes = [];
-  function writeStr(s) { for(let i=0;i<s.length;i++) bytes.push(s.charCodeAt(i)); }
-  function writeByte(b) { bytes.push(b & 0xff); }
-  function writeShort(v) { bytes.push(v & 0xff); bytes.push((v >> 8) & 0xff); }
+    await addDoc(collection(db, 'registrations'), docData);
 
-  // Header
-  writeStr('GIF89a');
-  writeShort(width);
-  writeShort(height);
-  writeByte(0x80 | colorTableSize); // GCT flag + size
-  writeByte(0); // bg color
-  writeByte(0); // pixel aspect
-
-  // Global Color Table
-  for (const [r, g, b] of colors) { writeByte(r); writeByte(g); writeByte(b); }
-
-  // Netscape extension for looping
-  writeByte(0x21); writeByte(0xFF); writeByte(11);
-  writeStr('NETSCAPE2.0');
-  writeByte(3); writeByte(1); writeShort(0); writeByte(0);
-
-  // Frames
-  const delayCS = Math.round(delay / 10);
-  for (const indices of indexedFrames) {
-    // Graphic Control Extension
-    writeByte(0x21); writeByte(0xF9); writeByte(4);
-    writeByte(0); writeShort(delayCS); writeByte(0); writeByte(0);
-
-    // Image Descriptor
-    writeByte(0x2C);
-    writeShort(0); writeShort(0); writeShort(width); writeShort(height);
-    writeByte(0); // no local color table
-
-    // LZW compress
-    const minCodeSize = 8;
-    writeByte(minCodeSize);
-    const compressed = lzwEncode(indices, minCodeSize);
-    // Write sub-blocks
-    let pos = 0;
-    while (pos < compressed.length) {
-      const chunk = Math.min(255, compressed.length - pos);
-      writeByte(chunk);
-      for (let i = 0; i < chunk; i++) bytes.push(compressed[pos++]);
-    }
-    writeByte(0); // block terminator
-  }
-
-  writeByte(0x3B); // trailer
-  return new Uint8Array(bytes);
-}
-
-function lzwEncode(indices, minCodeSize) {
-  const clearCode = 1 << minCodeSize;
-  const eoiCode = clearCode + 1;
-  let codeSize = minCodeSize + 1;
-  let nextCode = eoiCode + 1;
-
-  // Dictionary
-  let dict = new Map();
-  for (let i = 0; i < clearCode; i++) dict.set(String(i), i);
-
-  const output = [];
-  let bits = 0, bitCount = 0;
-  function writeBits(code, size) {
-    bits |= (code << bitCount);
-    bitCount += size;
-    while (bitCount >= 8) {
-      output.push(bits & 0xff);
-      bits >>= 8;
-      bitCount -= 8;
-    }
-  }
-
-  writeBits(clearCode, codeSize);
-  let current = String(indices[0]);
-
-  for (let i = 1; i < indices.length; i++) {
-    const next = current + ',' + indices[i];
-    if (dict.has(next)) {
-      current = next;
-    } else {
-      writeBits(dict.get(current), codeSize);
-      if (nextCode < 4096) {
-        dict.set(next, nextCode++);
-        if (nextCode > (1 << codeSize) && codeSize < 12) codeSize++;
-      } else {
-        writeBits(clearCode, codeSize);
-        dict = new Map();
-        for (let j = 0; j < clearCode; j++) dict.set(String(j), j);
-        nextCode = eoiCode + 1;
-        codeSize = minCodeSize + 1;
+    // Update referrer count
+    if (refCode) {
+      const qRef = query(collection(db, 'registrations'), where('referCode', '==', refCode));
+      const snapRef = await getDocs(qRef);
+      if (!snapRef.empty) {
+        const refDoc = snapRef.docs[0];
+        const { doc, updateDoc } = window.__fb;
+        await updateDoc(doc(db, 'registrations', refDoc.id), {
+          referralCount: (refDoc.data().referralCount || 0) + 1
+        });
       }
-      current = String(indices[i]);
     }
+
+    msg.innerHTML = '<span style="color:#006400">✅ Registered successfully! Your submission is PENDING review.</span>';
+    document.getElementById('refer-section').style.display = '';
+    document.getElementById('refer-link-text').textContent = myRefLink;
+    loadStats();
+  } catch (e) {
+    console.error(e);
+    msg.innerHTML = '<span style="color:#c00">⚠️ Error: ' + e.message + '</span>';
   }
-  writeBits(dict.get(current), codeSize);
-  writeBits(eoiCode, codeSize);
-  if (bitCount > 0) output.push(bits & 0xff);
-  return output;
 }
 
-function loadImage(src) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.src = src;
-  });
-}
+// ─── SEARCH USER ──────────────────────────────────────────
+async function searchUser() {
+  const val = document.getElementById('search-input').value.trim().replace(/^@/, '');
+  const container = document.getElementById('lookup-result');
+  if (!val) { container.innerHTML = '<div class="notice">Enter an ETH address or X username.</div>'; return; }
+  container.innerHTML = '<div style="font-family:var(--vt);font-size:17px;color:#999">Searching...</div>';
 
-// ==================== TOAST ====================
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+  try {
+    const { db, collection, getDocs, query, where } = window.__fb;
+    let docs = [];
 
-// ==================== ELEMENT SDK ====================
-const defaultConfig = {
-  app_title: 'PIXEL ART STUDIO',
-  upload_text: 'পিক্সেল আর্ট আপলোড করুন',
-  background_color: '#0a0a0f',
-  surface_color: '#1a1a2e',
-  text_color: '#e8e8e8',
-  primary_color: '#ff6b9d',
-  accent_color: '#6bffb8',
-  font_family: 'Press Start 2P',
-  font_size: 14,
-};
+    if (val.startsWith('0x')) {
+      const q = query(collection(db, 'registrations'), where('ethAddress', '==', val));
+      const snap = await getDocs(q);
+      snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    } else {
+      const q = query(collection(db, 'registrations'), where('xUsername', '==', val));
+      const snap = await getDocs(q);
+      snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    }
 
-function applyConfig(config) {
-  const el = (id) => document.getElementById(id);
-  const t = el('appTitle');
-  if (t) t.textContent = config.app_title || defaultConfig.app_title;
-  const u = el('uploadText');
-  if (u) u.textContent = config.upload_text || defaultConfig.upload_text;
-
-  const bg = config.background_color || defaultConfig.background_color;
-  const surface = config.surface_color || defaultConfig.surface_color;
-  const text = config.text_color || defaultConfig.text_color;
-  const primary = config.primary_color || defaultConfig.primary_color;
-  const accent = config.accent_color || defaultConfig.accent_color;
-  const font = config.font_family || defaultConfig.font_family;
-  const fontSize = config.font_size || defaultConfig.font_size;
-
-  const wrapper = el('appWrapper');
-  if (wrapper) {
-    wrapper.style.background = bg;
-    wrapper.style.color = text;
+    if (!docs.length) {
+      container.innerHTML = '<div class="notice">No registration found for this address/username.</div>';
+      return;
+    }
+    container.innerHTML = docs.map(renderUserCard).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="notice" style="color:#c00">Error: ' + e.message + '</div>';
   }
-  if (t) t.style.color = primary;
-
-  document.querySelectorAll('.btn-primary').forEach(b => {
-    b.style.background = `linear-gradient(135deg, ${primary}, #c44dff)`;
-  });
-  document.querySelectorAll('.style-card.active').forEach(c => {
-    c.style.borderColor = primary;
-  });
-  document.querySelectorAll('.anim-card.active').forEach(c => {
-    c.style.borderColor = accent;
-  });
-
-  document.querySelectorAll('.pixel-font').forEach(e => {
-    e.style.fontFamily = `${font}, monospace`;
-  });
-  document.querySelectorAll('.bengali-font').forEach(e => {
-    e.style.fontSize = fontSize + 'px';
-  });
 }
 
-if (window.elementSdk) {
-  window.elementSdk.init({
-    defaultConfig,
-    onConfigChange: async (config) => applyConfig(config),
-    mapToCapabilities: (config) => ({
-      recolorables: [
-        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
-        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
-        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
-        { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
-        { get: () => config.accent_color || defaultConfig.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } },
-      ],
-      borderables: [],
-      fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
-      fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } },
-    }),
-    mapToEditPanelValues: (config) => new Map([
-      ['app_title', config.app_title || defaultConfig.app_title],
-      ['upload_text', config.upload_text || defaultConfig.upload_text],
-    ]),
-  });
+// ─── RENDER USER CARD ─────────────────────────────────────
+const ROLE_CLASSES = { OG: 'role-og', GDT: 'role-gdt', WL: 'role-wl', 'Top NFTs Holders': 'role-top', 'Early Supporter': 'role-early' };
+
+function renderUserCard(d) {
+  const statusClass = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' }[d.status] || 'status-pending';
+  const statusLabel = { pending: '⏳ PENDING', approved: '✅ VERIFIED', rejected: '❌ REJECTED' }[d.status] || '⏳ PENDING';
+  const roles = (d.roles || []).map(r => `<span class="role-badge ${ROLE_CLASSES[r]||''}">${r}</span>`).join('');
+  const refDisplay = d.referLink ? `<div class="refer-box" style="margin-top:10px"><div class="refer-label">Your Referral Link</div><div class="refer-link">${d.referLink}</div></div>` : '';
+
+  return `<div class="user-card">
+    <div class="card-header">
+      <div class="card-x"><a href="https://x.com/${d.xUsername}" target="_blank">@${d.xUsername}</a></div>
+      <div class="card-status ${statusClass}">${statusLabel}</div>
+    </div>
+    <div class="card-detail">🦊 ${d.ethAddress}</div>
+    <div class="card-detail">🎨 NFTs Held: ${d.adminNftCount || d.nftCount || 0}</div>
+    <div class="card-detail">🔗 Referrals: ${d.referralCount || 0}</div>
+    ${d.roles && d.roles.length ? `<div class="card-roles">${roles}</div>` : ''}
+    ${refDisplay}
+  </div>`;
 }
 
-// Init
-buildUI();
-lucide.createIcons();
+// ─── LOAD STATS ───────────────────────────────────────────
+async function loadStats() {
+  try {
+    const { db, collection, getDocs } = window.__fb;
+    const snap = await getDocs(collection(db, 'registrations'));
+    let verified = 0, pending = 0, rejected = 0;
+    snap.forEach(d => {
+      const s = d.data().status;
+      if (s === 'approved') verified++;
+      else if (s === 'rejected') rejected++;
+      else pending++;
+    });
+    document.getElementById('stat-verified').textContent = verified;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-rejected').textContent = rejected;
+    document.getElementById('stat-total').textContent = snap.size;
+  } catch(e) { console.warn('Stats error', e); }
+}
+
+// ─── LEADERBOARD ──────────────────────────────────────────
+async function loadLeaderboard() {
+  try {
+    const { db, collection, getDocs } = window.__fb;
+    const snap = await getDocs(collection(db, 'registrations'));
+    const all = [];
+    snap.forEach(d => all.push({ id: d.id, ...d.data() }));
+
+    // NFT leaderboard
+    const nftSorted = [...all].filter(d => d.status === 'approved').sort((a,b) => (b.adminNftCount||0)-(a.adminNftCount||0));
+    const nftRows = nftSorted.slice(0,50).map((d,i) => {
+      const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+      return `<tr>
+        <td><span class="lb-rank ${rankClass}">#${i+1}</span></td>
+        <td><a href="https://x.com/${d.xUsername}" target="_blank" style="color:var(--win-blue);font-family:var(--vt);font-size:16px">@${d.xUsername}</a></td>
+        <td style="font-family:var(--pixel);font-size:10px">${d.adminNftCount||0}</td>
+        <td><span class="card-status status-approved">✅</span></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="4" style="font-family:var(--vt);font-size:16px;color:#999">No data yet.</td></tr>';
+    document.getElementById('lb-nft-body').innerHTML = nftRows;
+
+    // Referral leaderboard
+    const refSorted = [...all].sort((a,b) => (b.referralCount||0)-(a.referralCount||0));
+    const refRows = refSorted.slice(0,50).map((d,i) => {
+      const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+      const sClass = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' }[d.status] || 'status-pending';
+      return `<tr>
+        <td><span class="lb-rank ${rankClass}">#${i+1}</span></td>
+        <td><a href="https://x.com/${d.xUsername}" target="_blank" style="color:var(--win-blue);font-family:var(--vt);font-size:16px">@${d.xUsername}</a></td>
+        <td style="font-family:var(--pixel);font-size:10px">${d.referralCount||0}</td>
+        <td><span class="card-status ${sClass}">${d.status}</span></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="4" style="font-family:var(--vt);font-size:16px;color:#999">No data yet.</td></tr>';
+    document.getElementById('lb-ref-body').innerHTML = refRows;
+
+  } catch(e) { console.warn('LB error', e); }
+}
+
+// ─── ADMIN LOGIN ──────────────────────────────────────────
+async function adminLogin() {
+  const { auth, provider, ADMIN_EMAIL, signInWithPopup } = window.__fb;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    if (result.user.email !== ADMIN_EMAIL) {
+      const { signOut } = window.__fb;
+      await signOut(auth);
+      document.getElementById('admin-login-msg').textContent = '⚠️ Unauthorized email.';
+      return;
+    }
+    showAdminPanel();
+  } catch(e) {
+    document.getElementById('admin-login-msg').textContent = '⚠️ ' + e.message;
+  }
+}
+
+function adminLogout() {
+  const { auth, signOut } = window.__fb;
+  signOut(auth);
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('admin-login-section').style.display = '';
+}
+
+function showAdminPanel() {
+  document.getElementById('admin-login-section').style.display = 'none';
+  document.getElementById('admin-panel').style.display = '';
+  loadAdminData('all');
+}
+
+// ─── LOAD ADMIN DATA ──────────────────────────────────────
+async function loadAdminData(filter) {
+  const container = document.getElementById('admin-cards-container');
+  container.innerHTML = '<div style="font-family:var(--vt);font-size:17px;color:#999">Loading...</div>';
+  try {
+    const { db, collection, getDocs } = window.__fb;
+    const snap = await getDocs(collection(db, 'registrations'));
+    const all = [];
+    snap.forEach(d => all.push({ id: d.id, ...d.data() }));
+    const filtered = filter === 'all' ? all : all.filter(d => d.status === filter);
+    if (!filtered.length) { container.innerHTML = '<div class="notice">No entries found.</div>'; return; }
+    container.innerHTML = filtered.map(renderAdminCard).join('');
+  } catch(e) { container.innerHTML = '<div class="notice" style="color:#c00">Error: ' + e.message + '</div>'; }
+}
+
+// ─── ADMIN CARD ───────────────────────────────────────────
+const ALL_ROLES = ['OG', 'GDT', 'WL', 'Top NFTs Holders', 'Early Supporter'];
+
+function renderAdminCard(d) {
+  const statusClass = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' }[d.status] || 'status-pending';
+  const statusLabel = { pending: '⏳ PENDING', approved: '✅ APPROVED', rejected: '❌ REJECTED' }[d.status] || '⏳ PENDING';
+  const roles = (d.roles || []).map(r => `<span class="role-badge ${ROLE_CLASSES[r]||''}">${r}</span>`).join('');
+  const roleChecks = ALL_ROLES.map(r => {
+    const checked = (d.roles || []).includes(r) ? 'checked' : '';
+    return `<label class="role-check-label">
+      <input type="checkbox" ${checked} onchange="toggleRole('${d.id}', '${r}', this.checked)"> ${r}
+    </label>`;
+  }).join('');
+
+  return `<div class="admin-card" id="acard-${d.id}">
+    <div class="admin-card-header">
+      <div>
+        <div style="font-family:var(--pixel);font-size:9px;color:var(--win-blue);margin-bottom:5px">
+          <a href="https://x.com/${d.xUsername}" target="_blank" style="color:var(--win-blue)">@${d.xUsername}</a>
+        </div>
+        <div style="font-family:var(--vt);font-size:14px;color:#555">${d.ethAddress}</div>
+        <div style="font-family:var(--vt);font-size:14px;color:#555">Retweet: <a href="${d.retweetLink}" target="_blank" style="color:var(--win-blue)">${d.retweetLink}</a></div>
+        <div style="font-family:var(--vt);font-size:14px;color:#555">Referrals: ${d.referralCount||0} | Ref code: ${d.referCode||'—'}</div>
+      </div>
+      <div class="card-status ${statusClass}">${statusLabel}</div>
+    </div>
+
+    <!-- NFT count edit -->
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap">
+      <span style="font-family:var(--pixel);font-size:7px">NFT COUNT:</span>
+      <input type="number" id="nft-edit-${d.id}" value="${d.adminNftCount||0}" min="0" style="width:80px;padding:3px 6px;border:2px solid var(--win-dark);background:var(--win-light);font-family:var(--vt);font-size:15px">
+      <button class="win-submit-btn" onclick="updateNftCount('${d.id}')">💾 SAVE</button>
+    </div>
+
+    <!-- Role assignment -->
+    <div style="font-family:var(--pixel);font-size:7px;margin-bottom:5px;margin-top:4px">ASSIGN ROLES:</div>
+    <div class="admin-role-toggle">${roleChecks}</div>
+    ${d.roles && d.roles.length ? `<div class="card-roles" style="margin-top:8px">${roles}</div>` : ''}
+
+    <!-- Approve / Reject -->
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="win-submit-btn" style="background:#006400;color:#fff;border-color:#003200" onclick="setStatus('${d.id}','approved')">✅ APPROVE</button>
+      <button class="win-submit-btn" style="background:#8b0000;color:#fff;border-color:#450000" onclick="setStatus('${d.id}','rejected')">❌ REJECT</button>
+      <button class="win-submit-btn" onclick="setStatus('${d.id}','pending')">⏳ PENDING</button>
+    </div>
+  </div>`;
+}
+
+// ─── ADMIN ACTIONS ────────────────────────────────────────
+async function setStatus(docId, status) {
+  try {
+    const { db, doc, updateDoc } = window.__fb;
+    await updateDoc(doc(db, 'registrations', docId), { status });
+    loadAdminData('all');
+    loadStats();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function updateNftCount(docId) {
+  const val = parseInt(document.getElementById('nft-edit-' + docId).value) || 0;
+  try {
+    const { db, doc, updateDoc } = window.__fb;
+    await updateDoc(doc(db, 'registrations', docId), { adminNftCount: val });
+    alert('NFT count updated!');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function toggleRole(docId, role, checked) {
+  try {
+    const { db, doc, updateDoc, getDoc } = window.__fb;
+    const docRef = doc(db, 'registrations', docId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return;
+    let roles = snap.data().roles || [];
+    if (checked) { if (!roles.includes(role)) roles.push(role); }
+    else { roles = roles.filter(r => r !== role); }
+    await updateDoc(docRef, { roles });
+    // Refresh roles display inline without full reload
+    const card = document.getElementById('acard-' + docId);
+    if (card) {
+      const rolesDiv = card.querySelector('.card-roles');
+      const html = roles.map(r => `<span class="role-badge ${ROLE_CLASSES[r]||''}">${r}</span>`).join('');
+      if (rolesDiv) rolesDiv.innerHTML = html;
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ─── AUTO-FILL REF CODE FROM URL ─────────────────────────
+function checkRefFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if (ref) {
+    const el = document.getElementById('ref-code');
+    if (el) el.value = ref;
+    // Switch to register tab
+    switchTab('tab-register');
+  }
+}
+
+// ─── ON APP READY ─────────────────────────────────────────
+function onAppReady() {
+  // Wait for firebase module to be ready
+  const waitFb = setInterval(() => {
+    if (window.__fb) {
+      clearInterval(waitFb);
+      loadStats();
+      checkRefFromUrl();
+
+      // Auth state
+      const { auth, onAuthStateChanged, ADMIN_EMAIL } = window.__fb;
+      onAuthStateChanged(auth, user => {
+        if (user && user.email === ADMIN_EMAIL) showAdminPanel();
+      });
+    }
+  }, 100);
+}
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fb28334732c4f02',t:'MTc3ODY4NDIxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
+</body>
+         </html>
