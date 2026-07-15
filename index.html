@@ -1,635 +1,391 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>⚡ Turbo NFT Downloader — 10,000 in 3 Mins</title>
-    
-    <!-- JSZip for ZIP compilation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body {
-            background: #06060c;
-            color: #f3f4f6;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, rgba(18,18,32,0.9), rgba(10,10,18,0.95));
-            border-radius: 20px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(212, 255, 0, 0.1);
-        }
-
-        header .logo {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #d4ff00, #00ffcc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        header .subtitle {
-            color: #9ca3af;
-            margin-top: 8px;
-            font-size: 1rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            max-width: 800px;
-            margin: 25px auto 0;
-        }
-
-        .stat-box {
-            background: rgba(255,255,255,0.03);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .stat-box .label { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-box .value { font-size: 1.5rem; font-weight: 700; color: #d4ff00; margin-top: 4px; }
-        .stat-box .value.failed { color: #ff4444; }
-
-        .toolbar {
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            flex-wrap: wrap;
-            margin: 25px 0 30px;
-        }
-
-        .toolbar button {
-            background: #11111f;
-            border: 1px solid rgba(255,255,255,0.08);
-            color: #fff;
-            padding: 14px 32px;
-            border-radius: 14px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .toolbar button#startBtn {
-            background: #d4ff00;
-            color: #06060c;
-            border: none;
-        }
-
-        .toolbar button#startBtn:hover {
-            background: #fff;
-            box-shadow: 0 0 40px rgba(212, 255, 0, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .toolbar button#startBtn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        .toolbar button:not(#startBtn):hover {
-            background: rgba(255,255,255,0.05);
-            border-color: #d4ff00;
-            color: #d4ff00;
-        }
-
-        /* ===== PROGRESS ===== */
-        .progress-container {
-            max-width: 900px;
-            margin: 0 auto 20px;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 10px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #d4ff00, #00ffcc);
-            border-radius: 20px;
-            transition: width 0.3s ease;
-        }
-
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #6b7280;
-        }
-
-        .progress-info strong { color: #d4ff00; }
-
-        /* ===== FAILED LOG ===== */
-        .failed-log {
-            max-width: 900px;
-            margin: 15px auto 25px;
-            padding: 15px 20px;
-            background: rgba(255, 0, 0, 0.05);
-            border: 1px solid rgba(255, 0, 0, 0.1);
-            border-radius: 12px;
-            display: none;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .failed-log.show { display: block; }
-        .failed-log .title { color: #ff4444; font-weight: 600; margin-bottom: 8px; }
-        .failed-log .ids { color: #ff8888; font-size: 0.85rem; word-break: break-all; }
-        .failed-log .count { color: #ff6666; font-weight: 700; }
-
-        /* ===== TOAST ===== */
-        .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: #11111f; color: #fff; padding: 14px 30px; border-radius: 14px;
-            border: 1px solid rgba(212, 255, 0, 0.2); font-weight: 600; font-size: 0.9rem;
-            opacity: 0; transition: all 0.4s; z-index: 9999;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            max-width: 90vw;
-            text-align: center;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .toast.error { border-color: rgba(255, 68, 68, 0.3); }
-        .toast.success { border-color: rgba(212, 255, 0, 0.3); }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
-            header .logo { font-size: 2rem; }
-            .toolbar button { padding: 10px 18px; font-size: 0.8rem; }
-            .stat-box .value { font-size: 1.2rem; }
-            .toast { font-size: 0.8rem; padding: 12px 20px; bottom: 20px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Layer-Based NFT Generator</title>
+  <!-- Tailwind CSS for modern dark-themed UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
-    <header>
-        <div class="logo">⚡ TURBO DOWNLOADER</div>
-        <p class="subtitle">10,000 Cool Cats — Max Speed — Zero Fail</p>
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="label">📦 Total</div>
-                <div class="value" id="totalStats">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="label">✅ Success</div>
-                <div class="value" id="successStats">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="label">❌ Failed</div>
-                <div class="value failed" id="failedStats">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="label">⏱️ Speed</div>
-                <div class="value" id="speedStats">0/s</div>
-            </div>
-        </div>
-    </header>
-
-    <div class="toolbar">
-        <button id="startBtn">🚀 Start Turbo Download</button>
-        <button id="downloadZipBtn" disabled>📦 Download ZIP</button>
-        <button id="resetBtn">⟳ Reset</button>
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold text-xl">⚡</div>
+      <h1 class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+        NFT SVG LAYER GENERATOR
+      </h1>
     </div>
+    <span class="text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">Firebase Integrated</span>
+  </header>
 
-    <!-- ===== PROGRESS ===== -->
-    <div class="progress-container">
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progressFill"></div>
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- Left Panel: SVG Upload and Layers Management (7 Columns) -->
+    <section class="lg:col-span-7 space-y-6">
+      
+      <!-- Create / Add New Layer Category -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-400">
+          <span>📁</span> 1. Manage Layers
+        </h2>
+        <div class="flex gap-3">
+          <input id="layer-name-input" type="text" placeholder="e.g. Background, Body, Eyes, Hat" 
+            class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200" />
+          <button id="add-layer-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+            Create Layer
+          </button>
         </div>
-        <div class="progress-info">
-            <span>📊 <strong id="progressPercent">0%</strong></span>
-            <span>⏳ <strong id="progressCount">0</strong> / 10,000</span>
-            <span>⚡ <strong id="progressSpeed">0</strong> / sec</span>
+      </div>
+
+      <!-- Upload SVG Code to Selected Layer -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-400">
+          <span>🎨</span> 2. Upload SVG Trait Code
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-2 font-medium">SELECT LAYER TARGET</label>
+            <select id="layer-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <!-- Dynamically populated -->
+              <option value="">-- Create a Layer First --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-2 font-medium">TRAIT / ITEM NAME</label>
+            <input id="trait-name" type="text" placeholder="e.g. Red BG, Laser Eyes, Crypto Crown" 
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-2 font-medium">PASTE RAW SVG CODE</label>
+            <textarea id="svg-code" rows="5" placeholder="Paste your <svg>...</svg> code here" 
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-300 placeholder-slate-600"></textarea>
+          </div>
+
+          <button id="save-trait-btn" class="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/10 active:scale-[0.99]">
+            Save Trait to Cloud Database
+          </button>
         </div>
-    </div>
+      </div>
 
-    <!-- ===== FAILED LOG ===== -->
-    <div class="failed-log" id="failedLog">
-        <div class="title">❌ Failed Token IDs:</div>
-        <div class="ids" id="failedIds"></div>
-        <div style="margin-top:8px;">Total: <span class="count" id="failedCount">0</span></div>
-    </div>
+      <!-- Loaded Trait Inventory Tree -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h3 class="text-base font-bold text-slate-300 mb-3">Stored Trait Inventory</h3>
+        <div id="inventory-container" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+          <p class="text-xs text-slate-500 italic">No traits uploaded yet. Upload items to see your canvas directory.</p>
+        </div>
+      </div>
 
-    <div id="toast" class="toast">✨ Ready</div>
+    </section>
 
-    <script>
-        (function() {
-            'use strict';
+    <!-- Right Panel: Canvas Preview & Compilation (5 Columns) -->
+    <section class="lg:col-span-5 space-y-6">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl sticky top-6">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-cyan-400">
+          <span>🖼️</span> Interactive Artboard
+        </h2>
 
-            // ===== DOM REFS =====
-            const startBtn = document.getElementById('startBtn');
-            const downloadZipBtn = document.getElementById('downloadZipBtn');
-            const resetBtn = document.getElementById('resetBtn');
-            const progressFill = document.getElementById('progressFill');
-            const progressPercent = document.getElementById('progressPercent');
-            const progressCount = document.getElementById('progressCount');
-            const progressSpeed = document.getElementById('progressSpeed');
-            const totalStats = document.getElementById('totalStats');
-            const successStats = document.getElementById('successStats');
-            const failedStats = document.getElementById('failedStats');
-            const speedStats = document.getElementById('speedStats');
-            const failedLog = document.getElementById('failedLog');
-            const failedIds = document.getElementById('failedIds');
-            const failedCount = document.getElementById('failedCount');
-            const toast = document.getElementById('toast');
+        <!-- Interactive SVG Layer Preview Canvas -->
+        <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-dashed border-slate-800 overflow-hidden flex items-center justify-center shadow-inner">
+          <div id="nft-canvas" class="absolute inset-0 w-full h-full flex items-center justify-center">
+             <!-- Combined SVGs stack dynamically here -->
+             <span class="text-slate-600 text-sm italic select-none">Live layered preview will load here</span>
+          </div>
+        </div>
 
-            // ===== CONFIG =====
-            const TOTAL = 10000;
-            const CONCURRENT = 50; // 50 parallel requests (MAX SPEED)
+        <!-- Render Controls -->
+        <div class="mt-6 space-y-4">
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+            <h4 class="text-xs font-bold text-slate-400 tracking-wider">ACTIVE LAYER STACK ORDER</h4>
+            <div id="active-layers-list" class="space-y-2 text-xs">
+              <!-- Shows order & active items -->
+              <span class="text-slate-500 italic">No active layers stacked</span>
+            </div>
+          </div>
 
-            // ===== STATE =====
-            let isRunning = false;
-            let isComplete = false;
-            let successCount = 0;
-            let failCount = 0;
-            let processedCount = 0;
-            let failedTokens = [];
-            let allData = [];
-            let startTime = 0;
-            let speedHistory = [];
+          <div class="grid grid-cols-2 gap-3">
+            <button id="randomize-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl text-sm transition-all">
+              🎲 Randomize NFT
+            </button>
+            <button id="download-btn" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition-all shadow-lg shadow-cyan-600/10">
+              📥 Save SVG Art
+            </button>
+          </div>
+        </div>
+      </div>
 
-            // ===== TOAST =====
-            function showToast(msg, type = 'success', duration = 3000) {
-                toast.textContent = msg;
-                toast.className = 'toast ' + type;
-                toast.classList.add('show');
-                clearTimeout(toast._hide);
-                toast._hide = setTimeout(() => toast.classList.remove('show'), duration);
-            }
+    </section>
+  </main>
 
-            // ===== UPDATE UI =====
-            function updateUI() {
-                const pct = Math.min(100, Math.round((processedCount / TOTAL) * 100));
-                progressFill.style.width = pct + '%';
-                progressPercent.textContent = pct + '%';
-                progressCount.textContent = processedCount;
-                totalStats.textContent = processedCount;
-                successStats.textContent = successCount;
-                failedStats.textContent = failCount;
+  <!-- Firebase Scripts & App Logic -->
+  <script type="module">
+    // Import Firebase v9 web SDK libraries
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-                // Speed calculation
-                if (startTime > 0) {
-                    const elapsed = (Date.now() - startTime) / 1000;
-                    const speed = elapsed > 0 ? Math.round(processedCount / elapsed) : 0;
-                    progressSpeed.textContent = speed;
-                    speedStats.textContent = speed + '/s';
-                }
+    // Your Web3 Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyASICdqWjF3bzvtwASwCIXVe0AUfoUeTqU",
+      authDomain: "castclick-cdfeb.firebaseapp.com",
+      projectId: "castclick-cdfeb",
+      storageBucket: "castclick-cdfeb.firebasestorage.app",
+      messagingSenderId: "578052056343",
+      appId: "1:578052056343:web:1042963805caa11f360352"
+    };
 
-                // Failed log
-                if (failedTokens.length > 0) {
-                    failedLog.classList.add('show');
-                    failedIds.textContent = failedTokens.join(', ');
-                    failedCount.textContent = failedTokens.length;
-                } else {
-                    failedLog.classList.remove('show');
-                }
+    // Initialize Firebase Services
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-                // Update button state
-                if (isComplete) {
-                    startBtn.disabled = true;
-                    startBtn.textContent = '✅ Complete!';
-                    downloadZipBtn.disabled = false;
-                }
-            }
+    // Global State for UI
+    let layersData = {}; // Format: { "Background": { "bg-red": "<svg>...", "bg-blue": "..." }, "Eyes": { ... } }
+    let layerOrder = []; // Dynamic stack render hierarchy: e.g., ["Background", "Body", "Eyes"]
+    let selectedCombo = {}; // Stores currently displayed trait for each layer: e.g. { "Background": "bg-red" }
 
-            // ===== FETCH SINGLE NFT =====
-            async function fetchNFT(id) {
-                const url = `https://api.coolcatsnft.com/cat/${id}`;
-                try {
-                    const res = await fetch(url, {
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    return { success: true, id, data };
-                } catch (err) {
-                    return { success: false, id, error: err.message };
-                }
-            }
+    // DOM References
+    const layerNameInput = document.getElementById('layer-name-input');
+    const addLayerBtn = document.getElementById('add-layer-btn');
+    const layerSelect = document.getElementById('layer-select');
+    const traitNameInput = document.getElementById('trait-name');
+    const svgCodeInput = document.getElementById('svg-code');
+    const saveTraitBtn = document.getElementById('save-trait-btn');
+    const inventoryContainer = document.getElementById('inventory-container');
+    const nftCanvas = document.getElementById('nft-canvas');
+    const activeLayersList = document.getElementById('active-layers-list');
+    const randomizeBtn = document.getElementById('randomize-btn');
+    const downloadBtn = document.getElementById('download-btn');
 
-            // ===== PROCESS BATCH =====
-            async function processBatch(ids) {
-                const promises = ids.map(id => fetchNFT(id));
-                const results = await Promise.all(promises);
+    // 1. REAL-TIME DATA SYNC WITH FIRESTORE
+    onSnapshot(collection(db, "nft_layers"), (snapshot) => {
+      layersData = {};
+      layerOrder = [];
+      
+      snapshot.forEach((doc) => {
+        const layerName = doc.id;
+        layersData[layerName] = doc.data();
+        layerOrder.push(layerName); // Set order of categories as they load
+      });
 
-                const batchData = [];
-                for (const result of results) {
-                    if (result.success) {
-                        successCount++;
-                        batchData.push({
-                            id: result.id,
-                            data: result.data,
-                            imageUrl: result.data.ipfs_image || result.data.image || ''
-                        });
-                    } else {
-                        failCount++;
-                        failedTokens.push(result.id);
-                    }
-                    processedCount++;
-                }
+      // Update dropdown selections and trait inventory boards
+      updateDropdownsAndTree();
+      renderActiveNFT();
+    });
 
-                return batchData;
-            }
+    // 2. CREATE A NEW LAYER
+    addLayerBtn.addEventListener('click', async () => {
+      const layerName = layerNameInput.value.trim();
+      if (!layerName) return alert('Enter a layer name first (e.g. Background)!');
+      
+      try {
+        // Initialize an empty layer structure in Firestore
+        await setDoc(doc(db, "nft_layers", layerName), {}, { merge: true });
+        layerNameInput.value = '';
+      } catch (error) {
+        console.error("Error creating layer: ", error);
+      }
+    });
 
-            // ===== PROCESS IMAGE (Background Replace + Flip + Watermark) =====
-            function processImage(imageUrl, tokenId) {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.crossOrigin = 'Anonymous';
-                    img.src = imageUrl;
+    // 3. UPLOAD TRAIT (SVG RAW CODE)
+    saveTraitBtn.addEventListener('click', async () => {
+      const selectedLayer = layerSelect.value;
+      const traitName = traitNameInput.value.trim();
+      const rawSvgCode = svgCodeInput.value.trim();
 
-                    img.onload = function() {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            const size = Math.min(img.width, img.height);
-                            canvas.width = size;
-                            canvas.height = size;
+      if (!selectedLayer || !traitName || !rawSvgCode) {
+        return alert('Please select a layer target, enter trait name, and paste your raw SVG code.');
+      }
 
-                            // Draw centered
-                            const sx = (img.width - size) / 2;
-                            const sy = (img.height - size) / 2;
-                            ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
+      // Quick Validation of SVG Raw Structure
+      if (!rawSvgCode.toLowerCase().includes("<svg") || !rawSvgCode.toLowerCase().includes("</svg>")) {
+        return alert("Error: Please paste a valid raw HTML <svg> tag sequence!");
+      }
 
-                            // Background replace
-                            const imageData = ctx.getImageData(0, 0, size, size);
-                            const data = imageData.data;
+      try {
+        // Clean SVG: Extract only inner content or wrapper compatible attributes if needed
+        // Here we save the raw input directly into Firestore map field under the respective layer
+        await setDoc(doc(db, "nft_layers", selectedLayer), {
+          [traitName]: rawSvgCode
+        }, { merge: true });
 
-                            // Sample edges for background
-                            const samples = [];
-                            const step = Math.max(1, Math.floor(size / 20));
-                            for (let x = 0; x < size; x += step) {
-                                samples.push({ r: data[x * 4], g: data[x * 4 + 1], b: data[x * 4 + 2] });
-                                const idx = ((size - 1) * size + x) * 4;
-                                samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
-                            }
-                            for (let y = 0; y < size; y += step) {
-                                const idx = (y * size) * 4;
-                                samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
-                                const idx2 = (y * size + size - 1) * 4;
-                                samples.push({ r: data[idx2], g: data[idx2 + 1], b: data[idx2 + 2] });
-                            }
+        // Reset Inputs
+        traitNameInput.value = '';
+        svgCodeInput.value = '';
+        alert(`Successfully saved Trait "${traitName}" inside Layer "${selectedLayer}"!`);
+      } catch (e) {
+        console.error("Error writing document to Firebase: ", e);
+      }
+    });
 
-                            const colorCount = {};
-                            samples.forEach(s => {
-                                const r = Math.round(s.r / 10) * 10;
-                                const g = Math.round(s.g / 10) * 10;
-                                const b = Math.round(s.b / 10) * 10;
-                                const key = `${r},${g},${b}`;
-                                colorCount[key] = (colorCount[key] || 0) + 1;
-                            });
+    // 4. UPDATE UI ELEMENTS (DROPDOWNS & DIRECTORY MAP)
+    function updateDropdownsAndTree() {
+      // Clear previous inputs
+      layerSelect.innerHTML = '<option value="">-- Select Target Layer --</option>';
+      inventoryContainer.innerHTML = '';
 
-                            let maxCount = 0;
-                            let bgColor = { r: 0, g: 0, b: 0 };
-                            for (const [key, count] of Object.entries(colorCount)) {
-                                if (count > maxCount) {
-                                    maxCount = count;
-                                    const [r, g, b] = key.split(',').map(Number);
-                                    bgColor = { r, g, b };
-                                }
-                            }
+      const layers = Object.keys(layersData);
+      if (layers.length === 0) {
+        layerSelect.innerHTML = '<option value="">-- Create a Layer First --</option>';
+        inventoryContainer.innerHTML = '<p class="text-xs text-slate-500 italic">No layers loaded. Start by typing a name above.</p>';
+        return;
+      }
 
-                            const tolerance = 50;
-                            const targetR = 212, targetG = 255, targetB = 0;
+      layers.forEach(layerName => {
+        // Dropdown populating
+        const opt = document.createElement('option');
+        opt.value = layerName;
+        opt.textContent = layerName;
+        layerSelect.appendChild(opt);
 
-                            for (let i = 0; i < data.length; i += 4) {
-                                const r = data[i], g = data[i + 1], b = data[i + 2];
-                                const isBg = (
-                                    Math.abs(r - bgColor.r) < tolerance &&
-                                    Math.abs(g - bgColor.g) < tolerance &&
-                                    Math.abs(b - bgColor.b) < tolerance
-                                );
-                                const isDark = (r < 30 && g < 30 && b < 30);
-                                const isWhite = (r > 240 && g > 240 && b > 240);
+        // Build Stored Inventory UI representation
+        const traitsObj = layersData[layerName];
+        const traitNames = Object.keys(traitsObj);
 
-                                if (isBg || isDark || isWhite) {
-                                    data[i] = targetR;
-                                    data[i + 1] = targetG;
-                                    data[i + 2] = targetB;
-                                    data[i + 3] = 255;
-                                }
-                            }
-                            ctx.putImageData(imageData, 0, 0);
+        const layerBlock = document.createElement('div');
+        layerBlock.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2";
+        
+        let traitBadgesHtml = '';
+        if (traitNames.length === 0) {
+          traitBadgesHtml = `<span class="text-[11px] text-slate-600 italic block">No designs added to this layer category</span>`;
+        } else {
+          traitNames.forEach(trait => {
+            const isSelected = selectedCombo[layerName] === trait;
+            traitBadgesHtml += `
+              <button onclick="window.selectTrait('${layerName}', '${trait}')" 
+                class="px-2.5 py-1 text-xs rounded-lg font-medium border transition-all m-0.5 ${
+                  isSelected 
+                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' 
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }">
+                ${trait}
+              </button>
+            `;
+          });
+        }
 
-                            // Flip horizontally
-                            const tempCanvas = document.createElement('canvas');
-                            tempCanvas.width = size;
-                            tempCanvas.height = size;
-                            const tempCtx = tempCanvas.getContext('2d');
-                            tempCtx.drawImage(canvas, 0, 0);
+        layerBlock.innerHTML = `
+          <div class="flex justify-between items-center pb-1 border-b border-slate-900">
+            <span class="text-xs font-bold text-slate-200 uppercase tracking-wide">${layerName}</span>
+            <span class="text-[10px] bg-slate-900 text-slate-500 px-2 py-0.5 rounded-full">${traitNames.length} items</span>
+          </div>
+          <div class="flex flex-wrap gap-1 pt-1">${traitBadgesHtml}</div>
+        `;
+        inventoryContainer.appendChild(layerBlock);
+      });
+    }
 
-                            ctx.fillStyle = '#d4ff00';
-                            ctx.fillRect(0, 0, size, size);
-                            ctx.save();
-                            ctx.translate(size, 0);
-                            ctx.scale(-1, 1);
-                            ctx.drawImage(tempCanvas, 0, 0);
-                            ctx.restore();
+    // Interactive Trait Selection Action Bindings
+    window.selectTrait = function(layerName, traitName) {
+      selectedCombo[layerName] = traitName;
+      updateDropdownsAndTree();
+      renderActiveNFT();
+    };
 
-                            resolve(canvas.toDataURL('image/png'));
-                        } catch (err) {
-                            resolve(imageUrl);
-                        }
-                    };
-                    img.onerror = () => resolve(imageUrl);
-                });
-            }
+    // 5. ENGINE: RENDER COMBINED SVG LAYERS
+    function renderActiveNFT() {
+      nftCanvas.innerHTML = '';
+      activeLayersList.innerHTML = '';
 
-            // ===== DOWNLOAD ALL =====
-            async function downloadAllAsZip() {
-                if (allData.length === 0) {
-                    showToast('⚠️ No data to download', 'error');
-                    return;
-                }
+      if (Object.keys(selectedCombo).length === 0) {
+        // Set default selection to first element of each layer if empty
+        Object.keys(layersData).forEach(layer => {
+          const keys = Object.keys(layersData[layer]);
+          if (keys.length > 0) selectedCombo[layer] = keys[0];
+        });
+      }
 
-                showToast('⏳ Compiling ZIP... Please wait.', 'success', 5000);
-                downloadZipBtn.disabled = true;
-                downloadZipBtn.textContent = '⏳ Zipping...';
+      // Container for stacked SVG assets
+      const combinedContainer = document.createElement('div');
+      combinedContainer.className = "relative w-full h-full";
 
-                const zip = new JSZip();
-                const imgFolder = zip.folder("images");
-                const metaFolder = zip.folder("metadata");
+      let hasContent = false;
 
-                let processed = 0;
-                const total = allData.length;
+      // Map dynamic array and stack based on order list
+      layerOrder.forEach((layerName) => {
+        const activeTrait = selectedCombo[layerName];
+        if (activeTrait && layersData[layerName][activeTrait]) {
+          hasContent = true;
+          
+          // Render tracking badges inside UI info panel
+          const badge = document.createElement('div');
+          badge.className = "flex justify-between items-center bg-slate-900 px-3 py-2 rounded-lg border border-slate-800";
+          badge.innerHTML = `
+            <span class="text-slate-400 font-semibold">${layerName}:</span>
+            <span class="text-indigo-400 font-mono font-bold">${activeTrait}</span>
+          `;
+          activeLayersList.appendChild(badge);
 
-                // Process in chunks to avoid memory issues
-                const chunkSize = 100;
-                for (let i = 0; i < allData.length; i += chunkSize) {
-                    const chunk = allData.slice(i, i + chunkSize);
+          // Render Layered Vector element
+          const svgCode = layersData[layerName][activeTrait];
+          const parser = new DOMParser();
+          const svgDoc = parser.parseFromString(svgCode, "image/svg+xml");
+          const svgEl = svgDoc.querySelector('svg');
 
-                    // Process images in parallel
-                    const processPromises = chunk.map(async (item) => {
-                        const processedImg = await processImage(item.imageUrl, item.id);
-                        return { ...item, processedImg };
-                    });
+          if (svgEl) {
+            // Apply standard absolute stacking attributes to make layers sit cleanly on top of each other
+            svgEl.style.position = 'absolute';
+            svgEl.style.top = '0';
+            svgEl.style.left = '0';
+            svgEl.style.width = '100%';
+            svgEl.style.height = '100%';
+            svgEl.style.zIndex = layerOrder.indexOf(layerName);
+            
+            combinedContainer.appendChild(svgEl);
+          }
+        }
+      });
 
-                    const processedChunk = await Promise.all(processPromises);
+      if (hasContent) {
+        nftCanvas.appendChild(combinedContainer);
+      } else {
+        nftCanvas.innerHTML = `<span class="text-slate-600 text-sm italic select-none">Choose layers below to view your custom vector canvas</span>`;
+        activeLayersList.innerHTML = `<span class="text-slate-500 italic">No layers loaded. Ensure categories contain elements.</span>`;
+      }
+    }
 
-                    for (const item of processedChunk) {
-                        const fileName = `${item.id + 1}`;
-                        if (item.processedImg.startsWith('data:image/png;base64,')) {
-                            const rawBase64 = item.processedImg.split(',')[1];
-                            imgFolder.file(`${fileName}.png`, rawBase64, { base64: true });
-                        }
-                        metaFolder.file(`${fileName}.json`, JSON.stringify(item.data, null, 2));
-                    }
+    // 6. RANDOM COMBINATION GENERATOR
+    randomizeBtn.addEventListener('click', () => {
+      Object.keys(layersData).forEach(layer => {
+        const traits = Object.keys(layersData[layer]);
+        if (traits.length > 0) {
+          const randomIndex = Math.floor(Math.random() * traits.length);
+          selectedCombo[layer] = traits[randomIndex];
+        }
+      });
+      updateDropdownsAndTree();
+      renderActiveNFT();
+    });
 
-                    processed += chunk.length;
-                    const pct = Math.round((processed / total) * 100);
-                    showToast(`⏳ Zipping: ${pct}%`, 'success', 2000);
-                }
+    // 7. DOWNLOAD EXPORT AS SVG FILE
+    downloadBtn.addEventListener('click', () => {
+      const activeSvgs = nftCanvas.querySelectorAll('svg');
+      if (activeSvgs.length === 0) return alert('No active composite artwork available to download!');
 
-                zip.generateAsync({ type: "blob" }).then(function(content) {
-                    const url = URL.createObjectURL(content);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `CoolCats_${allData.length}.zip`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    downloadZipBtn.disabled = false;
-                    downloadZipBtn.textContent = '📦 Download ZIP';
-                    showToast('✅ ZIP Downloaded Successfully!', 'success');
-                }).catch(() => {
-                    downloadZipBtn.disabled = false;
-                    downloadZipBtn.textContent = '📦 Download ZIP';
-                    showToast('❌ Error during ZIP compilation', 'error');
-                });
-            }
+      // Create a master blank SVG wrapper to embed all active layers into one vector file
+      let masterSvgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">`;
+      
+      activeSvgs.forEach((svg) => {
+        // Extract inner HTML of each component layer inside the viewport wrapper
+        masterSvgContent += `<g>${svg.innerHTML}</g>`;
+      });
 
-            // ===== MAIN DOWNLOAD ENGINE =====
-            async function startTurboDownload() {
-                if (isRunning) return;
+      masterSvgContent += `</svg>`;
 
-                isRunning = true;
-                isComplete = false;
-                startBtn.disabled = true;
-                startBtn.textContent = '⏳ Running...';
-                downloadZipBtn.disabled = true;
-                allData = [];
-                failedTokens = [];
-                successCount = 0;
-                failCount = 0;
-                processedCount = 0;
-                startTime = Date.now();
-
-                showToast('🚀 Starting Turbo Download...', 'success');
-
-                const totalBatches = Math.ceil(TOTAL / CONCURRENT);
-
-                for (let batch = 0; batch < totalBatches; batch++) {
-                    const startId = batch * CONCURRENT;
-                    const endId = Math.min(startId + CONCURRENT, TOTAL);
-                    const ids = [];
-                    for (let i = startId; i < endId; i++) {
-                        ids.push(i);
-                    }
-
-                    const batchData = await processBatch(ids);
-                    allData.push(...batchData);
-
-                    // Speed update
-                    const elapsed = (Date.now() - startTime) / 1000;
-                    const speed = elapsed > 0 ? Math.round(processedCount / elapsed) : 0;
-
-                    updateUI();
-
-                    // Show live status
-                    if (batch % 5 === 0 || batch === totalBatches - 1) {
-                        const pct = Math.round((processedCount / TOTAL) * 100);
-                        showToast(`⚡ ${processedCount}/${TOTAL} (${pct}%) — ${speed}/s`, 'success', 1500);
-                    }
-                }
-
-                isRunning = false;
-                isComplete = true;
-                startBtn.disabled = true;
-                startBtn.textContent = '✅ Complete!';
-                downloadZipBtn.disabled = false;
-                updateUI();
-
-                const elapsed = (Date.now() - startTime) / 1000;
-                const avgSpeed = Math.round(processedCount / elapsed);
-
-                if (failedTokens.length > 0) {
-                    showToast(`⚠️ Complete! ${failedTokens.length} failed. Check log.`, 'error', 5000);
-                } else {
-                    showToast(`🎉 All ${TOTAL} downloaded in ${Math.round(elapsed)}s (${avgSpeed}/s)!`, 'success', 5000);
-                }
-            }
-
-            // ===== RESET =====
-            function resetAll() {
-                if (isRunning) return;
-
-                isComplete = false;
-                allData = [];
-                failedTokens = [];
-                successCount = 0;
-                failCount = 0;
-                processedCount = 0;
-                startTime = 0;
-
-                startBtn.disabled = false;
-                startBtn.textContent = '🚀 Start Turbo Download';
-                downloadZipBtn.disabled = true;
-                downloadZipBtn.textContent = '📦 Download ZIP';
-
-                progressFill.style.width = '0%';
-                progressPercent.textContent = '0%';
-                progressCount.textContent = '0';
-                progressSpeed.textContent = '0';
-                totalStats.textContent = '0';
-                successStats.textContent = '0';
-                failedStats.textContent = '0';
-                speedStats.textContent = '0/s';
-                failedLog.classList.remove('show');
-                failedIds.textContent = '';
-                failedCount.textContent = '0';
-
-                showToast('⟳ Reset Complete', 'success');
-            }
-
-            // ===== EVENT LISTENERS =====
-            startBtn.addEventListener('click', startTurboDownload);
-            downloadZipBtn.addEventListener('click', downloadAllAsZip);
-            resetBtn.addEventListener('click', resetAll);
-
-            // ===== INIT =====
-            updateUI();
-            showToast('✨ Ready — Click "Start Turbo Download"', 'success', 3000);
-
-        })();
-    </script>
-
+      // Generate localized blob asset path download link
+      const blob = new Blob([masterSvgContent], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `generative_nft_${Date.now()}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+  </script>
 </body>
 </html>
