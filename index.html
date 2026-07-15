@@ -1,475 +1,302 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SVG Layer-Based NFT Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Normis · IPFS Token #88 Pixel Generator</title>
+    <style>
+        :root {
+            --bg-dark: #070a13;
+            --panel-bg: rgba(17, 25, 40, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3b82f6;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(189, 0, 255, 0.1) 0px, transparent 50%);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 1240px;
+            width: 100%;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        .header { text-align: center; margin-bottom: 2.5rem; }
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(to right, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-family: monospace;
+            color: #60a5fa;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .nft-card {
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 20px;
+            padding: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-5px);
+            border-color: #4facfe;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-family: monospace;
+            margin-bottom: 1rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pixel-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .pixel-canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .style-badge {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 6px 16px;
+            border-radius: 100px;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+<body>
 
-  <!-- Header -->
-  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur px-6 py-4 flex justify-between items-center">
-    <div class="flex items-center gap-3">
-      <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold text-xl">⚡</div>
-      <h1 class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
-        NFT SVG LAYER GENERATOR
-      </h1>
+<div class="container">
+    <div class="header">
+        <h1>🎨 IPFS Token #88 মাল্টি-স্টাইল জেনারেটর</h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">মেটাডাটা ইমেজ লাইভ প্রসেসিং ইঞ্জিন</p>
     </div>
-    <span id="db-status" class="text-xs text-amber-400 bg-amber-950/50 px-3 py-1.5 rounded-full border border-amber-800">Connecting...</span>
-  </header>
 
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
-    
-    <!-- Left Panel -->
-    <section class="lg:col-span-7 space-y-6">
-      
-      <!-- Create Layer -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-400">
-          <span>📁</span> 1. Create custom layers
-        </h2>
-        <div class="flex gap-3">
-          <input id="layer-name-input" type="text" placeholder="e.g. Clothes, Background" 
-            class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200" />
-          <button id="add-layer-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all shadow-lg active:scale-95">
-            Create Layer
-          </button>
-        </div>
-      </div>
+    <div class="status-box" id="statusLog">
+        ⏳ IPFS গেটওয়ে থেকে টোকেন #৮৮ এর মেটাডাটা ও ইমেজ রিড করা হচ্ছে...
+    </div>
 
-      <!-- Upload SVG Code -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-400">
-          <span>🎨</span> 2. Custom NFT Trait upload
-        </h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs text-slate-400 mb-2 font-medium">SELECT LAYER TARGET</label>
-            <select id="layer-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </select>
-          </div>
+    <div class="card-grid" id="cardGrid"></div>
+</div>
 
-          <div>
-            <label class="block text-xs text-slate-400 mb-2 font-medium">TRAIT / ITEM NAME</label>
-            <input id="trait-name" type="text" placeholder="e.g. Golden Crown, Laser Eyes" 
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200" />
-          </div>
+<script>
+    const TARGET_IPFS = "ipfs://bafybeicyrh4lkik6zhqlheqj4qu6pbc4w3w4hkfbdvoufchzfjwpby5lma/88";
+    const GATEWAY = "https://ipfs.io/ipfs/";
 
-          <div>
-            <label class="block text-xs text-slate-400 mb-2 font-medium">PASTE RAW SVG CODE</label>
-            <textarea id="svg-code" rows="5" placeholder="Paste your <svg>...</svg> code here" 
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-300"></textarea>
-          </div>
+    const PIXEL_STYLES = [
+        { id: 'classic', name: '✦ Classic 64x64', res: 64 },
+        { id: 'minipepe', name: '🐸 Mini Pepe Cute Vibe', res: 48 },
+        { id: 'nerd_hd', name: '🤓 Digital Nerds 4K', res: 64 },
+        { id: 'dreamer', name: '✨ Digital Dreamer Glow', res: 64 },
+        { id: 'cyberpunk', name: '🌆 Cyberpunk Neon', res: 48 },
+        { id: 'vintage', name: '🎞️ Vintage Retro Gaming', res: 32 },
+        { id: 'pastel', name: '🍦 Cute Pastel Matte', res: 48 },
+        { id: 'monochrome', name: '🔲 GameBoy Monochrome', res: 32 },
+        { id: 'warm', name: '🌅 Warm Golden Hour', res: 64 },
+        { id: 'ice', name: '❄️ Cold Ice Nordic', res: 64 },
+        { id: 'matrix', name: '📟 Digital Matrix Code', res: 48 },
+        { id: 'highpoly_3d', name: '💎 Glossy Resin Poly', res: 64 },
+        { id: 'amber', name: '🏺 Amber Antique', res: 48 },
+        { id: 'toxic', name: '🧪 Toxic Radioactive', res: 32 }
+    ];
 
-          <button id="save-trait-btn" class="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg">
-            Save Trait to Cloud Database
-          </button>
-        </div>
-      </div>
-
-      <!-- Inventory Tree -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h3 class="text-base font-bold text-slate-300 mb-3">Stored Trait Inventory</h3>
-        <div id="inventory-container" class="space-y-4 max-h-[350px] overflow-y-auto pr-2">
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Right Panel: Art Preview -->
-    <section class="lg:col-span-5 space-y-6">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl sticky top-6">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-cyan-400">
-          <span>🖼️</span> Interactive Artboard
-        </h2>
-
-        <!-- Canvas -->
-        <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-dashed border-slate-800 overflow-hidden flex items-center justify-center">
-          <div id="nft-canvas" class="absolute inset-0 w-full h-full flex items-center justify-center">
-          </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="mt-6 space-y-4">
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-            <h4 class="text-xs font-bold text-slate-400 tracking-wider">ACTIVE LAYER STACK ORDER</h4>
-            <div id="active-layers-list" class="space-y-2 text-xs">
+    function initGrid() {
+        document.getElementById('cardGrid').innerHTML = PIXEL_STYLES.map(style => `
+            <div class="nft-card">
+                <div class="card-label">TOKEN #88 <span>${style.res}x${style.res}</span></div>
+                <div class="pixel-wrapper">
+                    <canvas class="pixel-canvas" id="canvas-${style.id}" width="${style.res}" height="${style.res}"></canvas>
+                </div>
+                <div class="style-badge">${style.name}</div>
             </div>
-          </div>
+        `).join('');
+    }
 
-          <div class="grid grid-cols-2 gap-3">
-            <button id="randomize-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl text-sm transition-all">
-              🎲 Randomize
-            </button>
-            <button id="download-btn" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition-all shadow-lg">
-              📥 Save SVG Art
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+    async function loadIpfsImage() {
+        const statusLog = document.getElementById('statusLog');
+        const cidPath = TARGET_IPFS.replace("ipfs://", "");
+        const metaUrl = `${GATEWAY}${cidPath}`;
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        try {
+            const response = await fetch(metaUrl);
+            if(!response.ok) throw new Error("মেটাডাটা লোড করতে ব্যর্থ হয়েছে।");
+            
+            const metadata = await response.json();
+            let rawImgUrl = metadata.image || metadata.file_url;
+            
+            if(!rawImgUrl) throw new Error("মেটাডাটাতে কোনো ইমেজ ফাইল পাওয়া যায়নি।");
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyASICdqWjF3bzvtwASwCIXVe0AUfoUeTqU",
-      authDomain: "castclick-cdfeb.firebaseapp.com",
-      projectId: "castclick-cdfeb",
-      storageBucket: "castclick-cdfeb.firebasestorage.app",
-      messagingSenderId: "578052056343",
-      appId: "1:578052056343:web:1042963805caa11f360352"
-    };
+            let finalImgUrl = rawImgUrl.startsWith("ipfs://") 
+                ? rawImgUrl.replace("ipfs://", GATEWAY) 
+                : rawImgUrl;
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+            statusLog.innerHTML = `✅ মেটাডাটা রিড করা সফল! ইমেজ সোর্স প্রসেস করা হচ্ছে...`;
 
-    // ১/১ গ্রিডের নিখুঁত প্রিসেট পিক্সেল SVG কোডসমূহ (Neon Lime Background এবং Body-র সাথে ম্যাচিং)
-    const presetLayers = {
-      "1_Background": {
-        "Lime Yellow BG": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges"><rect width="16" height="16" fill="#d4ff00" /></svg>`
-      },
-      "2_Body": {
-        "Pixel Cat": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Ears -->
-          <rect x="3" y="2" width="2" height="2" fill="#222" />
-          <rect x="11" y="2" width="2" height="2" fill="#222" />
-          <rect x="4" y="3" width="1" height="1" fill="#ffb7c5" />
-          <rect x="11" y="3" width="1" height="1" fill="#ffb7c5" />
-          <!-- Head/Face Base -->
-          <rect x="3" y="4" width="10" height="7" fill="#f3f3f3" />
-          <rect x="2" y="5" width="12" height="5" fill="#f3f3f3" />
-          <!-- Outline -->
-          <rect x="2" y="4" width="1" height="1" fill="#222" />
-          <rect x="13" y="4" width="1" height="1" fill="#222" />
-          <rect x="1" y="5" width="1" height="5" fill="#222" />
-          <rect x="14" y="5" width="1" height="5" fill="#222" />
-          <rect x="2" y="10" width="12" height="1" fill="#222" />
-          <!-- Body/Chest -->
-          <rect x="4" y="11" width="8" height="4" fill="#f3f3f3" />
-          <rect x="3" y="11" width="1" height="4" fill="#222" />
-          <rect x="12" y="11" width="1" height="4" fill="#222" />
-          <rect x="4" y="14" width="8" height="1" fill="#222" />
-        </svg>`,
-        "Pixel Pepe": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Head Base -->
-          <rect x="3" y="3" width="10" height="8" fill="#3a8a3c" />
-          <rect x="2" y="5" width="12" height="5" fill="#3a8a3c" />
-          <rect x="3" y="3" width="10" height="1" fill="#1b4d22" />
-          <rect x="2" y="5" width="1" height="5" fill="#1b4d22" />
-          <rect x="13" y="5" width="1" height="5" fill="#1b4d22" />
-          <rect x="3" y="11" width="10" height="1" fill="#1b4d22" />
-          <!-- Lips/Mouth Base Area -->
-          <rect x="4" y="9" width="8" height="2" fill="#c62828" />
-          <!-- Body -->
-          <rect x="4" y="12" width="8" height="3" fill="#1565c0" />
-          <rect x="3" y="12" width="1" height="3" fill="#0d47a1" />
-          <rect x="12" y="12" width="1" height="3" fill="#0d47a1" />
-        </svg>`
-      },
-      "3_Eyes": {
-        "Kawaii Eyes": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Eye Left -->
-          <rect x="4" y="6" width="2" height="2" fill="#222" />
-          <rect x="4" y="6" width="1" height="1" fill="#fff" />
-          <!-- Eye Right -->
-          <rect x="10" y="6" width="2" height="2" fill="#222" />
-          <rect x="10" y="6" width="1" height="1" fill="#fff" />
-          <!-- Cheeks -->
-          <rect x="3" y="8" width="1" height="1" fill="#ff4081" />
-          <rect x="12" y="8" width="1" height="1" fill="#ff4081" />
-        </svg>`,
-        "Cool Sunglasses": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Glasses Body -->
-          <rect x="3" y="6" width="4" height="2" fill="#111" />
-          <rect x="9" y="6" width="4" height="2" fill="#111" />
-          <rect x="7" y="6" width="2" height="1" fill="#111" />
-          <!-- Reflections -->
-          <rect x="4" y="7" width="1" height="1" fill="#00e5ff" />
-          <rect x="10" y="7" width="1" height="1" fill="#00e5ff" />
-        </svg>`
-      },
-      "4_Mouth": {
-        "Simple Smile": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <rect x="7" y="9" width="2" height="1" fill="#222" />
-          <rect x="6" y="8" width="1" height="1" fill="#222" />
-          <rect x="9" y="8" width="1" height="1" fill="#222" />
-        </svg>`,
-        "Smoking Pipe": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Pipe Line -->
-          <rect x="8" y="9" width="3" height="1" fill="#5d4037" />
-          <!-- Bowl -->
-          <rect x="11" y="8" width="2" height="2" fill="#d84315" />
-          <!-- Smoke -->
-          <rect x="12" y="6" width="1" height="1" fill="#b0bec5" />
-          <rect x="13" y="5" width="1" height="1" fill="#b0bec5" />
-        </svg>`
-      },
-      "5_Hats": {
-        "Golden Crown": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Crown base -->
-          <rect x="4" y="3" width="8" height="2" fill="#ffd54f" />
-          <rect x="3" y="1" width="10" height="3" fill="#ffb300" />
-          <!-- Points -->
-          <rect x="3" y="0" width="1" height="1" fill="#d32f2f" /> <!-- Jewel -->
-          <rect x="8" y="0" width="1" height="1" fill="#1976d2" /> <!-- Jewel -->
-          <rect x="12" y="0" width="1" height="1" fill="#d32f2f" /> <!-- Jewel -->
-          <!-- Crown Cutouts -->
-          <rect x="5" y="1" width="2" height="2" fill="none" />
-          <rect x="9" y="1" width="2" height="2" fill="none" />
-        </svg>`,
-        "Cool Cap": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
-          <!-- Cap Base -->
-          <rect x="3" y="2" width="10" height="3" fill="#d32f2f" />
-          <!-- Visor/Front -->
-          <rect x="1" y="4" width="4" height="1" fill="#111" />
-          <!-- Badge -->
-          <rect x="7" y="3" width="2" height="1" fill="#fff" />
-        </svg>`
-      }
-    };
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => {
+                statusLog.innerHTML = `🚀 টোকেন #৮৮ এর ওপর সফলভাবে ১৪টি পিক্সেল ফিল্টার রেন্ডার করা হয়েছে!`;
+                processAllStyles(img);
+            };
+            img.onerror = () => {
+                statusLog.innerHTML = `❌ CORS বা গেটওয়ে সমস্যার কারণে ইমেজ লোড ফাইল লক হয়ে গেছে।`;
+            };
+            img.src = finalImgUrl;
 
-    let layersData = {};
-    let layerOrder = [];
-    let selectedCombo = {};
+        } catch (error) {
+            statusLog.innerHTML = `❌ ভুল: ${error.message} (পাবলিক IPFS গেটওয়ে রেসপন্স টাইমআউট হতে পারে)`;
+        }
+    }
 
-    const dbStatus = document.getElementById('db-status');
-    const layerNameInput = document.getElementById('layer-name-input');
-    const addLayerBtn = document.getElementById('add-layer-btn');
-    const layerSelect = document.getElementById('layer-select');
-    const traitNameInput = document.getElementById('trait-name');
-    const svgCodeInput = document.getElementById('svg-code');
-    const saveTraitBtn = document.getElementById('save-trait-btn');
-    const inventoryContainer = document.getElementById('inventory-container');
-    const nftCanvas = document.getElementById('nft-canvas');
-    const activeLayersList = document.getElementById('active-layers-list');
-    const randomizeBtn = document.getElementById('randomize-btn');
-    const downloadBtn = document.getElementById('download-btn');
+    function processAllStyles(currentImage) {
+        PIXEL_STYLES.forEach(style => {
+            const canvas = document.getElementById(`canvas-${style.id}`);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const res = style.res;
 
-    // Firestore থেকে ডেটা সিঙ্ক করা
-    try {
-      onSnapshot(collection(db, "nft_layers"), (snapshot) => {
-        layersData = {};
-        
-        snapshot.forEach((doc) => {
-          layersData[doc.id] = doc.data();
+            ctx.clearRect(0, 0, res, res);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(currentImage, 0, 0, res, res);
+
+            const imgData = ctx.getImageData(0, 0, res, res);
+            const data = imgData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i], g = data[i+1], b = data[i+2];
+                let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                switch(style.id) {
+                    case 'minipepe':
+                        data[i] = Math.max(0, r - 20);
+                        data[i+1] = Math.min(255, g * 1.3 + 20);
+                        data[i+2] = Math.max(0, b - 10);
+                        break;
+                    case 'nerd_hd':
+                        data[i] = Math.min(255, r * 1.2);
+                        data[i+1] = Math.min(255, g * 1.2);
+                        data[i+2] = Math.min(255, b * 1.3);
+                        break;
+                    case 'dreamer':
+                        data[i] = Math.min(255, r * 0.9 + 40);
+                        data[i+1] = Math.min(255, g * 0.8 + 50);
+                        data[i+2] = Math.min(255, b * 1.2 + 60);
+                        break;
+                    case 'cyberpunk':
+                        data[i] = Math.min(255, r * 1.5 + 40);
+                        data[i+1] = Math.min(255, g * 0.3);
+                        data[i+2] = Math.min(255, b * 1.8 + 50);
+                        break;
+                    case 'vintage':
+                        data[i] = Math.min(255, (r * 0.39) + (g * 0.76) + (b * 0.18));
+                        data[i+1] = Math.min(255, (r * 0.34) + (g * 0.68) + (b * 0.16));
+                        data[i+2] = Math.min(255, (r * 0.27) + (g * 0.53) + (b * 0.13));
+                        break;
+                    case 'pastel':
+                        data[i] = Math.min(255, r * 0.6 + 100);
+                        data[i+1] = Math.min(255, g * 0.6 + 100);
+                        data[i+2] = Math.min(255, b * 0.5 + 120);
+                        break;
+                    case 'monochrome':
+                        let v = gray > 127 ? 240 : 30;
+                        data[i] = data[i+1] = data[i+2] = v;
+                        break;
+                    case 'warm':
+                        data[i] = Math.min(255, r * 1.4 + 30);
+                        data[i+1] = Math.min(255, g * 1.1 + 10);
+                        data[i+2] = b * 0.6;
+                        break;
+                    case 'ice':
+                        data[i] = r * 0.5;
+                        data[i+1] = Math.min(255, g * 1.1 + 20);
+                        data[i+2] = Math.min(255, b * 1.5 + 40);
+                        break;
+                    case 'matrix':
+                        data[i] = 0; data[i+1] = Math.min(255, gray * 1.6); data[i+2] = 0;
+                        break;
+                    case 'highpoly_3d':
+                        let factor = gray > 180 ? 1.4 : 0.8;
+                        data[i] = Math.min(255, r * factor);
+                        data[i+1] = Math.min(255, g * factor);
+                        data[i+2] = Math.min(255, b * factor);
+                        break;
+                    case 'amber':
+                        data[i] = Math.min(255, gray * 1.3); data[i+1] = Math.min(255, gray * 0.9); data[i+2] = Math.min(255, gray * 0.3);
+                        break;
+                    case 'toxic':
+                        data[i] = Math.min(255, r * 0.8 + 20); data[i+1] = Math.min(255, g * 1.5 + 40); data[i+2] = 0;
+                        break;
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
         });
-
-        // ফায়ারবেসে যদি কোনো লেয়ার স্টোর না থাকে, তবে প্রিসেট লেয়ারগুলো পুশ করব
-        if (Object.keys(layersData).length === 0) {
-          uploadPresetsToFirebase();
-        } else {
-          // লেয়ারগুলো নামের ক্রমানুসারে সাজানো (1_Background, 2_Body, ইত্যাদি)
-          layerOrder = Object.keys(layersData).sort();
-          dbStatus.textContent = "Connected & Active";
-          dbStatus.className = "text-xs text-emerald-400 bg-emerald-950/50 px-3 py-1.5 rounded-full border border-emerald-800";
-          updateDropdownsAndTree();
-          renderActiveNFT();
-        }
-      }, (error) => {
-        console.error(error);
-        dbStatus.textContent = "Offline/Local Mode";
-        dbStatus.className = "text-xs text-amber-400 bg-amber-950/50 px-3 py-1.5 rounded-full border border-amber-800";
-        // ডাটাবেস এরর হলে লোকাল প্রিসেট দিয়ে রেন্ডার হবে
-        layersData = presetLayers;
-        layerOrder = Object.keys(layersData).sort();
-        updateDropdownsAndTree();
-        renderActiveNFT();
-      });
-    } catch (e) {
-      console.error(e);
     }
 
-    // ফায়ারবেসে প্রিসেট আপলোড করার মেকানিজম
-    async function uploadPresetsToFirebase() {
-      dbStatus.textContent = "Initializing Presets...";
-      for (const [layerName, traits] of Object.entries(presetLayers)) {
-        await setDoc(doc(db, "nft_layers", layerName), { ...traits, _created: true }, { merge: true });
-      }
-    }
-
-    // নতুন কাস্টম লেয়ার তৈরি
-    addLayerBtn.addEventListener('click', async () => {
-      const layerName = layerNameInput.value.trim();
-      if (!layerName) return alert('Enter a layer name first!');
-      
-      try {
-        await setDoc(doc(db, "nft_layers", layerName), { _created: true }, { merge: true });
-        layerNameInput.value = '';
-        alert(`"${layerName}" Layer Created!`);
-      } catch (error) {
-        alert("Error: " + error.message);
-      }
-    });
-
-    // কাস্টম ট্রেইট আপলোড
-    saveTraitBtn.addEventListener('click', async () => {
-      const selectedLayer = layerSelect.value;
-      const traitName = traitNameInput.value.trim();
-      const rawSvgCode = svgCodeInput.value.trim();
-
-      if (!selectedLayer || !traitName || !rawSvgCode) {
-        return alert('Please fill up all the fields!');
-      }
-
-      try {
-        await setDoc(doc(db, "nft_layers", selectedLayer), {
-          [traitName]: rawSvgCode
-        }, { merge: true });
-
-        traitNameInput.value = '';
-        svgCodeInput.value = '';
-        alert(`"${traitName}" uploaded to "${selectedLayer}"!`);
-      } catch (e) {
-        alert("Error saving: " + e.message);
-      }
-    });
-
-    // ড্রপডাউন এবং ইনভেন্টরি আপডেট
-    function updateDropdownsAndTree() {
-      layerSelect.innerHTML = '<option value="">-- Select Layer --</option>';
-      inventoryContainer.innerHTML = '';
-
-      layerOrder.forEach(layerName => {
-        const opt = document.createElement('option');
-        opt.value = layerName;
-        opt.textContent = layerName.replace(/^\d+_/, ""); // '1_Background' -> 'Background' দেখাবে
-        layerSelect.appendChild(opt);
-
-        const traitsObj = { ...layersData[layerName] };
-        delete traitsObj._created;
-        const traitNames = Object.keys(traitsObj);
-
-        const layerBlock = document.createElement('div');
-        layerBlock.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2";
-        
-        let traitBadgesHtml = '';
-        if (traitNames.length === 0) {
-          traitBadgesHtml = `<span class="text-[11px] text-slate-600 italic block">No designs inside</span>`;
-        } else {
-          traitNames.forEach(trait => {
-            const isSelected = selectedCombo[layerName] === trait;
-            traitBadgesHtml += `
-              <button onclick="window.selectTrait('${layerName}', '${trait}')" 
-                class="px-2.5 py-1 text-xs rounded-lg font-medium border m-0.5 transition-all ${
-                  isSelected 
-                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' 
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                }">
-                ${trait}
-              </button>
-            `;
-          });
-        }
-
-        layerBlock.innerHTML = `
-          <div class="flex justify-between items-center pb-1 border-b border-slate-900">
-            <span class="text-xs font-bold text-slate-200 uppercase tracking-wide">${layerName.replace(/^\d+_/, "")}</span>
-            <span class="text-[10px] bg-slate-900 text-slate-500 px-2 py-0.5 rounded-full">${traitNames.length} items</span>
-          </div>
-          <div class="flex flex-wrap gap-1 pt-1">${traitBadgesHtml}</div>
-        `;
-        inventoryContainer.appendChild(layerBlock);
-      });
-    }
-
-    window.selectTrait = function(layerName, traitName) {
-      selectedCombo[layerName] = traitName;
-      updateDropdownsAndTree();
-      renderActiveNFT();
-    };
-
-    // আর্ট রেন্ডার মেকানিজম
-    function renderActiveNFT() {
-      nftCanvas.innerHTML = '';
-      activeLayersList.innerHTML = '';
-
-      const combinedContainer = document.createElement('div');
-      combinedContainer.className = "relative w-full h-full";
-      let hasContent = false;
-
-      // যদি কোনো কম্বো সিলেক্ট করা না থাকে, তবে প্রথম আইটেমগুলো অটো সিলেক্ট হবে
-      layerOrder.forEach(layer => {
-        const traits = Object.keys(layersData[layer]).filter(k => k !== '_created');
-        if (traits.length > 0 && !selectedCombo[layer]) {
-          selectedCombo[layer] = traits[0];
-        }
-      });
-
-      layerOrder.forEach((layerName) => {
-        const activeTrait = selectedCombo[layerName];
-        if (activeTrait && layersData[layerName][activeTrait]) {
-          hasContent = true;
-          
-          const badge = document.createElement('div');
-          badge.className = "flex justify-between items-center bg-slate-900 px-3 py-2 rounded-lg border border-slate-800";
-          badge.innerHTML = `
-            <span class="text-slate-400 font-semibold">${layerName.replace(/^\d+_/, "")}:</span>
-            <span class="text-indigo-400 font-mono font-bold">${activeTrait}</span>
-          `;
-          activeLayersList.appendChild(badge);
-
-          const svgCode = layersData[layerName][activeTrait];
-          const parser = new DOMParser();
-          const svgDoc = parser.parseFromString(svgCode, "image/svg+xml");
-          const svgEl = svgDoc.querySelector('svg');
-
-          if (svgEl) {
-            svgEl.style.position = 'absolute';
-            svgEl.style.top = '0';
-            svgEl.style.left = '0';
-            svgEl.style.width = '100%';
-            svgEl.style.height = '100%';
-            svgEl.style.zIndex = layerOrder.indexOf(layerName);
-            combinedContainer.appendChild(svgEl);
-          }
-        }
-      });
-
-      if (hasContent) {
-        nftCanvas.appendChild(combinedContainer);
-      } else {
-        nftCanvas.innerHTML = `<span class="text-slate-600 text-sm italic select-none font-bold">No preview active</span>`;
-        activeLayersList.innerHTML = `<span class="text-slate-500 italic">No layers loaded.</span>`;
-      }
-    }
-
-    randomizeBtn.addEventListener('click', () => {
-      layerOrder.forEach(layer => {
-        const traits = Object.keys(layersData[layer]).filter(k => k !== '_created');
-        if (traits.length > 0) {
-          const randomIndex = Math.floor(Math.random() * traits.length);
-          selectedCombo[layer] = traits[randomIndex];
-        }
-      });
-      updateDropdownsAndTree();
-      renderActiveNFT();
-    });
-
-    downloadBtn.addEventListener('click', () => {
-      const activeSvgs = nftCanvas.querySelectorAll('svg');
-      if (activeSvgs.length === 0) return alert('Nothing to download!');
-
-      let masterSvgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">`;
-      activeSvgs.forEach((svg) => {
-        masterSvgContent += `<g>${svg.innerHTML}</g>`;
-      });
-      masterSvgContent += `</svg>`;
-
-      const blob = new Blob([masterSvgContent], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `pixel_nft_${Date.now()}.svg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    });
-  </script>
+    // রান ইঞ্জিন
+    initGrid();
+    loadIpfsImage();
+</script>
 </body>
 </html>
