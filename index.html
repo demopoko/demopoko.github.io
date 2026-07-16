@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🗿 Normies Matrix Code Engraved LED</title>
+    <title>🗿 Normies Engraved LED (Zero Background Edition)</title>
     <style>
         :root {
             --bg-dark: #050507;
@@ -40,7 +40,7 @@
         .header h1 {
             font-size: 2.6rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #39ff14 0%, #00f0ff 100%);
+            background: linear-gradient(135deg, #00f0ff 0%, #ff0055 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.5px;
@@ -51,19 +51,19 @@
             font-size: 1.05rem;
         }
         .header .sub span {
-            color: #39ff14;
+            color: #00f0ff;
             font-weight: 700;
         }
         .status-box {
             background: rgba(5, 5, 7, 0.9);
-            border: 1px solid rgba(57, 255, 20, 0.15);
+            border: 1px solid rgba(0, 240, 255, 0.15);
             padding: 1rem 1.5rem;
             border-radius: 16px;
             text-align: center;
             margin-bottom: 2.5rem;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.95rem;
-            color: #39ff14;
+            color: #00f0ff;
         }
         .status-box .counter {
             font-size: 1.4rem;
@@ -81,7 +81,7 @@
         .progress-bar {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #39ff14, #00f0ff);
+            background: linear-gradient(90deg, #00f0ff, #ff0055);
             border-radius: 10px;
             transition: width 0.3s ease;
         }
@@ -104,8 +104,8 @@
         }
         .nft-card:hover {
             transform: translateY(-4px);
-            border-color: rgba(57, 255, 20, 0.25);
-            box-shadow: 0 20px 40px rgba(57, 255, 20, 0.04);
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 20px 40px rgba(0, 240, 255, 0.04);
             background: rgba(12, 12, 15, 0.9);
         }
         .nft-card .card-index {
@@ -130,23 +130,25 @@
             width: 100%;
             height: 100%;
             display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
         .nft-card .token-id {
             margin-top: 0.8rem;
             font-size: 0.75rem;
-            color: #39ff14;
+            color: #00f0ff;
             font-weight: 600;
-            background: rgba(57, 255, 20, 0.04);
+            background: rgba(0, 240, 255, 0.04);
             padding: 4px 12px;
             border-radius: 100px;
-            border: 1px solid rgba(57, 255, 20, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.08);
         }
         .load-more-btn {
             display: block;
             width: 220px;
             margin: 2rem auto 0 auto;
             padding: 1rem;
-            background: linear-gradient(135deg, #39ff14, #00f0ff);
+            background: linear-gradient(135deg, #00f0ff, #ff0055);
             color: #000000;
             font-weight: bold;
             font-family: inherit;
@@ -158,7 +160,7 @@
         }
         .load-more-btn:hover:not(:disabled) {
             transform: scale(1.03);
-            box-shadow: 0 0 25px rgba(57, 255, 20, 0.4);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
         }
         .load-more-btn:disabled {
             background: #1e293b;
@@ -187,7 +189,7 @@
             padding: 2.2rem;
             max-width: 600px;
             width: 100%;
-            border: 1px solid rgba(57, 255, 20, 0.25);
+            border: 1px solid rgba(0, 240, 255, 0.2);
             box-shadow: 0 50px 100px rgba(0, 0, 0, 0.95);
             position: relative;
         }
@@ -209,8 +211,8 @@
             transition: all 0.2s;
         }
         .modal-close:hover {
-            background: rgba(57, 255, 20, 0.1);
-            color: #39ff14;
+            background: rgba(0, 240, 255, 0.1);
+            color: #00f0ff;
         }
         .modal-image-wrapper {
             width: 100%;
@@ -218,12 +220,14 @@
             border-radius: 20px;
             overflow: hidden;
             background: #000000;
-            border: 1px solid rgba(57, 255, 20, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.1);
         }
         .modal-image-wrapper canvas {
             width: 100%;
             height: 100%;
             display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
         .modal-title {
             text-align: center;
@@ -248,18 +252,23 @@
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="header">
-        <h1>🗿 Normies Matrix Engraved LED</h1>
-        <div class="sub">কোডিং ক্যারেক্টার ও সিম্বল কাঠামো · <span>64x64 Grid Matrix</span></div>
+        <h1>🗿 Normies Engraved LED</h1>
+        <div class="sub">১০০% সলিড ব্ল্যাক ব্যাকগ্রাউন্ড ও ক্লিয়ার ক্যারেক্টার · <span>64x64 Plate</span></div>
     </div>
+
     <div class="status-box" id="statusLog">
         ⏳ মেটাডাটা লোড হচ্ছে... <span class="counter" id="loadedCount">0</span> / 100
     </div>
+
     <div class="progress-wrapper">
         <div class="progress-bar" id="progressBar"></div>
     </div>
+
     <div class="card-grid" id="cardGrid"></div>
+
     <button class="load-more-btn" id="loadMoreBtn" disabled>⏳ লোড হচ্ছে...</button>
 </div>
 
@@ -271,7 +280,7 @@
             <canvas id="modalCanvas" width="512" height="512"></canvas>
         </div>
         <div class="modal-title" id="modalTitle">Token #1</div>
-        <div class="modal-sub" id="modalSub">Matrix Code Character Structure (64x64)</div>
+        <div class="modal-sub" id="modalSub">Engraved LED Matrix (64x64)</div>
     </div>
 </div>
 
@@ -282,11 +291,9 @@
     const TOTAL_TOKENS = 100;
     const BATCH_SIZE = 20;
     const GRID_SIZE = 64;
+
     let loadedTokens = 0;
     let isProcessing = false;
-
-    // ——— পছন্দের বিশেষ কোডিং ক্যারেক্টার লিস্ট ———
-    const MATRIX_CHARS = ['^', '÷', 'π', '√', '`', '~', '×', '=', '℅', '$', '@', '#', '%', '&', '*', '+', '?', '!'];
 
     // ——— DOM রেফ ———
     const grid = document.getElementById('cardGrid');
@@ -306,6 +313,7 @@
         modalOverlay.classList.remove('active');
         document.body.style.overflow = '';
     }
+
     modalClose.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
@@ -324,8 +332,8 @@
         return Promise.all(promises);
     }
 
-    // ——— মডিফাইড ক্যারেক্টার কোডিং ম্যাট্রিক্স প্রসেসর (ব্যাকগ্রাউন্ড ফিল্টার সহ) ———
-    function applyMatrixTextEffect(ctx, img, width, height) {
+    // ——— ১০০% পিওর ব্ল্যাক ব্যাকগ্রাউন্ড এবং বডি এলইড প্রসেসর ———
+    function applyEngravedLEDGridEffect(ctx, img, width, height) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = GRID_SIZE;
         tempCanvas.height = GRID_SIZE;
@@ -336,16 +344,11 @@
         const imgData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
         const data = imgData.data;
 
-        // ব্যাকগ্রাউন্ড সম্পূর্ণ কালো
+        // সম্পূর্ণ স্ক্রিন কুচকুচে কালো ব্যাকগ্রাউন্ড
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, width, height);
 
         const blockSize = width / GRID_SIZE;
-        
-        // ফন্ট সেটিংস
-        ctx.font = `bold ${blockSize}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -355,42 +358,43 @@
                 const b = data[idx+2];
                 const a = data[idx+3];
 
-                const posX = x * blockSize + (blockSize / 2);
-                const posY = y * blockSize + (blockSize / 2);
+                const posX = x * blockSize;
+                const posY = y * blockSize;
 
-                // ব্যাকগ্রাউন্ড ট্র্যান্সপারেন্ট হলে স্কিপ করবে
-                if (a < 50) continue;
+                // ব্যাকগ্রাউন্ড ট্র্যান্সপারেন্ট হলে খালি কালো থাকবে
+                if (a < 50) {
+                    continue;
+                }
 
+                // কালার ইনভার্স রিলেশন ও কঠোর থ্রেশহোল্ড চেক
                 const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
 
-                // নতুন ফিল্টার লজিক: ব্রাইটনেস ১৩৫ এর কম হলে এবং পিউর হোয়াইট বা অতিরিক্ত উজ্জ্বল ব্যাকগ্রাউন্ড না হলে রেন্ডার হবে
-                if (brightness < 135 && !(r > 200 && g > 200 && b > 200)) {
-                    
-                    // ব্রাইটনেস বা পিক্সেল ইনডেক্স এর উপর ভিত্তি করে ক্যারেক্টার নির্বাচন
-                    const charIndex = Math.floor((brightness / 135) * MATRIX_CHARS.length);
-                    const charToPrint = MATRIX_CHARS[charIndex % MATRIX_CHARS.length];
+                // থ্রেশহোল্ড কমিয়ে দেওয়া হলো (< 50) যেন ব্যাকগ্রাউন্ডের ধূসর আলো কোনোভাবে ধরা না পড়ে
+                if (brightness < 50) {
+                    // ১. সকেট ব্যাকগ্রাউন্ড বা পকেট ড্র করা (ক্যারেক্টারের অবয়বের নিচে হালকা গর্তের থ্রিডি ইফেক্ট)
+                    ctx.fillStyle = '#101014'; 
+                    ctx.fillRect(posX + 1, posY + 1, blockSize - 1, blockSize - 1);
 
-                    // নিয়ন গ্লো টেক্সট কালার লজিক
-                    if (brightness < 30) {
-                        ctx.fillStyle = '#00f0ff'; // ইলেকট্রিক সায়ান ব্লু
-                    } else if (brightness >= 30 && brightness < 80) {
-                        ctx.fillStyle = '#ff0055'; // নিয়ন হট পিঙ্ক
+                    // ২. ক্যারেক্টারের বডি ও ডিটেইলস ভাইব্রেন্ট কালার ম্যাপিং
+                    if (brightness < 18) {
+                        ctx.fillStyle = '#ff0055'; // চরম ডার্ক হাইলাইটগুলোতে হট নিয়ন পিঙ্ক
+                    } else if (brightness >= 18 && brightness < 35) {
+                        ctx.fillStyle = '#00f0ff'; // ক্যারেক্টারের মূল বডি স্ট্রাকচারে উজ্জ্বল নিয়ন সায়ান
                     } else {
-                        ctx.fillStyle = '#39ff14'; // নিয়ন ম্যাট্রিক্স গ্রিন
+                        ctx.fillStyle = '#d4ff00'; // ফেস ও ট্রেইটস লাইনে ম্যাজিক লাইম গ্রিন
                     }
 
-                    // লাল বা স্পেশাল কালার সিগন্যাল ডিটেকশন
-                    if (r > 160 && b < 100 && g < 100) {
-                        ctx.fillStyle = '#ff2c00'; // লাভা রেড
+                    // বিশেষ স্পট কালার প্রিজার্ভেশন (যেমন চশমা, মুখ বা লালচে অংশ)
+                    if (r > 190 && b < 120 && g < 120) {
+                        ctx.fillStyle = '#ff3c00'; // ভাইব্রেন্ট নিয়ন রেড
                     }
 
-                    // ক্যানভাসে টেক্সট ক্যারেক্টার ড্র করা
-                    ctx.fillText(charToPrint, posX, posY);
-
+                    ctx.fillRect(posX + 2, posY + 2, blockSize - 3, blockSize - 3);
                 } else {
-                    // ব্যাকগ্রাউন্ড অংশ সম্পূর্ণ নিরেট কালো রাখা
+                    // এটি মূল ফটোর লাইট গ্রে/সাদা ব্যাকগ্রাউন্ড এরিয়া। 
+                    // যেহেতু লক্ষ্য ব্যাকগ্রাউন্ড কালো রাখা—এখানে সলিড কালো ছাড়া আর কিছু ড্র করা হবে না।
                     ctx.fillStyle = '#000000';
-                    ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+                    ctx.fillRect(posX, posY, blockSize, blockSize);
                 }
             }
         }
@@ -404,6 +408,7 @@
                 resolve(null);
                 return;
             }
+
             const finalUrl = imgUrl.startsWith('ipfs://') 
                 ? imgUrl.replace('ipfs://', GATEWAY) 
                 : imgUrl;
@@ -416,13 +421,13 @@
                 canvas.height = 512;
                 const ctx = canvas.getContext('2d');
                 
-                applyMatrixTextEffect(ctx, img, 512, 512);
+                applyEngravedLEDGridEffect(ctx, img, 512, 512);
 
                 const card = document.createElement('div');
                 card.className = 'nft-card';
                 card.dataset.index = index;
                 card.innerHTML = `
-                    <div class="card-index"><span>#${index}</span> <span style="font-size:0.6rem; color:#39ff14; font-weight: bold;">MATRIX CODE</span></div>
+                    <div class="card-index"><span>#${index}</span> <span style="font-size:0.6rem; color:#00f0ff; font-weight: bold;">NEON GLOW</span></div>
                     <div class="image-wrapper"></div>
                     <div class="token-id">👾 Token #${index}</div>
                 `;
@@ -431,7 +436,7 @@
                 wrapper.appendChild(canvas);
 
                 card.addEventListener('click', () => {
-                    openModal(canvas, `🗿 Token #${index}`, `Matrix Code Character · ${index}/100`);
+                    openModal(canvas, `🗿 Token #${index}`, `Clear Engraved LED · ${index}/100`);
                 });
 
                 resolve(card);
@@ -446,6 +451,8 @@
         const ctx = modalCanvas.getContext('2d');
         modalCanvas.width = 512;
         modalCanvas.height = 512;
+        ctx.imageSmoothingEnabled = false;
+
         ctx.clearRect(0, 0, 512, 512);
         ctx.drawImage(sourceCanvas, 0, 0, 512, 512);
 
@@ -485,7 +492,7 @@
         grid.appendChild(fragment);
 
         if (loadedTokens >= TOTAL_TOKENS) {
-            statusLog.innerHTML = `✅ সম্পূর্ণ! <span class="counter">${TOTAL_TOKENS}</span> টি NFT হুবহু <span style="color:#39ff14; font-weight:bold;">Matrix Character Structure</span> স্টাইলে রূপান্তরিত!`;
+            statusLog.innerHTML = `✅ সম্পূর্ণ! <span class="counter">${TOTAL_TOKENS}</span> টি NFT হুবহু <span style="color:#00f0ff; font-weight:bold;">Engraved Neon Glow</span> স্টাইলে রূপান্তরিত!`;
             loadMoreBtn.style.display = 'none';
         } else {
             statusLog.innerHTML = `⏳ লোড হচ্ছে... <span class="counter">${loadedTokens}</span> / ${TOTAL_TOKENS}`;
@@ -504,5 +511,6 @@
     // প্রথম ব্যাচ রান করা
     processBatch(1);
 </script>
+
 </body>
 </html>
