@@ -1,9 +1,9 @@
-html_content = """<!DOCTYPE html>
+html_content_multi = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NFT Lottie Vault Studio</title>
+    <title>NFT Multi-Lottie Vault Studio</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Lottie Player Library -->
@@ -13,147 +13,154 @@ html_content = """<!DOCTYPE html>
         .nft-card-shadow {
             box-shadow: 0 20px 40px -15px rgba(6, 182, 212, 0.25), 0 0 0 1px rgba(6, 182, 212, 0.15);
         }
+        .gallery-card-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        .gallery-card-shadow:hover {
+            box-shadow: 0 8px 20px rgba(6, 182, 212, 0.2), 0 0 0 1px rgba(6, 182, 212, 0.3);
+        }
         /* Custom scrollbar for dark theme */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #020617;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #06b6d4;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-cyan-500 selection:text-slate-950">
 
     <!-- Header Section -->
     <header class="p-4 border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto flex justify-between items-center">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2.5">
                 <div class="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_10px_#06b6d4]"></div>
                 <h1 class="text-xl font-black bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-500 bg-clip-text text-transparent tracking-wider">
-                    NFT VAULT STUDIO
+                    NFT MULTI-VAULT
                 </h1>
             </div>
             <span class="text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-md tracking-widest uppercase">
-                Firebase Sync Active
+                Firebase Cluster Active
             </span>
         </div>
     </header>
 
     <!-- Main Workspace -->
-    <main class="max-w-5xl mx-auto p-4 w-full flex-grow flex flex-col items-center justify-center gap-8 py-8">
+    <main class="max-w-6xl mx-auto p-4 w-full flex-grow flex flex-col gap-10 py-8">
         
         <!-- Welcome Title -->
-        <div class="text-center max-w-xl">
+        <div class="text-center max-w-xl mx-auto">
             <h2 class="text-3xl font-extrabold sm:text-4xl mb-2.5 tracking-tight text-white">
-                Decentralized <span class="text-cyan-400">Lottie NFT</span> Viewer
+                Multi-Asset <span class="text-cyan-400">NFT Collection</span>
             </h2>
             <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                Upload your Lottie JSON animations. They will be rendered into a dynamic 512x512 full-bleed NFT card layout and permanently secured on your Firebase cloud infrastructure until manually deleted.
+                Upload multiple Lottie JSON assets at once or sequentially. Manage your entire digital catalog securely backed up on Firebase Realtime Database.
             </p>
         </div>
 
-        <!-- Dashboard Layout Grid -->
-        <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <!-- Upper Block: Input Box & Big Previewer -->
+        <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            <!-- Left Side: Control & Uploader Panel -->
-            <div class="flex flex-col gap-6 w-full">
-                <!-- Upload Slot -->
+            <!-- Left Side controls (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-6 w-full">
+                <!-- Upload Slot (Multiple Allowed) -->
                 <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-sm">
-                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Upload Asset Pipeline</h3>
+                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Pipeline Integration</h3>
                     <label for="jsonFileInput" class="block border-2 border-dashed border-slate-700/80 hover:border-cyan-500 active:scale-[0.99] rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-slate-950/30">
-                        <input type="file" id="jsonFileInput" class="hidden" accept=".json,application/json">
+                        <!-- 'multiple' parameter added below to allow batch selections -->
+                        <input type="file" id="jsonFileInput" class="hidden" accept=".json,application/json" multiple>
                         <div class="flex flex-col items-center gap-3">
                             <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/10">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                 </svg>
                             </div>
-                            <span class="text-sm font-bold text-slate-200">Import Lottie JSON File</span>
-                            <span class="text-[10px] text-slate-500">Supports standard Bodymovin schema up to 10MB</span>
+                            <span class="text-sm font-bold text-slate-200">Import Batch JSON Files</span>
+                            <span class="text-[10px] text-slate-500">Select one or multiple files simultaneously</span>
                         </div>
                     </label>
                 </div>
 
-                <!-- Database Live Statistics & Actions -->
+                <!-- Active Token Info Data -->
                 <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-sm flex flex-col gap-3.5">
-                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Cloud Synchronizer</h3>
+                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Storage Node Engine</h3>
                     
                     <div class="bg-slate-950/60 px-4 py-3 rounded-xl border border-slate-800/60 flex justify-between items-center text-xs font-mono">
-                        <span class="text-slate-400">Vault Node Status:</span>
-                        <span id="syncStatus" class="text-amber-400 font-bold flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Checking Storage...
-                        </span>
+                        <span class="text-slate-400">Total Minted Assets:</span>
+                        <span id="assetCounter" class="text-cyan-400 font-bold">0 Active</span>
                     </div>
 
-                    <!-- Meta specifications -->
+                    <!-- Meta specs -->
                     <div id="metaInfoCard" class="hidden bg-slate-950/30 p-4 rounded-xl border border-slate-800/60 flex flex-col gap-2 text-xs font-mono">
-                        <div class="flex justify-between"><span class="text-slate-500">Asset Title:</span><span id="metaName" class="text-cyan-400 truncate max-w-[180px]">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Selected Asset:</span><span id="metaName" class="text-cyan-400 truncate max-w-[180px]">-</span></div>
                         <div class="flex justify-between"><span class="text-slate-500">Dimensions:</span><span id="metaDim" class="text-slate-300">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-500">Frame Budget:</span><span id="metaFps" class="text-slate-300">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Frame Engine:</span><span id="metaFps" class="text-slate-300">-</span></div>
                     </div>
 
                     <button id="deleteBtn" class="hidden w-full bg-red-950/40 hover:bg-red-900/60 text-red-400 font-bold py-3 px-4 rounded-xl text-xs border border-red-900/50 transition-all tracking-wider uppercase cursor-pointer">
-                        Wipe Asset From Firebase
+                        Burn Token From Cloud
                     </button>
                 </div>
             </div>
 
-            <!-- Right Side: The 512x512 Full Bleed NFT Showcase Card -->
-            <div class="flex flex-col items-center justify-center w-full">
+            <!-- Right Side Focus Area: Big 512x512 Studio Display (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col items-center justify-center w-full">
                 <div class="w-full flex justify-between items-center max-w-[512px] mb-2 px-1">
-                    <span class="text-[11px] font-mono text-slate-500 uppercase tracking-widest">SHOWCASE_SLOT_01</span>
-                    <span class="text-[11px] font-mono text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/10">ERC-721 Lottie</span>
+                    <span class="text-[11px] font-mono text-slate-500 uppercase tracking-widest">THEATER DISPLAY MODULE</span>
+                    <span class="text-[11px] font-mono text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/10">512x512 Canvas</span>
                 </div>
 
-                <!-- Core 512x512 Canvas Container -->
+                <!-- Core 512x512 Canvas Box (NO BOUNDS, NO LEAKS, NO PADDING) -->
                 <div class="w-[512px] h-[512px] min-w-[512px] min-h-[512px] bg-slate-900 rounded-2xl border border-slate-800 nft-card-shadow overflow-hidden relative group">
-                    
-                    <!-- Full-bleed Lottie Canvas Area (NO MARGINS, NO PADDING) -->
                     <div id="nftLottieCanvas" class="w-full h-full object-cover flex items-center justify-center bg-black">
-                        <!-- Default Placeholder Graphic inside 512x512 box -->
-                        <div id="canvasPlaceholder" class="flex flex-col items-center gap-3 text-slate-600 transition-colors group-hover:text-slate-400">
+                        <!-- Placeholder -->
+                        <div id="canvasPlaceholder" class="flex flex-col items-center gap-3 text-slate-600">
                             <svg class="w-16 h-16 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l8.982-11.795H14.19l.813-5.096L6 16h3.813z"></path></svg>
-                            <span class="text-xs font-mono tracking-widest uppercase">Vault Empty • Awaiting Feed</span>
+                            <span class="text-xs font-mono tracking-widest uppercase">Select an Asset Below</span>
                         </div>
                     </div>
 
-                    <!-- Sleek Overlay HUD info when asset runs inside card -->
-                    <div id="hudOverlay" class="hidden absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent border-t border-slate-800/40">
+                    <!-- Overlay HUD info -->
+                    <div id="hudOverlay" class="hidden absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent border-t border-slate-800/40">
                         <div class="flex justify-between items-end">
                             <div>
-                                <p class="text-[10px] text-cyan-400 font-mono tracking-wider font-semibold uppercase">Active Token</p>
-                                <h4 id="hudTitle" class="text-base font-black tracking-tight text-white mt-0.5">Lottie Engine #777</h4>
+                                <p class="text-[10px] text-cyan-400 font-mono tracking-wider font-semibold uppercase">Active Vault Stream</p>
+                                <h4 id="hudTitle" class="text-sm font-black tracking-tight text-white mt-0.5 truncate max-w-[320px]">Asset Engine</h4>
                             </div>
-                            <div class="text-right font-mono">
-                                <p class="text-[9px] text-slate-500 uppercase tracking-wider">Blockchain Mint</p>
-                                <p class="text-xs text-emerald-400 font-bold">Firebase Core</p>
+                            <div class="text-right font-mono text-[10px]">
+                                <span class="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">Live Cloud Node</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
+
+        <!-- Lower Block: Interactive Catalog Grid System -->
+        <div class="w-full border-t border-slate-900 pt-8">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 font-mono flex items-center gap-2">
+                <span>📁</span> Cloud Collection Catalog Grid
+            </h3>
+            
+            <!-- Grid Container -->
+            <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Dynamic cards generate here -->
+                <div id="gridLoadingState" class="col-span-full text-center py-12 text-slate-600 font-mono text-xs uppercase tracking-widest">
+                    Synchronizing Index Cluster...
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Footer System -->
     <footer class="p-4 text-center text-[10px] text-slate-600 border-t border-slate-900 bg-slate-950 mt-12 tracking-wider font-mono uppercase">
-        Immutable Cloud Web3 Sandbox • Built for Digital Artifacts
+        Immutable Cloud Multi-Asset Vault Sandbox • ERC-721 Paradigm UI
     </footer>
 
-    <!-- Firebase SDK Modular Import Core Scripts -->
+    <!-- Firebase SDK Imports and Multi-Logical Tree System -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, get, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Injected User Custom Firebase Database Parameter Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyASICdqWjF3bzvtwASwCIXVe0AUfoUeTqU",
             authDomain: "castclick-cdfeb.firebaseapp.com",
@@ -164,148 +171,227 @@ html_content = """<!DOCTYPE html>
             appId: "1:578052056343:web:1042963805caa11f360352"
         };
 
-        // Fire-up instance nodes
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        // Target paths for current single NFT persistent record
-        const dbRecordPath = ref(database, 'vaulted_lottie_nft');
+        // Root path node where collection elements array object is mapped
+        const collectionRootRef = ref(database, 'lottie_vault_collection');
 
-        // Document DOM Nodes references
+        // References
         const jsonFileInput = document.getElementById('jsonFileInput');
-        const syncStatus = document.getElementById('syncStatus');
+        const assetCounter = document.getElementById('assetCounter');
         const nftLottieCanvas = document.getElementById('nftLottieCanvas');
         const canvasPlaceholder = document.getElementById('canvasPlaceholder');
         const hudOverlay = document.getElementById('hudOverlay');
         const hudTitle = document.getElementById('hudTitle');
         const deleteBtn = document.getElementById('deleteBtn');
+        const catalogGrid = document.getElementById('catalogGrid');
+        const gridLoadingState = document.getElementById('gridLoadingState');
         
         const metaInfoCard = document.getElementById('metaInfoCard');
         const metaName = document.getElementById('metaName');
         const metaDim = document.getElementById('metaDim');
         const metaFps = document.getElementById('metaFps');
 
-        let activeLottieInstance = null;
+        let localCacheMap = {}; // Holds objects locally to prevent re-fetching
+        let currentSelectedKey = null;
+        let activeMainLottieInstance = null;
+        let activeGridInstances = {}; // Track loop players for thumbnails
 
-        // Auto initialization routine: Pull content from database immediately on load
+        // Bootstrap loader
         window.addEventListener('DOMContentLoaded', () => {
-            fetchExistingTokenFromCloud();
+            refreshCollectionFromDatabase();
         });
 
-        // Pull method (Persistence mechanism)
-        function fetchExistingTokenFromCloud() {
-            syncStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Pulling from cloud...`;
-            syncStatus.className = "text-amber-400 font-bold flex items-center gap-1.5";
+        // Pull full map cluster from server
+        function refreshCollectionFromDatabase() {
+            get(collectionRootRef).then((snapshot) => {
+                catalogGrid.innerHTML = ""; // Wipe DOM cleanly
+                localCacheMap = {};
+                
+                // Clear obsolete thumbnail allocations
+                Object.keys(activeGridInstances).forEach(k => {
+                    if(activeGridInstances[k]) activeGridInstances[k].destroy();
+                });
+                activeGridInstances = {};
 
-            get(dbRecordPath).then((snapshot) => {
                 if (snapshot.exists()) {
-                    const record = snapshot.val();
-                    syncStatus.innerHTML = `✓ Synced with Firebase`;
-                    syncStatus.className = "text-emerald-400 font-bold flex items-center gap-1.5";
-                    
-                    // Trigger execution pipe to setup animation view
-                    renderLottieToNftCanvas(record.lottieJsonString, record.fileName);
-                    updateStatsUi(record.fileName, record.dimensions, record.frames);
-                } else {
-                    syncStatus.innerHTML = `○ Vault Empty (No data)`;
-                    syncStatus.className = "text-slate-500 font-bold flex items-center gap-1.5";
-                }
-            }).catch((error) => {
-                console.error("Firebase Snapshot Error: ", error);
-                syncStatus.innerHTML = `✕ Connection Failed`;
-                syncStatus.className = "text-red-400 font-bold flex items-center gap-1.5";
-            });
-        }
+                    localCacheMap = snapshot.val();
+                    const keys = Object.keys(localCacheMap);
+                    assetCounter.textContent = `${keys.length} Items Vaulted`;
 
-        // Upload Pipeline Trigger
-        jsonFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            syncStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> Committing changes...`;
-            syncStatus.className = "text-cyan-400 font-bold flex items-center gap-1.5";
-
-            const reader = new FileReader();
-            reader.readAsText(file);
-            reader.onload = function(event) {
-                try {
-                    const rawParsedJson = JSON.parse(event.target.result);
-
-                    // Integrity check schema check
-                    if (!rawParsedJson.v || !rawParsedJson.layers) {
-                        alert("Invalid Schema: Uploaded file does not contain compliant Lottie framework data nodes.");
-                        fetchExistingTokenFromCloud();
-                        return;
-                    }
-
-                    const dimText = `${rawParsedJson.w || 500} x ${rawParsedJson.h || 500}`;
-                    const fpsText = `${rawParsedJson.fr || 30} FPS / ${rawParsedJson.op || 0} Frames`;
-
-                    // Push package structures directly into Firebase
-                    set(dbRecordPath, {
-                        fileName: file.name,
-                        dimensions: dimText,
-                        frames: fpsText,
-                        lottieJsonString: JSON.stringify(rawParsedJson),
-                        timestamp: Date.now()
-                    }).then(() => {
-                        syncStatus.innerHTML = `✓ Saved Successfully`;
-                        syncStatus.className = "text-emerald-400 font-bold flex items-center gap-1.5";
-                        
-                        renderLottieToNftCanvas(JSON.stringify(rawParsedJson), file.name);
-                        updateStatsUi(file.name, dimText, fpsText);
+                    // Generate UI Cards
+                    keys.forEach(key => {
+                        const data = localCacheMap[key];
+                        createGridCardUi(key, data);
                     });
 
-                } catch (err) {
-                    alert("Processing Error: Unable to compile current file payload safely into valid object maps.");
-                    fetchExistingTokenFromCloud();
+                    // Auto-load the first element on screen if none selected
+                    if (!currentSelectedKey || !localCacheMap[currentSelectedKey]) {
+                        selectAssetNode(keys[0]);
+                    } else {
+                        selectAssetNode(currentSelectedKey);
+                    }
+                } else {
+                    assetCounter.textContent = "0 Items Vaulted";
+                    catalogGrid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-600 font-mono text-xs uppercase tracking-widest">No assets found in vault. Upload JSON parameters to initialize.</div>`;
+                    resetMainTheaterUi();
                 }
-            };
-        });
-
-        // Core Render Execution into full bleed 512px box
-        function renderLottieToNftCanvas(jsonString, assetTitle) {
-            // Un-mount previous node engine tree allocation structures
-            if (activeLottieInstance) {
-                activeLottieInstance.destroy();
-            }
-
-            // Flush out fallback placeholder layout trees
-            canvasPlaceholder.style.display = 'none';
-            hudOverlay.classList.remove('hidden');
-            hudTitle.textContent = assetTitle;
-
-            const targetPayload = JSON.parse(jsonString);
-
-            // Trigger Bodymovin system execution to container frame block
-            activeLottieInstance = lottie.loadAnimation({
-                container: nftLottieCanvas,
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                animationData: targetPayload
+            }).catch(err => {
+                console.error(err);
+                catalogGrid.innerHTML = `<div class="col-span-full text-center py-12 text-red-500 font-mono text-xs uppercase tracking-widest">Database Sync Error Hook. Check Configurations.</div>`;
             });
         }
 
-        // Status Visual UI Updater
-        function updateStatsUi(name, dim, frameBudget) {
-            metaInfoCard.classList.remove('hidden');
-            deleteBtn.classList.remove('hidden');
+        // Build grid layout template components
+        function createGridCardUi(key, itemData) {
+            const card = document.createElement('div');
+            card.className = `gallery-card-shadow border bg-slate-900/40 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col group relative ${currentSelectedKey === key ? 'border-cyan-500 bg-slate-900' : 'border-slate-800'}`;
+            card.id = `card_${key}`;
             
-            metaName.textContent = name;
-            metaDim.textContent = dim;
-            metaFps.textContent = frameBudget;
+            // Thumbnail canvas area
+            const thumbContainer = document.createElement('div');
+            thumbContainer.className = "w-full aspect-square bg-black border-b border-slate-950/60 overflow-hidden flex items-center justify-center relative";
+            
+            card.appendChild(thumbContainer);
+
+            // Details section
+            const descArea = document.createElement('div');
+            descArea.className = "p-2.5 flex flex-col min-w-0";
+            descArea.innerHTML = `
+                <span class="text-[10px] font-mono text-cyan-400 font-bold truncate">${itemData.fileName}</span>
+                <span class="text-[8px] font-mono text-slate-500 uppercase tracking-tighter mt-0.5">${itemData.dimensions}</span>
+            `;
+            card.appendChild(descArea);
+
+            // Trigger activation click capture
+            card.addEventListener('click', () => {
+                selectAssetNode(key);
+            });
+
+            catalogGrid.appendChild(card);
+
+            // Lazy deferred rendering configuration for grid tiny loop previewers
+            setTimeout(() => {
+                try {
+                    const parsed = JSON.parse(itemData.lottieJsonString);
+                    activeGridInstances[key] = lottie.loadAnimation({
+                        container: thumbContainer,
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        animationData: parsed
+                    });
+                } catch(e) {
+                    thumbContainer.innerHTML = `<span class="text-[8px] text-red-500 font-mono">ERR</span>`;
+                }
+            }, 50);
         }
 
-        // Destructor: Remove asset node entry from Firebase realtime server tree
-        window.changeStyle = function() {}; // Reserved fallback
+        // Focus selection activation trigger logic
+        function selectAssetNode(key) {
+            if (!localCacheMap[key]) return;
+            
+            // Reset active styles
+            if (currentSelectedKey) {
+                const oldCard = document.getElementById(`card_${currentSelectedKey}`);
+                if (oldCard) oldCard.className = "gallery-card-shadow border border-slate-800 bg-slate-900/40 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col group relative";
+            }
+            
+            currentSelectedKey = key;
+            const newCard = document.getElementById(`card_${key}`);
+            if (newCard) newCard.className = "gallery-card-shadow border border-cyan-500 bg-slate-900 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col group relative";
+
+            const selectedAsset = localCacheMap[key];
+            
+            // Push active attributes into theater framework controls
+            metaInfoCard.classList.remove('hidden');
+            deleteBtn.classList.remove('hidden');
+            metaName.textContent = selectedAsset.fileName;
+            metaDim.textContent = selectedAsset.dimensions;
+            metaFps.textContent = selectedAsset.frames;
+
+            // Render theater
+            if (activeMainLottieInstance) activeMainLottieInstance.destroy();
+            canvasPlaceholder.style.display = 'none';
+            hudOverlay.classList.remove('hidden');
+            hudTitle.textContent = selectedAsset.fileName;
+
+            try {
+                activeMainLottieInstance = lottie.loadAnimation({
+                    container: nftLottieCanvas,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    animationData: JSON.parse(selectedAsset.lottieJsonString)
+                });
+            } catch (err) {
+                console.error("Failed to load core track element", err);
+            }
+        }
+
+        // Multi File Input processor pipeline
+        jsonFileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            assetCounter.textContent = "Uploading Package Node Sync...";
+
+            // Process iteration inside promises queue
+            for (const file of files) {
+                await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.readAsText(file);
+                    reader.onload = function(event) {
+                        try {
+                            const rawParsedJson = JSON.parse(event.target.result);
+                            if (rawParsedJson.v && rawParsedJson.layers) {
+                                const dimText = `${rawParsedJson.w || 500} x ${rawParsedJson.h || 500}`;
+                                const fpsText = `${rawParsedJson.fr || 30} FPS / ${rawParsedJson.op || 0} F`;
+
+                                // Push operation generates auto unique child branches indices keys strings
+                                const newRecordRef = push(collectionRootRef);
+                                set(newRecordRef, {
+                                    fileName: file.name,
+                                    dimensions: dimText,
+                                    frames: fpsText,
+                                    lottieJsonString: JSON.stringify(rawParsedJson),
+                                    timestamp: Date.now()
+                                }).then(() => resolve());
+                            } else {
+                                resolve(); // silently skip corrupted schema blocks
+                            }
+                        } catch (err) {
+                            resolve(); // catch formatting parse faults safely
+                        }
+                    };
+                });
+            }
+            
+            // Complete upload cycle flush
+            jsonFileInput.value = ""; // flush file element track
+            refreshCollectionFromDatabase();
+        });
+
+        // Reset display structures if completely clean
+        function resetMainTheaterUi() {
+            if (activeMainLottieInstance) activeMainLottieInstance.destroy();
+            canvasPlaceholder.style.display = 'flex';
+            hudOverlay.classList.add('hidden');
+            metaInfoCard.classList.add('hidden');
+            deleteBtn.classList.add('hidden');
+            currentSelectedKey = null;
+        }
+
+        // Wipe selected element index location block
         deleteBtn.addEventListener('click', () => {
-            if (confirm("Are you absolutely sure you want to permanently delete this asset record from Firebase? This node action is irreversible.")) {
-                syncStatus.innerHTML = `Removing token...`;
-                
-                remove(dbRecordPath).then(() => {
-                    alert("Asset purged from database node.");
-                    location.reload(); // Hard flush status state
+            if (!currentSelectedKey) return;
+            if (confirm("Are you certain you wish to purge this item index from the Firebase permanent cloud tree cluster?")) {
+                const targetDeleteNode = ref(database, `lottie_vault_collection/${currentSelectedKey}`);
+                remove(targetDeleteNode).then(() => {
+                    alert("Asset burned.");
+                    currentSelectedKey = null;
+                    refreshCollectionFromDatabase();
                 });
             }
         });
@@ -314,6 +400,6 @@ html_content = """<!DOCTYPE html>
 </html>
 """
 
-with open("nft-lottie-studio.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
-print("Persistent Firebase NFT Studio generated successfully.")
+with open("nft-multi-lottie-studio.html", "w", encoding="utf-8") as f:
+    f.write(html_content_multi)
+print("Persistent Firebase Multi-File NFT Studio generated successfully.")
