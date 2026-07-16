@@ -3,300 +3,516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Normis · IPFS Token #88 Pixel Generator</title>
+    <title>কালো ব্যাকগ্রাউন্ড</title>
     <style>
         :root {
-            --bg-dark: #070a13;
-            --panel-bg: rgba(17, 25, 40, 0.65);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --accent-blue: #3b82f6;
-            --text-main: #f1f5f9;
+            --bg-dark: #0a0e1a;
+            --panel-bg: rgba(18, 28, 46, 0.85);
+            --border-color: rgba(255, 255, 255, 0.07);
+            --text-main: #f0f4ff;
             --text-muted: #94a3b8;
+            --accent: #3b82f6;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             background: var(--bg-dark);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(189, 0, 255, 0.1) 0px, transparent 50%);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                radial-gradient(ellipse at 10% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 90% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 60%);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 3rem 1.5rem;
+            padding: 2rem 1rem;
             color: var(--text-main);
         }
-
         .container {
-            max-width: 1240px;
+            max-width: 1440px;
             width: 100%;
+            margin: 0 auto;
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 3rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 32px;
+            padding: 2.5rem;
             border: 1px solid var(--border-color);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
         }
-
-        .header { text-align: center; margin-bottom: 2.5rem; }
-        .header h1 {
-            font-size: 2.2rem;
-            background: linear-gradient(to right, #ffffff, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .status-box {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 1.2rem;
-            border-radius: 12px;
+        .header {
             text-align: center;
             margin-bottom: 2.5rem;
-            font-family: monospace;
-            color: #60a5fa;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
-
+        .header h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .header .sub {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1.05rem;
+        }
+        .header .sub span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .status-box {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: #93c5fd;
+            backdrop-filter: blur(8px);
+        }
+        .status-box .counter {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .progress-wrapper {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 1.5rem;
+            margin-bottom: 2rem;
         }
-
         .nft-card {
-            background: rgba(30, 41, 59, 0.4);
-            border-radius: 20px;
-            padding: 1.2rem;
+            background: rgba(30, 41, 59, 0.35);
+            border-radius: 16px;
+            padding: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
         }
-
         .nft-card:hover {
-            transform: translateY(-5px);
-            border-color: #4facfe;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.05);
+            background: rgba(30, 41, 59, 0.65);
         }
-
-        .card-label {
+        .nft-card .card-index {
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             font-family: monospace;
-            margin-bottom: 1rem;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .pixel-wrapper {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .pixel-canvas {
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
-
-        .style-badge {
-            margin-top: 1rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #60a5fa;
-            background: rgba(59, 130, 246, 0.1);
-            padding: 6px 16px;
-            border-radius: 100px;
+            margin-bottom: 0.7rem;
             width: 100%;
             text-align: center;
+            opacity: 0.6;
+        }
+        .nft-card .image-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.3);
+            background: #000000;
+        }
+        .nft-card .image-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated; /* পিক্সেল আর্টের ক্লারিটি ধরে রাখার জন্য */
+            background: #000000;
+        }
+        .nft-card .token-id {
+            margin-top: 0.6rem;
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.08);
+            padding: 3px 12px;
+            border-radius: 100px;
+            border: 1px solid rgba(59, 130, 246, 0.08);
+        }
+        .load-more-btn {
+            display: block;
+            width: 200px;
+            margin: 2rem auto 0 auto;
+            padding: 1rem;
+            background: var(--accent);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .load-more-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+        .load-more-btn:disabled {
+            background: #475569;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(24px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: rgba(18, 28, 46, 0.95);
+            border-radius: 28px;
+            padding: 2rem;
+            max-width: 650px;
+            width: 100%;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+            animation: scaleIn 0.3s ease;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #94a3b8;
+            font-size: 1.8rem;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-family: sans-serif;
+        }
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            transform: rotate(90deg);
+        }
+        .modal-image-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            background: #000000;
+        }
+        .modal-image-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
+            background: #000000;
+        }
+        .modal-title {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .modal-sub {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; }
+        }
+        @media (max-width: 640px) {
+            .container { padding: 1.2rem; }
+            .header h1 { font-size: 1.8rem; }
+            .card-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
+            .nft-card { padding: 0.7rem; }
+            .modal-content { padding: 1.2rem; margin: 1rem; }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
-        <h1>🎨 IPFS Token #88 মাল্টি-স্টাইল জেনারেটর</h1>
-        <p style="color: var(--text-muted); margin-top: 0.5rem;">মেটাডাটা ইমেজ লাইভ প্রসেসিং ইঞ্জিন</p>
+        <h1>Black Background Generator</h1>
+        <div class="sub">মূল NFT অপরিবর্তিত · শুধু ব্যাকগ্রাউন্ড কালো · <span>ফ্লিপ ডান → বাম</span></div>
     </div>
-
     <div class="status-box" id="statusLog">
-        ⏳ IPFS গেটওয়ে থেকে টোকেন #৮৮ এর মেটাডাটা ও ইমেজ রিড করা হচ্ছে...
+        ⏳ মেটাডাটা লোড হচ্ছে... <span class="counter" id="loadedCount">0</span> / 10000
     </div>
-
+    <div class="progress-wrapper">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
     <div class="card-grid" id="cardGrid"></div>
+    <button class="load-more-btn" id="loadMoreBtn" disabled>⏳ লোড হচ্ছে...</button>
+</div>
+
+<!-- মোডাল -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+        <button class="modal-close" id="modalClose">✕</button>
+        <div class="modal-image-wrapper">
+            <canvas id="modalCanvas" width="600" height="600"></canvas>
+        </div>
+        <div class="modal-title" id="modalTitle">Token #1</div>
+        <div class="modal-sub" id="modalSub">Original NFT · ব্যাকগ্রাউন্ড কালো</div>
+    </div>
 </div>
 
 <script>
-    const TARGET_IPFS = "ipfs://bafybeicyrh4lkik6zhqlheqj4qu6pbc4w3w4hkfbdvoufchzfjwpby5lma/88";
+    // ——— কনফিগ ———
+    const METADATA_BASE = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq";
     const GATEWAY = "https://ipfs.io/ipfs/";
+    const TOTAL_TOKENS = 10000;  // ১০,০০০ টি NFT
+    const BATCH_SIZE = 20;
+    
+    let loadedTokens = 0;
+    let isProcessing = false;
 
-    const PIXEL_STYLES = [
-        { id: 'classic', name: '✦ Classic 64x64', res: 64 },
-        { id: 'minipepe', name: '🐸 Mini Pepe Cute Vibe', res: 48 },
-        { id: 'nerd_hd', name: '🤓 Digital Nerds 4K', res: 64 },
-        { id: 'dreamer', name: '✨ Digital Dreamer Glow', res: 64 },
-        { id: 'cyberpunk', name: '🌆 Cyberpunk Neon', res: 48 },
-        { id: 'vintage', name: '🎞️ Vintage Retro Gaming', res: 32 },
-        { id: 'pastel', name: '🍦 Cute Pastel Matte', res: 48 },
-        { id: 'monochrome', name: '🔲 GameBoy Monochrome', res: 32 },
-        { id: 'warm', name: '🌅 Warm Golden Hour', res: 64 },
-        { id: 'ice', name: '❄️ Cold Ice Nordic', res: 64 },
-        { id: 'matrix', name: '📟 Digital Matrix Code', res: 48 },
-        { id: 'highpoly_3d', name: '💎 Glossy Resin Poly', res: 64 },
-        { id: 'amber', name: '🏺 Amber Antique', res: 48 },
-        { id: 'toxic', name: '🧪 Toxic Radioactive', res: 32 }
-    ];
+    // ——— DOM রেফ ———
+    const grid = document.getElementById('cardGrid');
+    const statusLog = document.getElementById('statusLog');
+    const loadedCount = document.getElementById('loadedCount');
+    const progressBar = document.getElementById('progressBar');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
 
-    function initGrid() {
-        document.getElementById('cardGrid').innerHTML = PIXEL_STYLES.map(style => `
-            <div class="nft-card">
-                <div class="card-label">TOKEN #88 <span>${style.res}x${style.res}</span></div>
-                <div class="pixel-wrapper">
-                    <canvas class="pixel-canvas" id="canvas-${style.id}" width="${style.res}" height="${style.res}"></canvas>
-                </div>
-                <div class="style-badge">${style.name}</div>
-            </div>
-        `).join('');
+    // ——— মোডাল ———
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalCanvas = document.getElementById('modalCanvas');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSub = document.getElementById('modalSub');
+    const modalClose = document.getElementById('modalClose');
+
+    function closeModal() {
+        modalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    // ——— মেটাডাটা লোড ———
+    async function loadMetadata(start, count) {
+        const promises = [];
+        for (let i = start; i < start + count && i <= TOTAL_TOKENS; i++) {
+            const url = `${GATEWAY}${METADATA_BASE.replace('ipfs://', '')}/${i}`;
+            promises.push(
+                fetch(url)
+                    .then(res => res.ok ? res.json() : null)
+                    .catch(() => null)
+            );
+        }
+        return Promise.all(promises);
     }
 
-    async function loadIpfsImage() {
-        const statusLog = document.getElementById('statusLog');
-        const cidPath = TARGET_IPFS.replace("ipfs://", "");
-        const metaUrl = `${GATEWAY}${cidPath}`;
+    // ——— অ্যাডভান্সড ড্র ফাংশন (ব্যাকগ্রাউন্ড কালার রিমুভ করে কালো করা ও ফ্লিপ) ———
+    function drawNormisNFT(ctx, res, img) {
+        // ১. একটি অফ-স্ক্রিন ক্যানভাস তৈরি করছি পিক্সেল প্রসেস করার জন্য
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = res;
+        tempCanvas.height = res;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // অফ-স্ক্রিন ক্যানভাসে মূল ছবি ড্র করলাম
+        tempCtx.drawImage(img, 0, 0, res, res);
+        
+        // ইমেজ ডাটা এক্সট্রাক্ট করা হচ্ছে
+        const imgData = tempCtx.getImageData(0, 0, res, res);
+        const data = imgData.data;
+        
+        // ছবির টপ-লেফট কর্নারের (0,0) পিক্সেলটিকে বেস ব্যাকগ্রাউন্ড কালার হিসেবে ডিটেক্ট করছি
+        const bgR = data[0];
+        const bgG = data[1];
+        const bgB = data[2];
+        
+        // ব্যাকগ্রাউন্ডের হালকা গ্রেডিয়েন্ট বা নয়েজ সামলানোর জন্য টলারেন্স সেট (ছাড়)
+        const tolerance = 35; 
 
-        try {
-            const response = await fetch(metaUrl);
-            if(!response.ok) throw new Error("মেটাডাটা লোড করতে ব্যর্থ হয়েছে।");
+        // প্রতিটি পিক্সেল চেক করে ব্যাকগ্রাউন্ড কালার পিওর ব্ল্যাক (#000000) করা হচ্ছে
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
             
-            const metadata = await response.json();
-            let rawImgUrl = metadata.image || metadata.file_url;
-            
-            if(!rawImgUrl) throw new Error("মেটাডাটাতে কোনো ইমেজ ফাইল পাওয়া যায়নি।");
+            // যদি কারেন্ট পিক্সেলের কালার ডিটেক্টেড ব্যাকগ্রাউন্ড কালারের সাথে ম্যাচ করে
+            if (Math.abs(r - bgR) < tolerance && 
+                Math.abs(g - bgG) < tolerance && 
+                Math.abs(b - bgB) < tolerance) {
+                
+                data[i] = 0;       // Red
+                data[i + 1] = 0;   // Green
+                data[i + 2] = 0;   // Blue
+                data[i + 3] = 255; // Alpha (সম্পূর্ণ সলিড কালো)
+            }
+        }
+        
+        // মডিফাইড ইমেজ ডাটা অফ-স্ক্রিন ক্যানভাসে পুশ করা হলো
+        tempCtx.putImageData(imgData, 0, 0);
 
-            let finalImgUrl = rawImgUrl.startsWith("ipfs://") 
-                ? rawImgUrl.replace("ipfs://", GATEWAY) 
-                : rawImgUrl;
+        // ২. মেইন ডিসপ্লে ক্যানভাস রেডি করা
+        ctx.imageSmoothingEnabled = false; // পিক্সেল আর্ট শার্প রাখার জন্য ফলস
+        
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, res, res);
+        
+        // ৩. প্রসেসড অফ-স্ক্রিন ইমেজকে ডান থেকে বামে ফ্লিপ করে ড্র
+        ctx.save();
+        ctx.translate(res, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(tempCanvas, 0, 0, res, res);
+        ctx.restore();
+    }
 
-            statusLog.innerHTML = `✅ মেটাডাটা রিড করা সফল! ইমেজ সোর্স প্রসেস করা হচ্ছে...`;
+    // ——— একক NFT প্রসেস ———
+    function processNFT(metadata, index) {
+        return new Promise((resolve) => {
+            const imgUrl = metadata?.image || metadata?.file_url || '';
+            if (!imgUrl) {
+                resolve(null);
+                return;
+            }
+
+            const finalUrl = imgUrl.startsWith('ipfs://') 
+                ? imgUrl.replace('ipfs://', GATEWAY) 
+                : imgUrl;
 
             const img = new Image();
-            img.crossOrigin = "Anonymous";
+            img.crossOrigin = "Anonymous"; // পিক্সেল ম্যানিপুলেশনের জন্য এটি বাধ্যতামূলক (CORS সমাধান)
+
             img.onload = () => {
-                statusLog.innerHTML = `🚀 টোকেন #৮৮ এর ওপর সফলভাবে ১৪টি পিক্সেল ফিল্টার রেন্ডার করা হয়েছে!`;
-                processAllStyles(img);
+                const res = 512; 
+                const canvas = document.createElement('canvas');
+                canvas.width = res;
+                canvas.height = res;
+                const ctx = canvas.getContext('2d');
+                
+                // ইমেজ প্রসেসিং ও ড্র ফাংশন কল
+                drawNormisNFT(ctx, res, img);
+
+                const card = document.createElement('div');
+                card.className = 'nft-card';
+                card.dataset.index = index;
+                card.innerHTML = `
+                    <div class="card-index">#${index}</div>
+                    <div class="image-wrapper"></div>
+                    <div class="token-id">🗿 Token #${index}</div>
+                `;
+
+                const wrapper = card.querySelector('.image-wrapper');
+                wrapper.appendChild(canvas);
+
+                card.addEventListener('click', () => {
+                    openModal(canvas, `🗿 Token #${index}`, `Normis Style · শুধু ব্যাকগ্রাউন্ড কালো · ${index}/10000`);
+                });
+
+                resolve(card);
             };
-            img.onerror = () => {
-                statusLog.innerHTML = `❌ CORS বা গেটওয়ে সমস্যার কারণে ইমেজ লোড ফাইল লক হয়ে গেছে।`;
-            };
-            img.src = finalImgUrl;
 
-        } catch (error) {
-            statusLog.innerHTML = `❌ ভুল: ${error.message} (পাবলিক IPFS গেটওয়ে রেসপন্স টাইমআউট হতে পারে)`;
-        }
-    }
-
-    function processAllStyles(currentImage) {
-        PIXEL_STYLES.forEach(style => {
-            const canvas = document.getElementById(`canvas-${style.id}`);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const res = style.res;
-
-            ctx.clearRect(0, 0, res, res);
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(currentImage, 0, 0, res, res);
-
-            const imgData = ctx.getImageData(0, 0, res, res);
-            const data = imgData.data;
-
-            for (let i = 0; i < data.length; i += 4) {
-                let r = data[i], g = data[i+1], b = data[i+2];
-                let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-
-                switch(style.id) {
-                    case 'minipepe':
-                        data[i] = Math.max(0, r - 20);
-                        data[i+1] = Math.min(255, g * 1.3 + 20);
-                        data[i+2] = Math.max(0, b - 10);
-                        break;
-                    case 'nerd_hd':
-                        data[i] = Math.min(255, r * 1.2);
-                        data[i+1] = Math.min(255, g * 1.2);
-                        data[i+2] = Math.min(255, b * 1.3);
-                        break;
-                    case 'dreamer':
-                        data[i] = Math.min(255, r * 0.9 + 40);
-                        data[i+1] = Math.min(255, g * 0.8 + 50);
-                        data[i+2] = Math.min(255, b * 1.2 + 60);
-                        break;
-                    case 'cyberpunk':
-                        data[i] = Math.min(255, r * 1.5 + 40);
-                        data[i+1] = Math.min(255, g * 0.3);
-                        data[i+2] = Math.min(255, b * 1.8 + 50);
-                        break;
-                    case 'vintage':
-                        data[i] = Math.min(255, (r * 0.39) + (g * 0.76) + (b * 0.18));
-                        data[i+1] = Math.min(255, (r * 0.34) + (g * 0.68) + (b * 0.16));
-                        data[i+2] = Math.min(255, (r * 0.27) + (g * 0.53) + (b * 0.13));
-                        break;
-                    case 'pastel':
-                        data[i] = Math.min(255, r * 0.6 + 100);
-                        data[i+1] = Math.min(255, g * 0.6 + 100);
-                        data[i+2] = Math.min(255, b * 0.5 + 120);
-                        break;
-                    case 'monochrome':
-                        let v = gray > 127 ? 240 : 30;
-                        data[i] = data[i+1] = data[i+2] = v;
-                        break;
-                    case 'warm':
-                        data[i] = Math.min(255, r * 1.4 + 30);
-                        data[i+1] = Math.min(255, g * 1.1 + 10);
-                        data[i+2] = b * 0.6;
-                        break;
-                    case 'ice':
-                        data[i] = r * 0.5;
-                        data[i+1] = Math.min(255, g * 1.1 + 20);
-                        data[i+2] = Math.min(255, b * 1.5 + 40);
-                        break;
-                    case 'matrix':
-                        data[i] = 0; data[i+1] = Math.min(255, gray * 1.6); data[i+2] = 0;
-                        break;
-                    case 'highpoly_3d':
-                        let factor = gray > 180 ? 1.4 : 0.8;
-                        data[i] = Math.min(255, r * factor);
-                        data[i+1] = Math.min(255, g * factor);
-                        data[i+2] = Math.min(255, b * factor);
-                        break;
-                    case 'amber':
-                        data[i] = Math.min(255, gray * 1.3); data[i+1] = Math.min(255, gray * 0.9); data[i+2] = Math.min(255, gray * 0.3);
-                        break;
-                    case 'toxic':
-                        data[i] = Math.min(255, r * 0.8 + 20); data[i+1] = Math.min(255, g * 1.5 + 40); data[i+2] = 0;
-                        break;
-                }
-            }
-            ctx.putImageData(imgData, 0, 0);
+            img.onerror = () => resolve(null);
+            img.src = finalUrl;
         });
     }
 
-    // রান ইঞ্জিন
-    initGrid();
-    loadIpfsImage();
+    // ——— মোডাল ওপেন ———
+    function openModal(sourceCanvas, title, sub) {
+        const ctx = modalCanvas.getContext('2d');
+        modalCanvas.width = 600;
+        modalCanvas.height = 600;
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 600, 600);
+        ctx.drawImage(sourceCanvas, 0, 0, 600, 600);
+
+        modalTitle.textContent = title;
+        modalSub.textContent = sub;
+        modalOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // ——— ব্যাচ প্রসেস ———
+    async function processBatch(startIndex) {
+        if (isProcessing) return;
+        isProcessing = true;
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = '⏳ প্রসেসিং...';
+
+        const end = Math.min(startIndex + BATCH_SIZE - 1, TOTAL_TOKENS);
+        const count = end - startIndex + 1;
+
+        statusLog.innerHTML = `⏳ মেটাডাটা লোড হচ্ছে... <span class="counter">${loadedTokens}</span> / ${TOTAL_TOKENS}`;
+        const metadatas = await loadMetadata(startIndex, count);
+        const fragment = document.createDocumentFragment();
+
+        for (let i = 0; i < metadatas.length; i++) {
+            const meta = metadatas[i];
+            const tokenIndex = startIndex + i;
+            const card = await processNFT(meta, tokenIndex);
+            if (card) {
+                fragment.appendChild(card);
+            }
+            loadedTokens++;
+            loadedCount.textContent = loadedTokens;
+            progressBar.style.width = `${(loadedTokens / TOTAL_TOKENS) * 100}%`;
+            statusLog.innerHTML = `⏳ প্রসেসিং... <span class="counter">${loadedTokens}</span> / ${TOTAL_TOKENS}`;
+        }
+
+        grid.appendChild(fragment);
+
+        if (loadedTokens >= TOTAL_TOKENS) {
+            statusLog.innerHTML = `✅ সম্পূর্ণ! <span class="counter">${TOTAL_TOKENS}</span> টি NFT শুধু ব্যাকগ্রাউন্ড কালো করে (ফ্লিপ সহ) লোড হয়েছে!`;
+            loadMoreBtn.style.display = 'none';
+        } else {
+            statusLog.innerHTML = `⏳ লোড হচ্ছে... <span class="counter">${loadedTokens}</span> / ${TOTAL_TOKENS}`;
+            loadMoreBtn.textContent = `📥 আরও ${Math.min(BATCH_SIZE, TOTAL_TOKENS - loadedTokens)}টি লোড করুন`;
+            loadMoreBtn.disabled = false;
+        }
+        isProcessing = false;
+    }
+
+    loadMoreBtn.addEventListener('click', () => {
+        if (!isProcessing && loadedTokens < TOTAL_TOKENS) {
+            processBatch(loadedTokens + 1);
+        }
+    });
+
+    // প্রথম ব্যাচ রান করা
+    processBatch(1);
 </script>
 </body>
 </html>
