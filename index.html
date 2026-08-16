@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art NFT Generator (5555 Collection)</title>
+    <title>Premium Pixel NFT Generator (10,000 Collection)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -44,6 +44,7 @@
         .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
         .progress-status { font-size: 0.85rem; color: var(--text-muted); text-align: center; font-family: monospace; }
         .trait-box { background: #0f172a; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; color: var(--accent); margin-top: 10px; line-height: 1.6; }
+        .rarity-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; margin-top: 6px; }
 
         @media (max-width: 768px) { .main-container { grid-template-columns: 1fr; } }
     </style>
@@ -51,15 +52,15 @@
 <body>
 
     <header>
-        <h1>5,555 Generative Pixel NFT Creator</h1>
-        <p>বিভিন্ন হেয়ারস্টাইল, চশমা, পোশাক ও মাউথ এক্সপ্রেশন সহ অনন্য ৫,৫৫৫টি NFT এক্সপোর্ট করুন</p>
+        <h1>10,000 Premium Generative Pixel NFT Creator</h1>
+        <p>বিভিন্ন হেয়ারস্টাইল, চশমা, পোশাক, এক্সেসরিজ ও রেয়ারিটি সহ প্রিমিয়াম কোয়ালিটির অনন্য NFT এক্সপোর্ট করুন</p>
     </header>
 
     <div class="main-container">
         <div class="controls-card">
             <div class="control-group">
-                <label for="nftCount">তৈরি করার পরিমাণ (সর্বোচ্চ ৫৫৫৫)</label>
-                <input type="number" id="nftCount" value="5555" min="1" max="5555">
+                <label for="nftCount">তৈরি করার পরিমাণ (সর্বোচ্চ ১০,০০০)</label>
+                <input type="number" id="nftCount" value="5555" min="1" max="10000">
             </div>
 
             <button class="btn btn-primary" id="btnPreview" onclick="generateSinglePreview()">র্যান্ডম প্রিভিউ দেখুন</button>
@@ -67,7 +68,7 @@
 
             <div class="progress-container" id="progressContainer">
                 <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                <div class="progress-status" id="progressStatus">প্রসেসিং হচ্ছে: 0 / 5555</div>
+                <div class="progress-status" id="progressStatus">প্রসেসিং হচ্ছে: 0 / 0</div>
             </div>
         </div>
 
@@ -85,109 +86,240 @@
     </div>
 
     <script>
-        // High quality pixel traits database with weighted rarities, lighting & compatibility rules
+        /* =========================================================
+           RARITY SYSTEM
+           ========================================================= */
+        const RARITY_ORDER  = ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"];
+        const RARITY_WEIGHT = { Common: 100, Uncommon: 42, Rare: 16, Epic: 6, Legendary: 2, Mythic: 0.6 };
+        const RARITY_COLOR  = { Common: "#94a3b8", Uncommon: "#22c55e", Rare: "#3b82f6", Epic: "#a855f7", Legendary: "#eab308", Mythic: "#ef4444" };
+
+        function R(rarity, overrideWeight) {
+            return { rarity, weight: overrideWeight !== undefined ? overrideWeight : RARITY_WEIGHT[rarity] };
+        }
+
+        /* =========================================================
+           TRAIT LIBRARY (expanded, layered, tagged for compatibility)
+           ========================================================= */
         const TRAITS = {
+
             backgrounds: [
-                { name: "Midnight Navy", type: "solid", mainColor: "#090d16", shadow: "#030508", weight: 60 },
-                { name: "Cyber Purple", type: "solid", mainColor: "#2a0845", shadow: "#170327", weight: 60 },
-                { name: "Toxic Emerald", type: "solid", mainColor: "#022c22", shadow: "#011712", weight: 55 },
-                { name: "Crimson Red", type: "solid", mainColor: "#450a0a", shadow: "#270303", weight: 55 },
-                { name: "Sunfire Orange", type: "solid", mainColor: "#431407", shadow: "#270a03", weight: 50 },
-                { name: "Neon Cyan", type: "solid", mainColor: "#083344", shadow: "#031720", weight: 50 },
-                { name: "Deep Violet", type: "solid", mainColor: "#3b0764", shadow: "#200338", weight: 50 },
-                { name: "Golden Glow", type: "solid", mainColor: "#451a03", shadow: "#270e01", weight: 45 },
-                { name: "Hot Pink", type: "solid", mainColor: "#500724", shadow: "#2e0314", weight: 45 },
-                { name: "Dark Terminal", type: "solid", mainColor: "#0f172a", shadow: "#020617", weight: 65 },
-                { name: "Cosmic Stars", type: "pattern_stars", mainColor: "#090d16", shadow: "#030508", accent: "#ffffff", weight: 30 },
-                { name: "Cyber Grid", type: "pattern_grid", mainColor: "#0f172a", shadow: "#020617", accent: "#38bdf8", weight: 25 },
-                { name: "Retro Arcade", type: "pattern_grid", mainColor: "#2a0845", shadow: "#170327", accent: "#f43f5e", weight: 25 },
-                { name: "Lava Core", type: "pattern_stars", mainColor: "#450a0a", shadow: "#270303", accent: "#f97316", weight: 20 },
-                { name: "Glitch Matrix", type: "pattern_grid", mainColor: "#022c22", shadow: "#011712", accent: "#22c55e", weight: 20 },
-                { name: "Holographic Sky", type: "pattern_stars", mainColor: "#3b0764", shadow: "#200338", accent: "#a855f7", weight: 15 },
-                { name: "Golden Treasury", type: "pattern_stars", mainColor: "#451a03", shadow: "#270e01", accent: "#eab308", weight: 10 }
+                { name: "Charcoal Black",   type: "solid",  mainColor: "#18181b", shadow: "#09090b", ...R("Common") },
+                { name: "Midnight Navy",    type: "solid",  mainColor: "#0f172a", shadow: "#020617", ...R("Common") },
+                { name: "Slate Gray",       type: "solid",  mainColor: "#334155", shadow: "#1e293b", ...R("Common") },
+                { name: "Deep Forest",      type: "solid",  mainColor: "#052e16", shadow: "#022c0e", ...R("Common") },
+                { name: "Ocean Blue",       type: "solid",  mainColor: "#0c4a6e", shadow: "#082f49", ...R("Common") },
+                { name: "Espresso Brown",   type: "solid",  mainColor: "#3b2415", shadow: "#22140c", ...R("Common") },
+                { name: "Wine Red",         type: "solid",  mainColor: "#4c0519", shadow: "#2c0210", ...R("Common") },
+                { name: "Steel Blue",       type: "solid",  mainColor: "#1e3a5f", shadow: "#0f1f33", ...R("Uncommon") },
+                { name: "Cyber Purple",     type: "solid",  mainColor: "#2a0845", shadow: "#170327", ...R("Uncommon") },
+                { name: "Toxic Emerald",    type: "solid",  mainColor: "#022c22", shadow: "#011712", ...R("Uncommon") },
+                { name: "Crimson Red",      type: "solid",  mainColor: "#450a0a", shadow: "#270303", ...R("Uncommon") },
+                { name: "Sunfire Orange",   type: "solid",  mainColor: "#431407", shadow: "#270a03", ...R("Uncommon") },
+                { name: "Neon Cyan Depth",  type: "solid",  mainColor: "#083344", shadow: "#031720", ...R("Uncommon") },
+                { name: "Deep Violet",      type: "solid",  mainColor: "#3b0764", shadow: "#200338", ...R("Uncommon") },
+                { name: "Rose Noir",        type: "solid",  mainColor: "#500724", shadow: "#2e0314", ...R("Uncommon") },
+                { name: "Golden Dusk",      type: "pattern_glow", mainColor: "#3f2d0a", shadow: "#241a05", accent: "#eab308", ...R("Rare") },
+                { name: "Magenta Storm",    type: "pattern_grid", mainColor: "#2a0845", shadow: "#170327", accent: "#ec4899", ...R("Rare") },
+                { name: "Electric Blue Grid", type: "pattern_grid", mainColor: "#0f172a", shadow: "#020617", accent: "#38bdf8", ...R("Rare") },
+                { name: "Cosmic Stars",     type: "pattern_stars", mainColor: "#090d16", shadow: "#030508", accent: "#ffffff", ...R("Rare") },
+                { name: "Retro Arcade",     type: "pattern_grid", mainColor: "#1e0a3c", shadow: "#100420", accent: "#f43f5e", ...R("Rare") },
+                { name: "Glitch Matrix",    type: "pattern_noise", mainColor: "#022c22", shadow: "#011712", accent: "#22c55e", ...R("Rare") },
+                { name: "Lava Core",        type: "pattern_stars", mainColor: "#450a0a", shadow: "#270303", accent: "#f97316", ...R("Epic") },
+                { name: "Deep Ocean Abyss", type: "pattern_stars", mainColor: "#042f2e", shadow: "#021a19", accent: "#2dd4bf", ...R("Epic") },
+                { name: "Holographic Sky",  type: "pattern_stars", mainColor: "#3b0764", shadow: "#200338", accent: "#a855f7", ...R("Epic") },
+                { name: "Toxic Wasteland",  type: "pattern_grid", mainColor: "#1a2e05", shadow: "#0d1802", accent: "#84cc16", ...R("Epic") },
+                { name: "Metallic Chrome",  type: "pattern_glow", mainColor: "#334155", shadow: "#1e293b", accent: "#e2e8f0", ...R("Epic") },
+                { name: "Golden Treasury",  type: "pattern_stars", mainColor: "#451a03", shadow: "#270e01", accent: "#eab308", ...R("Legendary") },
+                { name: "Diamond Prism",    type: "pattern_grid", mainColor: "#0c2b3d", shadow: "#061622", accent: "#67e8f9", ...R("Legendary") },
+                { name: "Void Nebula",      type: "pattern_stars", mainColor: "#150422", shadow: "#0a0210", accent: "#d946ef", ...R("Mythic") },
+                { name: "Celestial Throne", type: "pattern_glow", mainColor: "#2e1a00", shadow: "#180d00", accent: "#fef08a", ...R("Mythic") }
             ],
+
             skins: [
-                { name: "Pale Sand", base: "#f5d0c5", shadow: "#d4a396", highlight: "#fff0eb", isDark: false, weight: 60 },
-                { name: "Warm Tan", base: "#d4976a", shadow: "#b07346", highlight: "#eec39a", isDark: false, weight: 60 },
-                { name: "Deep Brown", base: "#8c5338", shadow: "#61341e", highlight: "#aa7052", isDark: true, weight: 55 },
-                { name: "Espresso", base: "#4a2c1d", shadow: "#2a150a", highlight: "#6a4330", isDark: true, weight: 55 },
-                { name: "Ash Gray", base: "#94a3b8", shadow: "#64748b", highlight: "#cbd5e1", isDark: false, weight: 40 },
-                { name: "Ghost White", base: "#e2e8f0", shadow: "#cbd5e1", highlight: "#ffffff", isDark: false, weight: 35 },
-                { name: "Cyber Green", base: "#4ade80", shadow: "#16a34a", highlight: "#86efac", isDark: false, weight: 30 },
-                { name: "Neon Blue", base: "#38bdf8", shadow: "#0284c7", highlight: "#7dd3fc", isDark: false, weight: 25 },
-                { name: "Lava Red", base: "#f87171", shadow: "#dc2626", highlight: "#fca5a5", isDark: false, weight: 20 },
-                { name: "Zombie Mutant", base: "#84cc16", shadow: "#4d7c0f", highlight: "#a3e635", isDark: false, weight: 20 },
-                { name: "Metallic Silver", base: "#cbd5e1", shadow: "#64748b", highlight: "#f8fafc", isDark: false, weight: 15 },
-                { name: "Golden Alloy", base: "#eab308", shadow: "#a16207", highlight: "#fef08a", isDark: false, weight: 10 }
+                { name: "Pale Sand",      base: "#f5d0c5", shadow: "#d4a396", highlight: "#fff0eb", ...R("Common") },
+                { name: "Warm Tan",       base: "#d4976a", shadow: "#b07346", highlight: "#eec39a", ...R("Common") },
+                { name: "Almond",         base: "#c98b5e", shadow: "#a2663c", highlight: "#e2ac81", ...R("Common") },
+                { name: "Warm Brown",     base: "#a9663f", shadow: "#7c4526", highlight: "#c58a5f", ...R("Common") },
+                { name: "Deep Brown",     base: "#8c5338", shadow: "#61341e", highlight: "#aa7052", ...R("Uncommon") },
+                { name: "Espresso",       base: "#4a2c1d", shadow: "#2a150a", highlight: "#6a4330", ...R("Uncommon") },
+                { name: "Ash Gray",       base: "#94a3b8", shadow: "#64748b", highlight: "#cbd5e1", ...R("Uncommon") },
+                { name: "Ghost White",    base: "#e2e8f0", shadow: "#cbd5e1", highlight: "#ffffff", ...R("Uncommon") },
+                { name: "Rose Blush",     base: "#f4b6c2", shadow: "#e18aa0", highlight: "#ffe3ea", ...R("Uncommon"), tag: "soft" },
+                { name: "Cyber Green",    base: "#4ade80", shadow: "#16a34a", highlight: "#86efac", ...R("Rare"), tag: "cyber" },
+                { name: "Neon Blue",      base: "#38bdf8", shadow: "#0284c7", highlight: "#7dd3fc", ...R("Rare"), tag: "cyber" },
+                { name: "Violet Alien",   base: "#a78bfa", shadow: "#6d28d9", highlight: "#ddd6fe", ...R("Epic"), tag: "alien" },
+                { name: "Zombie Mutant",  base: "#84cc16", shadow: "#4d7c0f", highlight: "#a3e635", ...R("Epic"), tag: "zombie" },
+                { name: "Molten Lava",    base: "#f87171", shadow: "#b91c1c", highlight: "#fca5a5", ...R("Legendary"), tag: "lava" },
+                { name: "Metallic Silver",base: "#cbd5e1", shadow: "#64748b", highlight: "#f8fafc", ...R("Legendary"), tag: "metallic" },
+                { name: "Golden Alloy",   base: "#eab308", shadow: "#a16207", highlight: "#fef08a", ...R("Mythic"), tag: "gold" }
             ],
+
             specialAuras: [
-                { name: "None", draw: () => "", weight: 180 },
-                { name: "Golden Aura", draw: () => `<rect x="18" y="18" width="64" height="64" fill="#eab308" opacity="0.15"/><rect x="14" y="14" width="72" height="72" fill="#fef08a" opacity="0.08"/>`, weight: 12 },
-                { name: "Neon Cyber Glow", draw: () => `<rect x="18" y="18" width="64" height="64" fill="#06b6d4" opacity="0.15"/><rect x="14" y="14" width="72" height="72" fill="#67e8f9" opacity="0.08"/>`, weight: 15 },
-                { name: "Fire Aura", draw: () => `<rect x="18" y="18" width="64" height="64" fill="#ef4444" opacity="0.15"/><rect x="14" y="14" width="72" height="72" fill="#fca5a5" opacity="0.08"/>`, weight: 12 },
-                { name: "Glitch Energy", draw: () => `<rect x="10" y="20" width="80" height="2" fill="#ec4899" opacity="0.6"/><rect x="5" y="60" width="90" height="2" fill="#22d3ee" opacity="0.6"/>`, weight: 10 },
-                { name: "Angel Halo", draw: () => `<rect x="36" y="8" width="28" height="4" fill="#fef08a"/><rect x="40" y="6" width="20" height="8" fill="#ffffff" opacity="0.7"/>`, weight: 8 },
-                { name: "Cosmic Particles", draw: () => `<rect x="15" y="25" width="2" height="2" fill="#fff"/><rect x="80" y="35" width="3" height="3" fill="#38bdf8"/><rect x="20" y="70" width="2" height="2" fill="#f43f5e"/><rect x="75" y="75" width="3" height="3" fill="#eab308"/>`, weight: 8 }
+                { name: "None", draw: () => "", ...R("Common", 420) },
+                { name: "Neon Cyan Glow", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#06b6d4" opacity="0.14"/><rect x="12" y="12" width="76" height="76" fill="#67e8f9" opacity="0.07"/>`, ...R("Rare") },
+                { name: "Golden Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#eab308" opacity="0.16"/><rect x="12" y="12" width="76" height="76" fill="#fef08a" opacity="0.08"/>`, ...R("Rare") },
+                { name: "Fire Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#ef4444" opacity="0.16"/><rect x="12" y="12" width="76" height="76" fill="#fca5a5" opacity="0.08"/>`, ...R("Rare") },
+                { name: "Ice Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#38bdf8" opacity="0.14"/><rect x="12" y="12" width="76" height="76" fill="#bae6fd" opacity="0.08"/>`, ...R("Rare") },
+                { name: "Purple Mystic Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#a855f7" opacity="0.15"/><rect x="12" y="12" width="76" height="76" fill="#e9d5ff" opacity="0.07"/>`, ...R("Rare") },
+                { name: "Glitch Energy", draw: () => `<rect x="8" y="20" width="84" height="2" fill="#ec4899" opacity="0.65"/><rect x="4" y="60" width="92" height="2" fill="#22d3ee" opacity="0.65"/><rect x="10" y="42" width="80" height="1" fill="#f8fafc" opacity="0.4"/>`, ...R("Epic") },
+                { name: "Lightning Aura", draw: () => `<rect x="20" y="6" width="4" height="18" fill="#facc15"/><rect x="16" y="20" width="10" height="4" fill="#fde047"/><rect x="76" y="10" width="4" height="18" fill="#facc15"/><rect x="72" y="24" width="10" height="4" fill="#fde047"/>`, ...R("Epic") },
+                { name: "Toxic Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#84cc16" opacity="0.16"/><rect x="10" y="70" width="8" height="8" fill="#a3e635" opacity="0.5"/>`, ...R("Epic") },
+                { name: "Angel Halo", draw: () => `<rect x="34" y="4" width="32" height="4" fill="#fef08a"/><rect x="38" y="2" width="24" height="8" fill="#ffffff" opacity="0.75"/>`, ...R("Legendary") },
+                { name: "Demon Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#7f1d1d" opacity="0.2"/><rect x="10" y="12" width="80" height="80" fill="#ef4444" opacity="0.06"/>`, ...R("Legendary") },
+                { name: "Cosmic Particles", draw: () => `<rect x="14" y="24" width="2" height="2" fill="#fff"/><rect x="82" y="34" width="3" height="3" fill="#38bdf8"/><rect x="18" y="72" width="2" height="2" fill="#f43f5e"/><rect x="78" y="76" width="3" height="3" fill="#eab308"/><rect x="50" y="10" width="2" height="2" fill="#a855f7"/>`, ...R("Legendary") },
+                { name: "Diamond Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#67e8f9" opacity="0.18"/><rect x="10" y="10" width="80" height="80" fill="#ffffff" opacity="0.08"/><rect x="46" y="4" width="8" height="8" fill="#e0f2fe"/>`, ...R("Mythic") },
+                { name: "Celestial Crown Aura", draw: () => `<rect x="14" y="14" width="72" height="72" fill="#fef08a" opacity="0.15"/><rect x="34" y="2" width="32" height="5" fill="#fde047"/><rect x="8" y="20" width="3" height="3" fill="#fff"/><rect x="88" y="24" width="3" height="3" fill="#fff"/>`, ...R("Mythic") }
             ],
+
             headwear: [
-                { name: "Bald", tag: "none", draw: () => "", weight: 50 },
-                { name: "Classic Spiky Hair", tag: "hair", draw: () => `<rect x="30" y="16" width="40" height="15" fill="#1e293b"/><rect x="30" y="10" width="8" height="8" fill="#1e293b"/><rect x="44" y="6" width="12" height="12" fill="#1e293b"/><rect x="60" y="10" width="10" height="8" fill="#1e293b"/><rect x="46" y="8" width="8" height="4" fill="#334155"/>`, weight: 40 },
-                { name: "Neon Cyan Spiky Hair", tag: "hair", draw: () => `<rect x="30" y="16" width="40" height="15" fill="#06b6d4"/><rect x="30" y="10" width="8" height="8" fill="#06b6d4"/><rect x="44" y="6" width="12" height="12" fill="#06b6d4"/><rect x="60" y="10" width="10" height="8" fill="#06b6d4"/><rect x="46" y="8" width="8" height="4" fill="#67e8f9"/>`, weight: 35 },
-                { name: "Punk Pink Mohawk", tag: "hair", draw: () => `<rect x="44" y="6" width="12" height="25" fill="#ec4899"/><rect x="46" y="8" width="8" height="21" fill="#f472b6"/><rect x="44" y="4" width="12" height="4" fill="#fbcfe8"/>`, weight: 30 },
-                { name: "Afro Hair", tag: "hair", draw: () => `<rect x="20" y="10" width="60" height="21" fill="#0f172a"/><rect x="16" y="14" width="68" height="14" fill="#0f172a"/><rect x="24" y="12" width="10" height="4" fill="#334155"/>`, weight: 35 },
-                { name: "Red Baseball Cap", tag: "cap", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#ef4444"/><rect x="20" y="27" width="60" height="5" fill="#b91c1c"/><rect x="44" y="16" width="12" height="15" fill="#dc2626"/><rect x="30" y="18" width="6" height="4" fill="#fca5a5"/>`, weight: 40 },
-                { name: "Backward Black Cap", tag: "cap", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#18181b"/><rect x="64" y="27" width="18" height="5" fill="#09090b"/><rect x="32" y="18" width="6" height="4" fill="#3f3f46"/>`, weight: 35 },
-                { name: "Royal Golden Crown", tag: "crown", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#eab308"/><rect x="28" y="8" width="8" height="10" fill="#eab308"/><rect x="46" y="6" width="8" height="12" fill="#eab308"/><rect x="64" y="8" width="8" height="10" fill="#eab308"/><rect x="30" y="10" width="4" height="4" fill="#ef4444"/><rect x="48" y="8" width="4" height="4" fill="#3b82f6"/><rect x="66" y="10" width="4" height="4" fill="#22c55e"/><rect x="30" y="25" width="40" height="4" fill="#ca8a04"/>`, weight: 15 },
-                { name: "Samurai Helmet", tag: "helmet_full", draw: () => `<rect x="24" y="12" width="52" height="19" fill="#1e1e1e"/><rect x="20" y="27" width="60" height="5" fill="#991b1b"/><rect x="44" y="4" width="12" height="12" fill="#eab308"/><rect x="36" y="6" width="28" height="4" fill="#ca8a04"/>`, weight: 15 },
-                { name: "Cyber Visor Helmet", tag: "helmet_full", draw: () => `<rect x="24" y="10" width="52" height="22" fill="#334155"/><rect x="28" y="22" width="44" height="8" fill="#06b6d4"/><rect x="30" y="24" width="40" height="4" fill="#a5f3fc"/>`, weight: 15 },
-                { name: "Space Explorer Helmet", tag: "helmet_full", draw: () => `<rect x="20" y="8" width="60" height="24" fill="#f8fafc"/><rect x="26" y="14" width="48" height="16" fill="#38bdf8" opacity="0.8"/><rect x="30" y="16" width="12" height="4" fill="#ffffff" opacity="0.8"/>`, weight: 12 },
-                { name: "Demon Horns", tag: "horns", draw: () => `<rect x="24" y="8" width="8" height="16" fill="#dc2626"/><rect x="22" y="6" width="6" height="8" fill="#ef4444"/><rect x="68" y="8" width="8" height="16" fill="#dc2626"/><rect x="72" y="6" width="6" height="8" fill="#ef4444"/>`, weight: 20 },
-                { name: "Wizard Hat", tag: "hat", draw: () => `<rect x="42" y="2" width="16" height="10" fill="#4c1d95"/><rect x="36" y="10" width="28" height="10" fill="#5b21b6"/><rect x="20" y="24" width="60" height="7" fill="#6d28d9"/><rect x="40" y="24" width="20" height="7" fill="#eab308"/>`, weight: 18 }
+                { name: "Bald", tag: "none", draw: () => "", ...R("Common") },
+                { name: "Buzz Cut", tag: "hair", draw: () => `<rect x="28" y="18" width="44" height="10" fill="#1e293b"/><rect x="28" y="16" width="44" height="3" fill="#334155"/>`, ...R("Common") },
+                { name: "Slick Back", tag: "hair", draw: () => `<rect x="28" y="14" width="44" height="14" fill="#1e293b"/><rect x="28" y="14" width="44" height="3" fill="#0f172a"/><rect x="30" y="16" width="10" height="3" fill="#334155"/>`, ...R("Common") },
+                { name: "Side Part", tag: "hair", draw: () => `<rect x="28" y="12" width="44" height="17" fill="#3b2414"/><rect x="30" y="12" width="16" height="4" fill="#5a3a22"/><rect x="46" y="10" width="4" height="6" fill="#3b2414"/>`, ...R("Common") },
+                { name: "Classic Spiky Hair", tag: "hair", draw: () => `<rect x="30" y="16" width="40" height="15" fill="#1e293b"/><rect x="30" y="10" width="8" height="8" fill="#1e293b"/><rect x="44" y="6" width="12" height="12" fill="#1e293b"/><rect x="60" y="10" width="10" height="8" fill="#1e293b"/><rect x="46" y="8" width="8" height="4" fill="#334155"/>`, ...R("Common") },
+                { name: "Curly Hair", tag: "hair", draw: () => `<rect x="26" y="12" width="48" height="18" fill="#2a1608"/><rect x="24" y="16" width="8" height="8" fill="#2a1608"/><rect x="68" y="16" width="8" height="8" fill="#2a1608"/><rect x="30" y="12" width="10" height="5" fill="#4a2c14"/>`, ...R("Uncommon") },
+                { name: "Afro Hair", tag: "hair", draw: () => `<rect x="20" y="10" width="60" height="21" fill="#0f172a"/><rect x="16" y="14" width="68" height="14" fill="#0f172a"/><rect x="24" y="12" width="10" height="4" fill="#334155"/>`, ...R("Uncommon") },
+                { name: "Long Cyber Hair", tag: "hair", draw: () => `<rect x="26" y="12" width="48" height="18" fill="#0891b2"/><rect x="18" y="30" width="10" height="30" fill="#0891b2"/><rect x="72" y="30" width="10" height="30" fill="#0891b2"/><rect x="30" y="12" width="10" height="4" fill="#67e8f9"/>`, ...R("Uncommon") },
+                { name: "Neon Cyan Spiky Hair", tag: "hair", draw: () => `<rect x="30" y="16" width="40" height="15" fill="#06b6d4"/><rect x="30" y="10" width="8" height="8" fill="#06b6d4"/><rect x="44" y="6" width="12" height="12" fill="#06b6d4"/><rect x="60" y="10" width="10" height="8" fill="#06b6d4"/><rect x="46" y="8" width="8" height="4" fill="#67e8f9"/>`, ...R("Uncommon") },
+                { name: "Punk Pink Mohawk", tag: "hair", draw: () => `<rect x="44" y="6" width="12" height="25" fill="#ec4899"/><rect x="46" y="8" width="8" height="21" fill="#f472b6"/><rect x="44" y="4" width="12" height="4" fill="#fbcfe8"/>`, ...R("Uncommon") },
+                { name: "Red Baseball Cap", tag: "cap", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#ef4444"/><rect x="20" y="27" width="60" height="5" fill="#b91c1c"/><rect x="44" y="16" width="12" height="15" fill="#dc2626"/><rect x="30" y="18" width="6" height="4" fill="#fca5a5"/>`, ...R("Uncommon") },
+                { name: "Backward Black Cap", tag: "cap", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#18181b"/><rect x="64" y="27" width="18" height="5" fill="#09090b"/><rect x="32" y="18" width="6" height="4" fill="#3f3f46"/>`, ...R("Uncommon") },
+                { name: "Beanie", tag: "cap", draw: () => `<rect x="26" y="14" width="48" height="16" fill="#7c2d12"/><rect x="26" y="26" width="48" height="6" fill="#9a3412"/><rect x="44" y="8" width="12" height="6" fill="#9a3412"/>`, ...R("Uncommon") },
+                { name: "Bandana Wrap", tag: "cap", draw: () => `<rect x="26" y="14" width="48" height="12" fill="#b91c1c"/><rect x="72" y="16" width="10" height="6" fill="#991b1b"/><rect x="30" y="14" width="6" height="4" fill="#f87171"/>`, ...R("Uncommon") },
+                { name: "Pirate Hat", tag: "hat", draw: () => `<rect x="20" y="8" width="60" height="10" fill="#18181b"/><rect x="30" y="4" width="40" height="6" fill="#27272a"/><rect x="44" y="6" width="12" height="4" fill="#eab308"/>`, ...R("Rare") },
+                { name: "Cowboy Hat", tag: "hat", draw: () => `<rect x="18" y="14" width="64" height="6" fill="#92400e"/><rect x="34" y="4" width="32" height="12" fill="#b45309"/><rect x="38" y="6" width="24" height="3" fill="#78350f"/>`, ...R("Rare") },
+                { name: "Wizard Hat", tag: "hat", draw: () => `<rect x="42" y="2" width="16" height="10" fill="#4c1d95"/><rect x="36" y="10" width="28" height="10" fill="#5b21b6"/><rect x="20" y="24" width="60" height="7" fill="#6d28d9"/><rect x="40" y="24" width="20" height="7" fill="#eab308"/>`, ...R("Rare") },
+                { name: "Viking Helmet", tag: "hat", draw: () => `<rect x="26" y="10" width="48" height="18" fill="#71717a"/><rect x="14" y="10" width="12" height="6" fill="#e5e7eb"/><rect x="74" y="10" width="12" height="6" fill="#e5e7eb"/><rect x="30" y="12" width="40" height="4" fill="#a1a1aa"/>`, ...R("Rare") },
+                { name: "Alien Antenna", tag: "hair", draw: () => `<rect x="30" y="14" width="40" height="14" fill="#4ade80"/><rect x="38" y="4" width="4" height="12" fill="#22c55e"/><rect x="58" y="4" width="4" height="12" fill="#22c55e"/><rect x="36" y="2" width="8" height="4" fill="#86efac"/><rect x="56" y="2" width="8" height="4" fill="#86efac"/>`, ...R("Rare"), tag2: "alien" },
+                { name: "Demon Horns", tag: "demon", draw: () => `<rect x="24" y="8" width="8" height="16" fill="#dc2626"/><rect x="22" y="6" width="6" height="8" fill="#ef4444"/><rect x="68" y="8" width="8" height="16" fill="#dc2626"/><rect x="72" y="6" width="6" height="8" fill="#ef4444"/>`, ...R("Rare") },
+                { name: "Cyber Visor Helmet", tag: "helmet_full", draw: () => `<rect x="24" y="10" width="52" height="22" fill="#334155"/><rect x="28" y="22" width="44" height="8" fill="#06b6d4"/><rect x="30" y="24" width="40" height="4" fill="#a5f3fc"/>`, ...R("Rare"), tag2: "cyber" },
+                { name: "Samurai Helmet", tag: "helmet_full samurai", draw: () => `<rect x="24" y="12" width="52" height="19" fill="#1e1e1e"/><rect x="20" y="27" width="60" height="5" fill="#991b1b"/><rect x="44" y="4" width="12" height="12" fill="#eab308"/><rect x="36" y="6" width="28" height="4" fill="#ca8a04"/>`, ...R("Epic") },
+                { name: "Space Explorer Helmet", tag: "helmet_full space", draw: () => `<rect x="20" y="8" width="60" height="24" fill="#f8fafc"/><rect x="26" y="14" width="48" height="16" fill="#38bdf8" opacity="0.8"/><rect x="30" y="16" width="12" height="4" fill="#ffffff" opacity="0.8"/>`, ...R("Epic") },
+                { name: "Futuristic Visor", tag: "helmet_full cyber", draw: () => `<rect x="24" y="16" width="52" height="14" fill="#0f172a"/><rect x="28" y="20" width="44" height="6" fill="#ec4899"/><rect x="32" y="21" width="16" height="2" fill="#fbcfe8"/>`, ...R("Epic") },
+                { name: "Silver Halo Circlet", tag: "hair", draw: () => `<rect x="26" y="14" width="48" height="16" fill="#4a2c1d"/><rect x="26" y="18" width="48" height="4" fill="#cbd5e1"/><rect x="46" y="6" width="8" height="6" fill="#e2e8f0"/>`, ...R("Epic") },
+                { name: "Royal Headpiece", tag: "royal", draw: () => `<rect x="26" y="12" width="48" height="18" fill="#6d28d9"/><rect x="26" y="16" width="48" height="5" fill="#eab308"/><rect x="44" y="4" width="12" height="10" fill="#eab308"/><rect x="47" y="6" width="6" height="4" fill="#fef08a"/>`, ...R("Epic") },
+                { name: "Golden Crown", tag: "crown", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#eab308"/><rect x="28" y="8" width="8" height="10" fill="#eab308"/><rect x="46" y="6" width="8" height="12" fill="#eab308"/><rect x="64" y="8" width="8" height="10" fill="#eab308"/><rect x="30" y="10" width="4" height="4" fill="#ef4444"/><rect x="48" y="8" width="4" height="4" fill="#3b82f6"/><rect x="66" y="10" width="4" height="4" fill="#22c55e"/><rect x="30" y="25" width="40" height="4" fill="#ca8a04"/>`, ...R("Legendary") },
+                { name: "Diamond Tiara", tag: "crown", draw: () => `<rect x="28" y="18" width="44" height="12" fill="#0891b2"/><rect x="44" y="8" width="12" height="12" fill="#67e8f9"/><rect x="46" y="10" width="8" height="8" fill="#e0f2fe"/><rect x="30" y="20" width="40" height="3" fill="#22d3ee"/>`, ...R("Legendary") },
+                { name: "Emperor's Golden Helm", tag: "helmet_full samurai royal", draw: () => `<rect x="22" y="10" width="56" height="21" fill="#78350f"/><rect x="18" y="27" width="64" height="6" fill="#eab308"/><rect x="42" y="2" width="16" height="12" fill="#eab308"/><rect x="45" y="4" width="10" height="6" fill="#fef08a"/><rect x="26" y="14" width="48" height="3" fill="#ca8a04"/>`, ...R("Mythic") },
+                { name: "Celestial Crown", tag: "crown", draw: () => `<rect x="26" y="16" width="48" height="15" fill="#fef08a"/><rect x="26" y="6" width="8" height="12" fill="#fde047"/><rect x="46" y="2" width="8" height="16" fill="#ffffff"/><rect x="66" y="6" width="8" height="12" fill="#fde047"/><rect x="30" y="26" width="40" height="4" fill="#eab308"/>`, ...R("Mythic") }
             ],
+
             eyewear: [
-                { name: "Classic Eyes", draw: (skin) => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="38" width="10" height="8" fill="#0f172a"/><rect x="34" y="40" width="4" height="4" fill="#ffffff"/><rect x="60" y="40" width="4" height="4" fill="#ffffff"/>`, weight: 60 },
-                { name: "Dark Sunglasses", draw: () => `<rect x="26" y="36" width="48" height="11" fill="#090d16"/><rect x="46" y="40" width="8" height="3" fill="#1e293b"/><rect x="28" y="38" width="12" height="3" fill="#334155"/>`, weight: 50 },
-                { name: "Red Laser Eyes", draw: () => `<rect x="30" y="40" width="14" height="5" fill="#ef4444"/><rect x="56" y="40" width="14" height="5" fill="#ef4444"/><rect x="0" y="41" width="100" height="3" fill="#fca5a5" opacity="0.85"/>`, weight: 15 },
-                { name: "VR Cyber Headset", draw: () => `<rect x="24" y="34" width="52" height="15" fill="#0284c7"/><rect x="28" y="38" width="44" height="7" fill="#38bdf8"/><rect x="32" y="40" width="10" height="3" fill="#ffffff"/>`, weight: 25 },
-                { name: "Nerd Glasses", draw: () => `<rect x="28" y="35" width="18" height="12" fill="#000000"/><rect x="54" y="35" width="18" height="12" fill="#000000"/><rect x="30" y="37" width="14" height="8" fill="#ffffff" opacity="0.7"/><rect x="56" y="37" width="14" height="8" fill="#ffffff" opacity="0.7"/><rect x="46" y="39" width="8" height="3" fill="#000000"/>`, weight: 40 },
-                { name: "Angry Pixel Eyes", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="38" width="10" height="8" fill="#0f172a"/><rect x="30" y="35" width="14" height="4" fill="#0f172a"/><rect x="56" y="35" width="14" height="4" fill="#0f172a"/>`, weight: 35 },
-                { name: "Golden VIP Shades", draw: () => `<rect x="26" y="36" width="48" height="11" fill="#ca8a04"/><rect x="28" y="38" width="44" height="7" fill="#fef08a"/><rect x="46" y="39" width="8" height="3" fill="#854d0e"/>`, weight: 15 },
-                { name: "Cyborg Glowing Eye", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="34" y="40" width="4" height="4" fill="#ffffff"/><rect x="54" y="34" width="18" height="14" fill="#dc2626"/><rect x="58" y="38" width="10" height="6" fill="#fef08a"/>`, weight: 20 },
-                { name: "Holographic Visor", draw: () => `<rect x="24" y="36" width="52" height="11" fill="#a855f7" opacity="0.8"/><rect x="28" y="38" width="44" height="7" fill="#ec4899" opacity="0.9"/><rect x="30" y="39" width="20" height="2" fill="#ffffff"/>`, weight: 15 }
+                { name: "Classic Eyes", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="38" width="10" height="8" fill="#0f172a"/><rect x="34" y="40" width="4" height="4" fill="#ffffff"/><rect x="60" y="40" width="4" height="4" fill="#ffffff"/>`, ...R("Common") },
+                { name: "Sleepy Eyes", draw: () => `<rect x="32" y="41" width="10" height="4" fill="#0f172a"/><rect x="58" y="41" width="10" height="4" fill="#0f172a"/>`, ...R("Common") },
+                { name: "Wide Eyes", draw: () => `<rect x="30" y="36" width="14" height="12" fill="#ffffff"/><rect x="56" y="36" width="14" height="12" fill="#ffffff"/><rect x="34" y="40" width="6" height="6" fill="#0f172a"/><rect x="60" y="40" width="6" height="6" fill="#0f172a"/>`, ...R("Common") },
+                { name: "Nerd Glasses", draw: () => `<rect x="28" y="35" width="18" height="12" fill="#000000"/><rect x="54" y="35" width="18" height="12" fill="#000000"/><rect x="30" y="37" width="14" height="8" fill="#ffffff" opacity="0.7"/><rect x="56" y="37" width="14" height="8" fill="#ffffff" opacity="0.7"/><rect x="46" y="39" width="8" height="3" fill="#000000"/>`, ...R("Common") },
+                { name: "Dark Sunglasses", draw: () => `<rect x="26" y="36" width="48" height="11" fill="#090d16"/><rect x="46" y="40" width="8" height="3" fill="#1e293b"/><rect x="28" y="38" width="12" height="3" fill="#334155"/>`, ...R("Uncommon") },
+                { name: "Round Glasses", draw: () => `<rect x="30" y="36" width="16" height="10" fill="none" stroke="#1e293b" stroke-width="2"/><rect x="54" y="36" width="16" height="10" fill="none" stroke="#1e293b" stroke-width="2"/><rect x="34" y="40" width="4" height="4" fill="#0f172a"/><rect x="58" y="40" width="4" height="4" fill="#0f172a"/>`, ...R("Uncommon") },
+                { name: "Angry Pixel Eyes", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="38" width="10" height="8" fill="#0f172a"/><rect x="30" y="35" width="14" height="4" fill="#0f172a"/><rect x="56" y="35" width="14" height="4" fill="#0f172a"/>`, ...R("Uncommon") },
+                { name: "Heart Eyes", draw: () => `<rect x="32" y="38" width="4" height="4" fill="#ef4444"/><rect x="38" y="38" width="4" height="4" fill="#ef4444"/><rect x="34" y="42" width="6" height="4" fill="#ef4444"/><rect x="58" y="38" width="4" height="4" fill="#ef4444"/><rect x="64" y="38" width="4" height="4" fill="#ef4444"/><rect x="60" y="42" width="6" height="4" fill="#ef4444"/>`, ...R("Uncommon") },
+                { name: "Wink", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="42" width="10" height="3" fill="#0f172a"/>`, ...R("Uncommon") },
+                { name: "Golden VIP Shades", draw: () => `<rect x="26" y="36" width="48" height="11" fill="#ca8a04"/><rect x="28" y="38" width="44" height="7" fill="#fef08a"/><rect x="46" y="39" width="8" height="3" fill="#854d0e"/>`, ...R("Rare") },
+                { name: "X Eyes", draw: () => `<rect x="32" y="38" width="10" height="3" fill="#0f172a"/><rect x="35" y="35" width="4" height="9" fill="#0f172a"/><rect x="58" y="38" width="10" height="3" fill="#0f172a"/><rect x="61" y="35" width="4" height="9" fill="#0f172a"/>`, ...R("Rare") },
+                { name: "Cyber Visor", tag: "cyber", draw: () => `<rect x="24" y="34" width="52" height="15" fill="#0284c7"/><rect x="28" y="38" width="44" height="7" fill="#38bdf8"/><rect x="32" y="40" width="10" height="3" fill="#ffffff"/>`, ...R("Rare") },
+                { name: "VR Cyber Headset", tag: "cyber", draw: () => `<rect x="24" y="34" width="52" height="15" fill="#0284c7"/><rect x="28" y="38" width="44" height="7" fill="#38bdf8"/><rect x="32" y="40" width="10" height="3" fill="#ffffff"/><rect x="20" y="36" width="4" height="8" fill="#0369a1"/>`, ...R("Rare") },
+                { name: "Red Laser Eyes", draw: () => `<rect x="30" y="40" width="14" height="5" fill="#ef4444"/><rect x="56" y="40" width="14" height="5" fill="#ef4444"/><rect x="0" y="41" width="100" height="3" fill="#fca5a5" opacity="0.85"/>`, ...R("Rare") },
+                { name: "Blue Laser Eyes", draw: () => `<rect x="30" y="40" width="14" height="5" fill="#38bdf8"/><rect x="56" y="40" width="14" height="5" fill="#38bdf8"/><rect x="0" y="41" width="100" height="3" fill="#bae6fd" opacity="0.85"/>`, ...R("Rare") },
+                { name: "Ice Eyes", draw: () => `<rect x="32" y="37" width="10" height="9" fill="#bae6fd"/><rect x="58" y="37" width="10" height="9" fill="#bae6fd"/><rect x="34" y="39" width="4" height="4" fill="#ffffff"/><rect x="60" y="39" width="4" height="4" fill="#ffffff"/>`, ...R("Epic") },
+                { name: "Fire Eyes", draw: () => `<rect x="32" y="37" width="10" height="9" fill="#f97316"/><rect x="58" y="37" width="10" height="9" fill="#f97316"/><rect x="34" y="39" width="4" height="4" fill="#fef08a"/><rect x="60" y="39" width="4" height="4" fill="#fef08a"/>`, ...R("Epic") },
+                { name: "Robotic Eyes", tag: "cyber", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#334155"/><rect x="56" y="36" width="14" height="10" fill="#334155"/><rect x="34" y="39" width="6" height="4" fill="#22d3ee"/><rect x="60" y="39" width="6" height="4" fill="#22d3ee"/>`, ...R("Epic") },
+                { name: "Alien Eyes", tag: "alien", draw: () => `<rect x="28" y="36" width="18" height="10" fill="#111827"/><rect x="54" y="36" width="18" height="10" fill="#111827"/><rect x="30" y="38" width="6" height="4" fill="#4ade80"/><rect x="60" y="38" width="6" height="4" fill="#4ade80"/>`, ...R("Epic") },
+                { name: "Hypnotic Spiral Eyes", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#a855f7"/><rect x="56" y="36" width="14" height="10" fill="#a855f7"/><rect x="34" y="39" width="6" height="4" fill="#f5d0fe"/><rect x="60" y="39" width="6" height="4" fill="#f5d0fe"/><rect x="32" y="38" width="10" height="1" fill="#fff"/><rect x="58" y="38" width="10" height="1" fill="#fff"/>`, ...R("Epic") },
+                { name: "Cyborg Glowing Eye", tag: "cyber", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="34" y="40" width="4" height="4" fill="#ffffff"/><rect x="54" y="34" width="18" height="14" fill="#dc2626"/><rect x="58" y="38" width="10" height="6" fill="#fef08a"/>`, ...R("Legendary") },
+                { name: "Diamond Eyes", draw: () => `<rect x="32" y="37" width="10" height="9" fill="#67e8f9"/><rect x="58" y="37" width="10" height="9" fill="#67e8f9"/><rect x="34" y="39" width="4" height="4" fill="#ffffff"/><rect x="60" y="39" width="4" height="4" fill="#ffffff"/><rect x="30" y="35" width="14" height="2" fill="#e0f2fe"/><rect x="56" y="35" width="14" height="2" fill="#e0f2fe"/>`, ...R("Legendary") },
+                { name: "Holographic Visor", draw: () => `<rect x="24" y="36" width="52" height="11" fill="#a855f7" opacity="0.8"/><rect x="28" y="38" width="44" height="7" fill="#ec4899" opacity="0.9"/><rect x="30" y="39" width="20" height="2" fill="#ffffff"/>`, ...R("Legendary") },
+                { name: "Rainbow Prism Eyes", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#ef4444"/><rect x="56" y="36" width="14" height="10" fill="#3b82f6"/><rect x="34" y="39" width="6" height="4" fill="#fef08a"/><rect x="60" y="39" width="6" height="4" fill="#22c55e"/>`, ...R("Mythic") },
+                { name: "Celestial Glowing Eyes", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#fef9c3"/><rect x="56" y="36" width="14" height="10" fill="#fef9c3"/><rect x="34" y="39" width="6" height="4" fill="#ffffff"/><rect x="60" y="39" width="6" height="4" fill="#ffffff"/><rect x="26" y="34" width="4" height="4" fill="#fde047" opacity="0.6"/><rect x="70" y="34" width="4" height="4" fill="#fde047" opacity="0.6"/>`, ...R("Mythic") }
             ],
+
             mouths: [
-                { name: "Neutral Line", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#451a03"/>`, weight: 60 },
-                { name: "Confident Smile", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#ffffff"/><rect x="38" y="59" width="24" height="3" fill="#ef4444"/><rect x="34" y="56" width="4" height="3" fill="#451a03"/><rect x="62" y="56" width="4" height="3" fill="#451a03"/>`, weight: 50 },
-                { name: "Gold Tooth Grin", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#ffffff"/><rect x="44" y="57" width="6" height="5" fill="#eab308"/><rect x="38" y="59" width="24" height="3" fill="#ef4444"/>`, weight: 25 },
-                { name: "Vampire Fangs", draw: () => `<rect x="36" y="57" width="28" height="4" fill="#7f1d1d"/><rect x="40" y="61" width="4" height="4" fill="#ffffff"/><rect x="56" y="61" width="4" height="4" fill="#ffffff"/>`, weight: 20 },
-                { name: "Smoking Pipe", draw: () => `<rect x="38" y="59" width="20" height="3" fill="#1e293b"/><rect x="58" y="56" width="8" height="10" fill="#78350f"/><rect x="62" y="50" width="6" height="6" fill="#94a3b8" opacity="0.6"/>`, weight: 30 },
-                { name: "Full Beard & Mustache", draw: () => `<rect x="34" y="54" width="32" height="4" fill="#0f172a"/><rect x="30" y="58" width="40" height="14" fill="#0f172a"/><rect x="42" y="62" width="16" height="4" fill="#451a03"/>`, weight: 35 },
-                { name: "Cyber Mask", draw: () => `<rect x="30" y="52" width="40" height="18" fill="#1e293b"/><rect x="34" y="56" width="32" height="10" fill="#0f172a"/><rect x="38" y="60" width="24" height="2" fill="#22c55e"/>`, weight: 20 },
-                { name: "Bubblegum Pop", draw: () => `<rect x="38" y="58" width="20" height="4" fill="#451a03"/><circle cx="58" cy="60" r="8" fill="#f472b6" opacity="0.95"/>`, weight: 20 }
+                { name: "Neutral Line", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#451a03"/>`, ...R("Common") },
+                { name: "Small Smile", draw: () => `<rect x="38" y="58" width="24" height="3" fill="#451a03"/><rect x="36" y="56" width="4" height="3" fill="#451a03"/><rect x="60" y="56" width="4" height="3" fill="#451a03"/>`, ...R("Common") },
+                { name: "Confident Smile", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#ffffff"/><rect x="38" y="59" width="24" height="3" fill="#ef4444"/><rect x="34" y="56" width="4" height="3" fill="#451a03"/><rect x="62" y="56" width="4" height="3" fill="#451a03"/>`, ...R("Common") },
+                { name: "Smirk", draw: () => `<rect x="38" y="58" width="20" height="3" fill="#451a03"/><rect x="56" y="55" width="6" height="4" fill="#451a03"/>`, ...R("Common") },
+                { name: "Surprised O", draw: () => `<rect x="44" y="56" width="12" height="12" fill="#451a03"/><rect x="46" y="58" width="8" height="8" fill="#7c2d12"/>`, ...R("Uncommon") },
+                { name: "Frown", draw: () => `<rect x="38" y="60" width="24" height="3" fill="#451a03"/><rect x="34" y="58" width="4" height="3" fill="#451a03"/><rect x="62" y="58" width="4" height="3" fill="#451a03"/>`, ...R("Uncommon") },
+                { name: "Tongue Out", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#451a03"/><rect x="46" y="60" width="8" height="8" fill="#f472b6"/>`, ...R("Uncommon") },
+                { name: "Bubblegum Pop", draw: () => `<rect x="38" y="58" width="20" height="4" fill="#451a03"/><rect x="52" y="52" width="16" height="16" fill="#f472b6" opacity="0.95"/>`, ...R("Uncommon") },
+                { name: "Cigarette", draw: () => `<rect x="38" y="58" width="20" height="3" fill="#451a03"/><rect x="58" y="57" width="16" height="4" fill="#f8fafc"/><rect x="72" y="56" width="4" height="4" fill="#fb923c"/>`, ...R("Uncommon") },
+                { name: "Smoking Pipe", draw: () => `<rect x="38" y="59" width="20" height="3" fill="#1e293b"/><rect x="58" y="56" width="8" height="10" fill="#78350f"/><rect x="62" y="50" width="6" height="6" fill="#94a3b8" opacity="0.6"/>`, ...R("Uncommon") },
+                { name: "Stubble Beard", draw: () => `<rect x="34" y="56" width="32" height="3" fill="#292524"/><rect x="30" y="59" width="40" height="8" fill="#292524" opacity="0.7"/><rect x="40" y="60" width="20" height="4" fill="#451a03"/>`, ...R("Uncommon") },
+                { name: "Full Beard & Mustache", draw: () => `<rect x="34" y="54" width="32" height="4" fill="#0f172a"/><rect x="30" y="58" width="40" height="14" fill="#0f172a"/><rect x="42" y="62" width="16" height="4" fill="#451a03"/>`, ...R("Rare") },
+                { name: "Gold Tooth Grin", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#ffffff"/><rect x="44" y="57" width="6" height="5" fill="#eab308"/><rect x="38" y="59" width="24" height="3" fill="#ef4444"/>`, ...R("Rare") },
+                { name: "Vampire Fangs", tag: "fangs", draw: () => `<rect x="36" y="57" width="28" height="4" fill="#7f1d1d"/><rect x="40" y="61" width="4" height="4" fill="#ffffff"/><rect x="56" y="61" width="4" height="4" fill="#ffffff"/>`, ...R("Rare") },
+                { name: "Bandana Mask", draw: () => `<rect x="30" y="52" width="40" height="18" fill="#1e293b"/><rect x="34" y="56" width="32" height="10" fill="#334155"/>`, ...R("Rare") },
+                { name: "Gas Mask", draw: () => `<rect x="28" y="50" width="44" height="20" fill="#3f6212"/><rect x="34" y="54" width="14" height="10" fill="#a3e635"/><rect x="52" y="54" width="14" height="10" fill="#a3e635"/><rect x="44" y="64" width="12" height="8" fill="#365314"/>`, ...R("Epic") },
+                { name: "Cyber Mask", tag: "cyber", draw: () => `<rect x="30" y="52" width="40" height="18" fill="#1e293b"/><rect x="34" y="56" width="32" height="10" fill="#0f172a"/><rect x="38" y="60" width="24" height="2" fill="#22c55e"/>`, ...R("Epic") },
+                { name: "Diamond Teeth", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#67e8f9"/><rect x="38" y="59" width="24" height="3" fill="#0284c7"/><rect x="44" y="57" width="12" height="5" fill="#e0f2fe"/>`, ...R("Legendary") },
+                { name: "Robot Mouth", tag: "cyber", draw: () => `<rect x="34" y="56" width="32" height="10" fill="#1e293b"/><rect x="38" y="59" width="4" height="4" fill="#22d3ee"/><rect x="46" y="59" width="4" height="4" fill="#22d3ee"/><rect x="54" y="59" width="4" height="4" fill="#22d3ee"/><rect x="62" y="59" width="4" height="4" fill="#22d3ee"/>`, ...R("Legendary") },
+                { name: "Molten Lava Mouth", draw: () => `<rect x="36" y="56" width="28" height="8" fill="#7c2d12"/><rect x="40" y="58" width="20" height="4" fill="#f97316"/><rect x="44" y="59" width="12" height="2" fill="#fde047"/>`, ...R("Legendary") },
+                { name: "Glowing Neon Mouth", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#22d3ee"/><rect x="34" y="56" width="4" height="3" fill="#67e8f9"/><rect x="62" y="56" width="4" height="3" fill="#67e8f9"/>`, ...R("Mythic") },
+                { name: "Celestial Glow Mouth", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#fef9c3"/><rect x="34" y="56" width="4" height="3" fill="#fde047"/><rect x="62" y="56" width="4" height="3" fill="#fde047"/>`, ...R("Mythic") }
             ],
+
             clothing: [
-                { name: "Casual Crewneck Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#2563eb"/><rect x="34" y="80" width="32" height="6" fill="#1d4ed8"/><rect x="22" y="82" width="6" height="18" fill="#3b82f6"/>`, weight: 60 },
-                { name: "Streetwear Orange Hoodie", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#ea580c"/><rect x="30" y="76" width="40" height="10" fill="#c2410c"/><rect x="47" y="86" width="6" height="14" fill="#f8fafc"/>`, weight: 50 },
-                { name: "Executive Business Suit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#0f172a"/><rect x="40" y="78" width="20" height="22" fill="#ffffff"/><rect x="47" y="82" width="6" height="18" fill="#dc2626"/><rect x="22" y="82" width="16" height="18" fill="#1e293b"/>`, weight: 40 },
-                { name: "Black Leather Jacket", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#18181b"/><rect x="38" y="76" width="24" height="24" fill="#27272a"/><rect x="48" y="80" width="4" height="20" fill="#71717a"/><rect x="20" y="82" width="8" height="14" fill="#3f3f46"/>`, weight: 35 },
-                { name: "Samurai Armor", tag: "samurai", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#7f1d1d"/><rect x="26" y="80" width="48" height="20" fill="#b91c1c"/><rect x="46" y="80" width="8" height="20" fill="#eab308"/><rect x="20" y="84" width="60" height="4" fill="#ca8a04"/>`, weight: 20 },
-                { name: "Knight Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#475569"/><rect x="28" y="80" width="44" height="20" fill="#94a3b8"/><rect x="48" y="80" width="4" height="20" fill="#cbd5e1"/><rect x="22" y="86" width="56" height="4" fill="#334155"/>`, weight: 20 },
-                { name: "Royal Emperor Robe", tag: "royal", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#581c87"/><rect x="36" y="76" width="28" height="24" fill="#eab308"/><rect x="42" y="80" width="16" height="20" fill="#7e22ce"/><rect x="18" y="80" width="8" height="20" fill="#fef08a"/>`, weight: 15 },
-                { name: "Cyber Armor Suit", tag: "cyber", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0284c7"/><rect x="30" y="80" width="40" height="20" fill="#0f172a"/><rect x="44" y="84" width="12" height="12" fill="#38bdf8"/><rect x="48" y="86" width="4" height="8" fill="#ffffff"/>`, weight: 20 },
-                { name: "Gold Plated Suit", tag: "gold", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#ca8a04"/><rect x="38" y="76" width="24" height="24" fill="#fef08a"/><rect x="47" y="80" width="6" height="20" fill="#854d0e"/><rect x="20" y="82" width="12" height="18" fill="#eab308"/>`, weight: 10 }
+                { name: "Plain T-Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#475569"/><rect x="34" y="80" width="32" height="6" fill="#334155"/>`, ...R("Common") },
+                { name: "Casual Crewneck Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#2563eb"/><rect x="34" y="80" width="32" height="6" fill="#1d4ed8"/><rect x="22" y="82" width="6" height="18" fill="#3b82f6"/>`, ...R("Common") },
+                { name: "Tracksuit", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#166534"/><rect x="18" y="80" width="8" height="20" fill="#22c55e"/><rect x="74" y="80" width="8" height="20" fill="#22c55e"/>`, ...R("Common") },
+                { name: "Flannel Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#7f1d1d"/><rect x="18" y="84" width="64" height="3" fill="#450a0a"/><rect x="18" y="92" width="64" height="3" fill="#450a0a"/>`, ...R("Common") },
+                { name: "Streetwear Orange Hoodie", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#ea580c"/><rect x="30" y="76" width="40" height="10" fill="#c2410c"/><rect x="47" y="86" width="6" height="14" fill="#f8fafc"/>`, ...R("Uncommon") },
+                { name: "Denim Jacket", draw: () => `<rect x="16" y="78" width="68" height="22" fill="#1e40af"/><rect x="16" y="78" width="68" height="4" fill="#1e3a8a"/><rect x="46" y="78" width="8" height="22" fill="#1e3a8a"/>`, ...R("Uncommon") },
+                { name: "Black Leather Jacket", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#18181b"/><rect x="38" y="76" width="24" height="24" fill="#27272a"/><rect x="48" y="80" width="4" height="20" fill="#71717a"/><rect x="20" y="82" width="8" height="14" fill="#3f3f46"/>`, ...R("Uncommon") },
+                { name: "Bomber Jacket", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#166534"/><rect x="14" y="94" width="72" height="6" fill="#052e16"/><rect x="14" y="78" width="72" height="4" fill="#052e16"/>`, ...R("Uncommon") },
+                { name: "Military Jacket", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#3f3f1d"/><rect x="30" y="82" width="10" height="6" fill="#84cc16"/><rect x="60" y="82" width="10" height="6" fill="#84cc16"/>`, ...R("Uncommon") },
+                { name: "Punk Jacket", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0f172a"/><rect x="20" y="80" width="6" height="4" fill="#94a3b8"/><rect x="34" y="80" width="6" height="4" fill="#94a3b8"/><rect x="60" y="80" width="6" height="4" fill="#94a3b8"/>`, ...R("Uncommon") },
+                { name: "Business Suit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#0f172a"/><rect x="40" y="78" width="20" height="22" fill="#ffffff"/><rect x="47" y="82" width="6" height="18" fill="#dc2626"/><rect x="22" y="82" width="16" height="18" fill="#1e293b"/>`, ...R("Uncommon") },
+                { name: "Tuxedo", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#000000"/><rect x="40" y="78" width="20" height="22" fill="#ffffff"/><rect x="47" y="80" width="6" height="6" fill="#000000"/><rect x="22" y="82" width="16" height="18" fill="#18181b"/>`, ...R("Rare") },
+                { name: "Pirate Outfit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#78350f"/><rect x="14" y="78" width="72" height="6" fill="#451a03"/><rect x="42" y="82" width="16" height="12" fill="#f8fafc"/>`, ...R("Rare") },
+                { name: "Cowboy Outfit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#7c2d12"/><rect x="14" y="78" width="72" height="4" fill="#5c1a08"/><rect x="40" y="86" width="20" height="4" fill="#eab308"/>`, ...R("Rare") },
+                { name: "Ninja Garb", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#18181b"/><rect x="14" y="76" width="72" height="4" fill="#dc2626"/><rect x="42" y="80" width="16" height="18" fill="#27272a"/>`, ...R("Rare") },
+                { name: "Knight Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#475569"/><rect x="28" y="80" width="44" height="20" fill="#94a3b8"/><rect x="48" y="80" width="4" height="20" fill="#cbd5e1"/><rect x="22" y="86" width="56" height="4" fill="#334155"/>`, ...R("Rare") },
+                { name: "Samurai Armor", tag: "samurai", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#7f1d1d"/><rect x="26" y="80" width="48" height="20" fill="#b91c1c"/><rect x="46" y="80" width="8" height="20" fill="#eab308"/><rect x="20" y="84" width="60" height="4" fill="#ca8a04"/>`, ...R("Rare") },
+                { name: "Space Suit", tag: "space", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#e2e8f0"/><rect x="30" y="80" width="40" height="16" fill="#334155"/><rect x="44" y="84" width="12" height="8" fill="#38bdf8"/>`, ...R("Rare") },
+                { name: "Steampunk Coat", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#78350f"/><rect x="30" y="80" width="40" height="18" fill="#92400e"/><rect x="46" y="82" width="8" height="8" fill="#eab308"/>`, ...R("Epic") },
+                { name: "Cyber Armor Suit", tag: "cyber", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0284c7"/><rect x="30" y="80" width="40" height="20" fill="#0f172a"/><rect x="44" y="84" width="12" height="12" fill="#38bdf8"/><rect x="48" y="86" width="4" height="8" fill="#ffffff"/>`, ...R("Epic") },
+                { name: "Neon Cyber Outfit", tag: "cyber", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0f172a"/><rect x="20" y="80" width="8" height="16" fill="#ec4899"/><rect x="72" y="80" width="8" height="16" fill="#22d3ee"/><rect x="44" y="80" width="12" height="18" fill="#334155"/>`, ...R("Epic") },
+                { name: "Royal Emperor Robe", tag: "royal", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#581c87"/><rect x="36" y="76" width="28" height="24" fill="#eab308"/><rect x="42" y="80" width="16" height="20" fill="#7e22ce"/><rect x="18" y="80" width="8" height="20" fill="#fef08a"/>`, ...R("Epic") },
+                { name: "Luxury Designer Suit", tag: "luxury", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#292524"/><rect x="40" y="78" width="20" height="22" fill="#fef08a"/><rect x="47" y="82" width="6" height="18" fill="#eab308"/><rect x="22" y="82" width="16" height="18" fill="#44403c"/>`, ...R("Epic") },
+                { name: "Diamond Outfit", tag: "luxury diamond", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0e7490"/><rect x="30" y="80" width="40" height="18" fill="#67e8f9"/><rect x="44" y="82" width="12" height="10" fill="#e0f2fe"/>`, ...R("Legendary") },
+                { name: "Gold Plated Suit", tag: "luxury gold", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#ca8a04"/><rect x="38" y="76" width="24" height="24" fill="#fef08a"/><rect x="47" y="80" width="6" height="20" fill="#854d0e"/><rect x="20" y="82" width="12" height="18" fill="#eab308"/>`, ...R("Legendary") },
+                { name: "Legendary Dragon Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#7f1d1d"/><rect x="26" y="80" width="48" height="20" fill="#dc2626"/><rect x="44" y="80" width="12" height="20" fill="#fbbf24"/><rect x="18" y="76" width="10" height="10" fill="#450a0a"/><rect x="72" y="76" width="10" height="10" fill="#450a0a"/>`, ...R("Legendary") },
+                { name: "Phoenix Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#9a3412"/><rect x="26" y="80" width="48" height="20" fill="#f97316"/><rect x="44" y="80" width="12" height="20" fill="#fde047"/><rect x="16" y="74" width="12" height="8" fill="#ea580c"/><rect x="72" y="74" width="12" height="8" fill="#ea580c"/>`, ...R("Legendary") },
+                { name: "Celestial Robe", tag: "royal", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#fef9c3"/><rect x="36" y="76" width="28" height="24" fill="#ffffff"/><rect x="42" y="80" width="16" height="20" fill="#fde047"/><rect x="18" y="80" width="8" height="20" fill="#fef08a"/>`, ...R("Mythic") },
+                { name: "Void Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0a0210"/><rect x="30" y="80" width="40" height="20" fill="#3b0764"/><rect x="44" y="84" width="12" height="12" fill="#d946ef"/><rect x="48" y="86" width="4" height="8" fill="#ffffff"/>`, ...R("Mythic") }
             ],
+
             accessories: [
-                { name: "None", draw: () => "", weight: 120 },
-                { name: "Heavy Gold Chain", draw: () => `<rect x="34" y="74" width="32" height="10" fill="none" stroke="#eab308" stroke-width="3"/><rect x="46" y="82" width="8" height="6" fill="#fef08a"/>`, weight: 40 },
-                { name: "Diamond Pendant Chain", draw: () => `<rect x="34" y="74" width="32" height="12" fill="none" stroke="#cbd5e1" stroke-width="3"/><rect x="47" y="84" width="6" height="6" fill="#38bdf8"/>`, weight: 25 },
-                { name: "Silver Hoop Earring", draw: () => `<rect x="22" y="48" width="4" height="8" fill="#e2e8f0"/>`, weight: 45 },
-                { name: "Wireless Cyber Earbuds", draw: () => `<rect x="22" y="46" width="4" height="6" fill="#ffffff"/><rect x="74" y="46" width="4" height="6" fill="#ffffff"/>`, weight: 35 },
-                { name: "Shoulder Cyber Cannon", draw: () => `<rect x="8" y="70" width="14" height="16" fill="#334155"/><rect x="6" y="74" width="6" height="8" fill="#06b6d4"/>`, weight: 15 },
-                { name: "Tactical Scarf", draw: () => `<rect x="26" y="70" width="48" height="10" fill="#334155"/><rect x="30" y="72" width="40" height="6" fill="#475569"/>`, weight: 30 }
+                { name: "None", draw: () => "", ...R("Common", 260) },
+                { name: "Silver Hoop Earring", draw: () => `<rect x="22" y="48" width="4" height="8" fill="#e2e8f0"/>`, ...R("Common") },
+                { name: "Stud Earring", draw: () => `<rect x="22" y="46" width="3" height="3" fill="#f8fafc"/>`, ...R("Common") },
+                { name: "Wireless Cyber Earbuds", draw: () => `<rect x="22" y="46" width="4" height="6" fill="#ffffff"/><rect x="74" y="46" width="4" height="6" fill="#ffffff"/>`, ...R("Common") },
+                { name: "Headphones", draw: () => `<rect x="18" y="30" width="8" height="18" fill="#1e293b"/><rect x="74" y="30" width="8" height="18" fill="#1e293b"/><rect x="24" y="20" width="52" height="6" fill="#1e293b"/>`, ...R("Uncommon") },
+                { name: "Tie Pin", draw: () => `<rect x="48" y="88" width="4" height="4" fill="#eab308"/>`, ...R("Uncommon") },
+                { name: "Bow Tie", draw: () => `<rect x="42" y="78" width="6" height="6" fill="#0f172a"/><rect x="52" y="78" width="6" height="6" fill="#0f172a"/><rect x="48" y="80" width="4" height="3" fill="#334155"/>`, ...R("Uncommon") },
+                { name: "Tactical Scarf", draw: () => `<rect x="26" y="70" width="48" height="10" fill="#334155"/><rect x="30" y="72" width="40" height="6" fill="#475569"/>`, ...R("Uncommon") },
+                { name: "Backpack Strap", draw: () => `<rect x="12" y="76" width="8" height="24" fill="#166534"/><rect x="80" y="76" width="8" height="24" fill="#166534"/>`, ...R("Uncommon") },
+                { name: "Face Tattoo", draw: () => `<rect x="30" y="50" width="3" height="10" fill="#1e293b" opacity="0.7"/>`, ...R("Uncommon") },
+                { name: "Scar", draw: () => `<rect x="60" y="40" width="2" height="14" fill="#7f1d1d" opacity="0.8"/>`, ...R("Uncommon") },
+                { name: "Silver Chain", draw: () => `<rect x="34" y="74" width="32" height="8" fill="none" stroke="#cbd5e1" stroke-width="2"/>`, ...R("Rare") },
+                { name: "Medal", draw: () => `<rect x="44" y="80" width="12" height="12" fill="#eab308"/><rect x="47" y="83" width="6" height="6" fill="#fef08a"/>`, ...R("Rare") },
+                { name: "Nose Ring", draw: () => `<rect x="48" y="52" width="3" height="3" fill="#e2e8f0"/>`, ...R("Rare") },
+                { name: "Shoulder Cyber Cannon", tag: "cyber", draw: () => `<rect x="8" y="70" width="14" height="16" fill="#334155"/><rect x="6" y="74" width="6" height="8" fill="#06b6d4"/>`, ...R("Rare") },
+                { name: "Cyber Implant", tag: "cyber", draw: () => `<rect x="66" y="34" width="8" height="8" fill="#0f172a"/><rect x="68" y="36" width="4" height="4" fill="#22d3ee"/>`, ...R("Epic") },
+                { name: "Heavy Gold Chain", tag: "gold", draw: () => `<rect x="34" y="74" width="32" height="10" fill="none" stroke="#eab308" stroke-width="3"/><rect x="46" y="82" width="8" height="6" fill="#fef08a"/>`, ...R("Epic") },
+                { name: "Diamond Pendant Chain", tag: "diamond", draw: () => `<rect x="34" y="74" width="32" height="12" fill="none" stroke="#cbd5e1" stroke-width="3"/><rect x="47" y="84" width="6" height="6" fill="#38bdf8"/>`, ...R("Epic") },
+                { name: "Pearl Necklace", draw: () => `<rect x="36" y="76" width="4" height="4" fill="#f8fafc"/><rect x="44" y="79" width="4" height="4" fill="#f8fafc"/><rect x="52" y="80" width="4" height="4" fill="#f8fafc"/><rect x="60" y="79" width="4" height="4" fill="#f8fafc"/>`, ...R("Epic") },
+                { name: "Holographic Wing Accessory", draw: () => `<rect x="4" y="60" width="12" height="24" fill="#a855f7" opacity="0.6"/><rect x="84" y="60" width="12" height="24" fill="#ec4899" opacity="0.6"/>`, ...R("Legendary") },
+                { name: "Angel Wings Accessory", draw: () => `<rect x="4" y="58" width="12" height="26" fill="#ffffff" opacity="0.85"/><rect x="84" y="58" width="12" height="26" fill="#ffffff" opacity="0.85"/>`, ...R("Legendary") },
+                { name: "Royal Medallion", tag: "royal", draw: () => `<rect x="42" y="80" width="16" height="16" fill="#eab308"/><rect x="46" y="84" width="8" height="8" fill="#fef08a"/>`, ...R("Legendary") },
+                { name: "Diamond Crown Accessory", tag: "diamond", draw: () => `<rect x="30" y="4" width="40" height="6" fill="#67e8f9"/><rect x="46" y="0" width="8" height="6" fill="#e0f2fe"/>`, ...R("Mythic") },
+                { name: "Celestial Halo Ring", draw: () => `<rect x="34" y="2" width="32" height="4" fill="#fef9c3" opacity="0.9"/><rect x="42" y="0" width="16" height="3" fill="#ffffff"/>`, ...R("Mythic") }
             ]
         };
 
-        // Helper: Select option based on rarity weights
+        /* =========================================================
+           HELPERS
+           ========================================================= */
         function getWeightedRandom(items) {
             const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
             let random = Math.random() * totalWeight;
@@ -198,40 +330,65 @@
             return items[0];
         }
 
-        // Helper: Determine overall rarity tier from weighted points
-        function calculateRarityScore(traits) {
-            let score = traits.bg.weight + traits.skin.weight + traits.headwear.weight + 
-                        traits.eyewear.weight + traits.mouth.weight + traits.clothing.weight + 
-                        traits.accessory.weight + traits.aura.weight;
-            
-            if (score < 180) return "Mythic";
-            if (score < 240) return "Legendary";
-            if (score < 300) return "Epic";
-            if (score < 370) return "Rare";
-            if (score < 440) return "Uncommon";
-            return "Common";
+        function overallRarity(traitList) {
+            let maxIdx = 0;
+            traitList.forEach(t => {
+                const idx = RARITY_ORDER.indexOf(t.rarity);
+                if (idx > maxIdx) maxIdx = idx;
+            });
+            return RARITY_ORDER[maxIdx];
         }
 
-        // Render multi-layered SVG Art with lighting and depth
-        function buildSVG(dna) {
-            const bg = TRAITS.backgrounds[dna.bgIndex];
-            const skin = TRAITS.skins[dna.skinIndex];
-            const headwear = TRAITS.headwear[dna.headwearIndex];
-            const eyewear = TRAITS.eyewear[dna.eyewearIndex];
-            const mouth = TRAITS.mouths[dna.mouthIndex];
-            const clothing = TRAITS.clothing[dna.clothingIndex];
-            const accessory = TRAITS.accessories[dna.accessoryIndex];
-            const aura = TRAITS.specialAuras[dna.auraIndex];
+        function hexToRgb(hex) {
+            const h = hex.replace('#', '');
+            return {
+                r: parseInt(h.substring(0, 2), 16),
+                g: parseInt(h.substring(2, 4), 16),
+                b: parseInt(h.substring(4, 6), 16)
+            };
+        }
 
-            // Render Background Pattern
+        function luminance(hex) {
+            const { r, g, b } = hexToRgb(hex);
+            return 0.299 * r + 0.587 * g + 0.114 * b;
+        }
+
+        // Ensures the character clearly pops against the chosen background
+        function hasGoodContrast(bgHex, skinHex) {
+            return Math.abs(luminance(bgHex) - luminance(skinHex)) > 55;
+        }
+
+        function hasTag(obj, tag) {
+            return obj && obj.tag && obj.tag.split(" ").includes(tag);
+        }
+
+        /* =========================================================
+           SVG RENDERING (layered pixel art with lighting)
+           ========================================================= */
+        function buildSVG(dna) {
+            const bg        = TRAITS.backgrounds[dna.bgIndex];
+            const skin       = TRAITS.skins[dna.skinIndex];
+            const headwear    = TRAITS.headwear[dna.headwearIndex];
+            const eyewear     = TRAITS.eyewear[dna.eyewearIndex];
+            const mouth       = TRAITS.mouths[dna.mouthIndex];
+            const clothing    = TRAITS.clothing[dna.clothingIndex];
+            const accessory   = TRAITS.accessories[dna.accessoryIndex];
+            const aura        = TRAITS.specialAuras[dna.auraIndex];
+
+            // Background pattern layer
             let bgPatternHtml = "";
             if (bg.type === "pattern_stars") {
                 bgPatternHtml = `<rect x="10" y="15" width="4" height="4" fill="${bg.accent}" opacity="0.6"/>
                                  <rect x="80" y="20" width="6" height="6" fill="${bg.accent}" opacity="0.8"/>
                                  <rect x="20" y="75" width="5" height="5" fill="${bg.accent}" opacity="0.5"/>
-                                 <rect x="75" y="80" width="4" height="4" fill="${bg.accent}" opacity="0.7"/>`;
+                                 <rect x="75" y="80" width="4" height="4" fill="${bg.accent}" opacity="0.7"/>
+                                 <rect x="8" y="55" width="3" height="3" fill="${bg.accent}" opacity="0.4"/>`;
             } else if (bg.type === "pattern_grid") {
                 bgPatternHtml = `<path d="M0 25 H100 M0 50 H100 M0 75 H100 M25 0 V100 M50 0 V100 M75 0 V100" stroke="${bg.accent}" stroke-width="0.75" opacity="0.25"/>`;
+            } else if (bg.type === "pattern_glow") {
+                bgPatternHtml = `<rect x="20" y="20" width="60" height="60" fill="${bg.accent}" opacity="0.08"/><rect x="30" y="30" width="40" height="40" fill="${bg.accent}" opacity="0.06"/>`;
+            } else if (bg.type === "pattern_noise") {
+                bgPatternHtml = `<rect x="12" y="18" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="88" y="22" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="16" y="82" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="84" y="78" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="50" y="90" width="2" height="2" fill="${bg.accent}" opacity="0.4"/>`;
             }
 
             return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="1000" height="1000" shape-rendering="crispEdges">
@@ -244,14 +401,17 @@
                 ${aura.draw()}
 
                 <!-- Character Base Silhouette Shadow -->
-                <rect x="22" y="24" width="56" height="70" fill="#000000" opacity="0.15" />
+                <rect x="21" y="23" width="58" height="72" fill="#000000" opacity="0.16" />
 
                 <!-- Head Base Structure -->
                 <rect x="26" y="26" width="48" height="42" fill="${skin.base}" />
-                <!-- Facial Shadows & Highlights (Pixel Lighting System) -->
+                <!-- Pixel Lighting: shadows & highlights -->
                 <rect x="66" y="26" width="8" height="42" fill="${skin.shadow}" />
+                <rect x="26" y="60" width="48" height="8" fill="${skin.shadow}" opacity="0.5" />
                 <rect x="26" y="26" width="48" height="4" fill="${skin.highlight}" opacity="0.6" />
                 <rect x="26" y="26" width="4" height="38" fill="${skin.highlight}" opacity="0.4" />
+                <rect x="30" y="48" width="8" height="6" fill="${skin.shadow}" opacity="0.35" />
+                <rect x="30" y="30" width="6" height="4" fill="${skin.highlight}" opacity="0.5" />
 
                 <!-- Ears -->
                 <rect x="20" y="38" width="6" height="12" fill="${skin.base}" />
@@ -262,63 +422,107 @@
                 <rect x="36" y="64" width="28" height="16" fill="${skin.base}" />
                 <rect x="56" y="64" width="8" height="16" fill="${skin.shadow}" />
 
-                <!-- Clothing Layer (Base & Collar) -->
+                <!-- Clothing Layer -->
                 ${clothing.draw()}
 
                 <!-- Mouth Layer -->
                 ${mouth.draw()}
 
                 <!-- Eyes & Eyewear Layer -->
-                ${eyewear.draw(skin)}
+                ${eyewear.draw()}
 
                 <!-- Hair / Headwear Layer -->
                 ${headwear.draw()}
 
-                <!-- Accessories Layer (Chains, Earbuds, Cannons) -->
+                <!-- Accessories Layer -->
                 ${accessory.draw()}
 
-                <!-- Canvas Pixel Border Outline (Premium Finish) -->
+                <!-- Canvas Pixel Border Outline -->
                 <rect width="100" height="100" fill="none" stroke="#000000" stroke-width="1" opacity="0.2"/>
             </svg>`;
         }
 
-        // Smart Compatible DNA Generator with Exclusion & Contrast Rules
+        /* =========================================================
+           SMART DNA GENERATOR (compatibility rules + contrast fix)
+           ========================================================= */
+        function pickCompatible(list, preferredTagPredicate, chance) {
+            if (Math.random() < chance) {
+                const matches = list.filter(preferredTagPredicate);
+                if (matches.length) return matches[Math.floor(Math.random() * matches.length)];
+            }
+            return null;
+        }
+
         function getRandomDNA() {
             let bg, skin, headwear, eyewear, mouth, clothing, accessory, aura;
 
-            while (true) {
+            bg = getWeightedRandom(TRAITS.backgrounds);
+            skin = getWeightedRandom(TRAITS.skins);
+
+            // Contrast guarantee: retry against a shuffled background list if needed
+            let contrastAttempts = 0;
+            while (!hasGoodContrast(bg.mainColor, skin.base) && contrastAttempts < 15) {
                 bg = getWeightedRandom(TRAITS.backgrounds);
-                skin = getWeightedRandom(TRAITS.skins);
-
-                // Smart Rule 1: High Contrast Check (Ensure skin doesn't blend into background)
-                if (bg.mainColor.toLowerCase() === skin.base.toLowerCase()) continue;
-
-                headwear = getWeightedRandom(TRAITS.headwear);
-                clothing = getWeightedRandom(TRAITS.clothing);
-
-                // Smart Rule 2: Theme Synergies
-                if (headwear.tag === "samurai" && Math.random() < 0.7) {
-                    const samSuit = TRAITS.clothing.find(c => c.tag === "samurai");
-                    if (samSuit) clothing = samSuit;
-                }
-                if (headwear.tag === "crown" && Math.random() < 0.6) {
-                    const royalSuit = TRAITS.clothing.find(c => c.tag === "royal");
-                    if (royalSuit) clothing = royalSuit;
-                }
-
-                eyewear = getWeightedRandom(TRAITS.eyewear);
-                
-                // Smart Rule 3: Helmet and Eyewear Conflict Prevention
-                if (headwear.tag === "helmet_full" && eyewear.name !== "Classic Eyes") {
-                    eyewear = TRAITS.eyewear[0]; // Force classic inside full helmets
-                }
-
-                mouth = getWeightedRandom(TRAITS.mouths);
-                accessory = getWeightedRandom(TRAITS.accessories);
-                aura = getWeightedRandom(TRAITS.specialAuras);
-
-                break;
+                contrastAttempts++;
             }
+
+            headwear = getWeightedRandom(TRAITS.headwear);
+            clothing = getWeightedRandom(TRAITS.clothing);
+
+            // Theme synergy rules
+            if (hasTag(headwear, "samurai") && Math.random() < 0.7) {
+                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "samurai"), 1);
+                if (alt) clothing = alt;
+            }
+            if (hasTag(headwear, "royal") && Math.random() < 0.6) {
+                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "royal"), 1);
+                if (alt) clothing = alt;
+            }
+            if (headwear.name === "Golden Crown" && Math.random() < 0.5) {
+                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "royal") || hasTag(c, "gold"), 1);
+                if (alt) clothing = alt;
+            }
+            if (hasTag(headwear, "space") && Math.random() < 0.7) {
+                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "space"), 1);
+                if (alt) clothing = alt;
+            }
+            if (hasTag(skin, "cyber") && Math.random() < 0.4) {
+                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "cyber"), 1);
+                if (alt) clothing = alt;
+            }
+
+            eyewear = getWeightedRandom(TRAITS.eyewear);
+
+            // Full helmets force simple eyes underneath (avoid visual collision)
+            if (hasTag(headwear, "helmet_full") && eyewear.name !== "Classic Eyes") {
+                eyewear = TRAITS.eyewear[0];
+            }
+            if (hasTag(skin, "alien") && Math.random() < 0.5) {
+                const alt = pickCompatible(TRAITS.eyewear, e => hasTag(e, "alien"), 1);
+                if (alt && !hasTag(headwear, "helmet_full")) eyewear = alt;
+            }
+            if (hasTag(headwear, "cyber") && Math.random() < 0.35 && !hasTag(headwear, "helmet_full")) {
+                const alt = pickCompatible(TRAITS.eyewear, e => hasTag(e, "cyber"), 1);
+                if (alt) eyewear = alt;
+            }
+
+            mouth = getWeightedRandom(TRAITS.mouths);
+            if (hasTag(skin, "zombie") && Math.random() < 0.45) {
+                const alt = pickCompatible(TRAITS.mouths, m => hasTag(m, "fangs"), 1);
+                if (alt) mouth = alt;
+            }
+
+            accessory = getWeightedRandom(TRAITS.accessories);
+            if (hasTag(clothing, "luxury") && Math.random() < 0.5) {
+                const alt = pickCompatible(TRAITS.accessories, a => hasTag(a, "gold") || hasTag(a, "diamond"), 1);
+                if (alt) accessory = alt;
+            }
+            if (hasTag(skin, "zombie") && Math.random() < 0.3) {
+                const alt = pickCompatible(TRAITS.accessories, a => a.name === "Scar", 1);
+                if (alt) accessory = alt;
+            }
+
+            aura = getWeightedRandom(TRAITS.specialAuras);
 
             return {
                 bgIndex: TRAITS.backgrounds.indexOf(bg),
@@ -332,38 +536,44 @@
             };
         }
 
+        function dnaTraits(dna) {
+            return {
+                bg: TRAITS.backgrounds[dna.bgIndex],
+                skin: TRAITS.skins[dna.skinIndex],
+                headwear: TRAITS.headwear[dna.headwearIndex],
+                eyewear: TRAITS.eyewear[dna.eyewearIndex],
+                mouth: TRAITS.mouths[dna.mouthIndex],
+                clothing: TRAITS.clothing[dna.clothingIndex],
+                accessory: TRAITS.accessories[dna.accessoryIndex],
+                aura: TRAITS.specialAuras[dna.auraIndex]
+            };
+        }
+
         function generateSinglePreview() {
             const dna = getRandomDNA();
-            const bg = TRAITS.backgrounds[dna.bgIndex];
-            const skin = TRAITS.skins[dna.skinIndex];
-            const headwear = TRAITS.headwear[dna.headwearIndex];
-            const eyewear = TRAITS.eyewear[dna.eyewearIndex];
-            const mouth = TRAITS.mouths[dna.mouthIndex];
-            const clothing = TRAITS.clothing[dna.clothingIndex];
-            const accessory = TRAITS.accessories[dna.accessoryIndex];
-            const aura = TRAITS.specialAuras[dna.auraIndex];
-
-            const rarityTier = calculateRarityScore({
-                bg, skin, headwear, eyewear, mouth, clothing, accessory, aura
-            });
+            const t = dnaTraits(dna);
+            const rarityTier = overallRarity([t.bg, t.skin, t.headwear, t.eyewear, t.mouth, t.clothing, t.accessory, t.aura]);
 
             document.getElementById('svgPreviewContainer').innerHTML = buildSVG(dna);
             document.getElementById('traitDisplay').innerHTML = `
-                Background: ${bg.name}<br>
-                Skin: ${skin.name}<br>
-                Headwear/Hair: ${headwear.name}<br>
-                Eyewear: ${eyewear.name}<br>
-                Mouth: ${mouth.name}<br>
-                Clothing: ${clothing.name}<br>
-                Accessory: ${accessory.name}<br>
-                Special Aura: ${aura.name}<br>
-                <strong style="color: #f59e0b;">Rarity Rank: ${rarityTier}</strong>
+                Background: ${t.bg.name}<br>
+                Skin: ${t.skin.name}<br>
+                Headwear/Hair: ${t.headwear.name}<br>
+                Eyewear: ${t.eyewear.name}<br>
+                Mouth: ${t.mouth.name}<br>
+                Clothing: ${t.clothing.name}<br>
+                Accessory: ${t.accessory.name}<br>
+                Special: ${t.aura.name}<br>
+                <span class="rarity-tag" style="background:${RARITY_COLOR[rarityTier]}22; color:${RARITY_COLOR[rarityTier]}; border:1px solid ${RARITY_COLOR[rarityTier]};">Rarity: ${rarityTier}</span>
             `;
         }
 
+        /* =========================================================
+           BATCH GENERATION (up to 10,000, guaranteed-unique DNA)
+           ========================================================= */
         async function startBatchGeneration() {
             const countInput = parseInt(document.getElementById('nftCount').value);
-            const count = Math.min(Math.max(countInput, 1), 5555);
+            const count = Math.min(Math.max(countInput || 1, 1), 10000);
 
             const btnGen = document.getElementById('btnGenerate');
             const btnPrev = document.getElementById('btnPreview');
@@ -374,6 +584,7 @@
             btnGen.disabled = true;
             btnPrev.disabled = true;
             progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
 
             const zip = new JSZip();
             const svgFolder = zip.folder("svg");
@@ -383,44 +594,36 @@
             for (let i = 1; i <= count; i++) {
                 let dna, dnaKey;
                 let attempts = 0;
-                
-                // Guarantee 100% Unique DNA for all 5555 items
+
+                // Guarantee unique DNA across the whole requested supply (up to 10,000)
                 do {
                     dna = getRandomDNA();
                     dnaKey = `${dna.bgIndex}-${dna.skinIndex}-${dna.headwearIndex}-${dna.eyewearIndex}-${dna.mouthIndex}-${dna.clothingIndex}-${dna.accessoryIndex}-${dna.auraIndex}`;
                     attempts++;
-                } while (dnaSet.has(dnaKey) && attempts < 10000);
+                } while (dnaSet.has(dnaKey) && attempts < 50000);
 
                 dnaSet.add(dnaKey);
 
-                const bg = TRAITS.backgrounds[dna.bgIndex];
-                const skin = TRAITS.skins[dna.skinIndex];
-                const headwear = TRAITS.headwear[dna.headwearIndex];
-                const eyewear = TRAITS.eyewear[dna.eyewearIndex];
-                const mouth = TRAITS.mouths[dna.mouthIndex];
-                const clothing = TRAITS.clothing[dna.clothingIndex];
-                const accessory = TRAITS.accessories[dna.accessoryIndex];
-                const aura = TRAITS.specialAuras[dna.auraIndex];
-
-                const rarityTier = calculateRarityScore({ bg, skin, headwear, eyewear, mouth, clothing, accessory, aura });
+                const t = dnaTraits(dna);
+                const rarityTier = overallRarity([t.bg, t.skin, t.headwear, t.eyewear, t.mouth, t.clothing, t.accessory, t.aura]);
                 const svgContent = buildSVG(dna);
 
                 const metadata = {
                     name: `Pixel Character #${String(i).padStart(4, '0')}`,
-                    description: `A premium collectible generative pixel character NFT from the official 5,555 collection.`,
+                    description: `A premium collectible generative pixel character NFT from the official ${count}-piece collection.`,
                     image: `${i}.svg`,
                     dna: dnaKey,
                     edition: i,
                     attributes: [
-                        { trait_type: "Background", value: bg.name },
-                        { trait_type: "Skin", value: skin.name },
-                        { trait_type: "Headwear", value: headwear.name },
-                        { trait_type: "Eyewear", value: eyewear.name },
-                        { trait_type: "Mouth", value: mouth.name },
-                        { trait_type: "Clothing", value: clothing.name },
-                        { trait_type: "Accessory", value: accessory.name },
-                        { trait_type: "Special Aura", value: aura.name },
-                        { trait_type: "Rarity Rank", value: rarityTier }
+                        { trait_type: "Background", value: t.bg.name },
+                        { trait_type: "Skin", value: t.skin.name },
+                        { trait_type: "Headwear", value: t.headwear.name },
+                        { trait_type: "Eyewear", value: t.eyewear.name },
+                        { trait_type: "Mouth", value: t.mouth.name },
+                        { trait_type: "Clothing", value: t.clothing.name },
+                        { trait_type: "Accessory", value: t.accessory.name },
+                        { trait_type: "Special", value: t.aura.name },
+                        { trait_type: "Rarity", value: rarityTier }
                     ]
                 };
 
@@ -437,7 +640,7 @@
 
             progressStatus.innerText = `ZIP সংকুচিত করা হচ্ছে...`;
 
-            zip.generateAsync({ type: "blob" }).then(function(content) {
+            zip.generateAsync({ type: "blob" }).then(function (content) {
                 saveAs(content, `Premium_Pixel_NFT_Collection_${count}.zip`);
                 btnGen.disabled = false;
                 btnPrev.disabled = false;
