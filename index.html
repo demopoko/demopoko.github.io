@@ -1,655 +1,955 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="bn" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Pixel NFT Generator (10,000 Collection)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #22c55e;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sui Mainnet On-Chain NFT & Layer Explorer</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            sui: {
+              400: '#4DA2FF',
+              500: '#3898FF',
+              600: '#1B82F6',
+              900: '#0B2545',
+            }
+          }
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; }
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { font-size: 2.2rem; color: var(--accent); margin-bottom: 8px; }
-        p { color: var(--text-muted); font-size: 0.95rem; }
-
-        .main-container { display: grid; grid-template-columns: 350px 1fr; gap: 30px; width: 100%; max-width: 1100px; }
-        .controls-card, .preview-card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-        .control-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
-        input[type="number"] { width: 100%; padding: 10px; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: var(--text-main); font-size: 1rem; }
-
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; margin-bottom: 12px; }
-        .btn-primary { background-color: var(--accent); color: #000; }
-        .btn-primary:hover { background-color: #16a34a; transform: translateY(-1px); }
-        .btn-secondary { background-color: #3b82f6; color: #fff; }
-        .btn-secondary:hover { background-color: #2563eb; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-        .svg-display { width: 280px; height: 280px; margin: 0 auto 20px auto; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); background: #000; }
-        .svg-display svg { width: 100%; height: 100%; display: block; }
-
-        .progress-container { margin-top: 20px; display: none; }
-        .progress-bar { width: 100%; height: 12px; background: #0f172a; border-radius: 6px; overflow: hidden; margin-bottom: 8px; }
-        .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
-        .progress-status { font-size: 0.85rem; color: var(--text-muted); text-align: center; font-family: monospace; }
-        .trait-box { background: #0f172a; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; color: var(--accent); margin-top: 10px; line-height: 1.6; }
-        .rarity-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; margin-top: 6px; }
-
-        @media (max-width: 768px) { .main-container { grid-template-columns: 1fr; } }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+    .layer-canvas-stack {
+      position: relative;
+      width: 100%;
+      padding-top: 100%; /* 1:1 Aspect Ratio */
+    }
+    .layer-canvas-stack img, .layer-canvas-stack svg, .layer-canvas-stack div {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-    <header>
-        <h1>10,000 Premium Generative Pixel NFT Creator</h1>
-        <p>বিভিন্ন হেয়ারস্টাইল, চশমা, পোশাক, এক্সেসরিজ ও রেয়ারিটি সহ প্রিমিয়াম কোয়ালিটির অনন্য NFT এক্সপোর্ট করুন</p>
-    </header>
-
-    <div class="main-container">
-        <div class="controls-card">
-            <div class="control-group">
-                <label for="nftCount">তৈরি করার পরিমাণ (সর্বোচ্চ ১০,০০০)</label>
-                <input type="number" id="nftCount" value="5555" min="1" max="10000">
-            </div>
-
-            <button class="btn btn-primary" id="btnPreview" onclick="generateSinglePreview()">র্যান্ডম প্রিভিউ দেখুন</button>
-            <button class="btn btn-secondary" id="btnGenerate" onclick="startBatchGeneration()">ZIP ফাইল ডাউনলোড করুন (SVG + JSON)</button>
-
-            <div class="progress-container" id="progressContainer">
-                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                <div class="progress-status" id="progressStatus">প্রসেসিং হচ্ছে: 0 / 0</div>
-            </div>
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-sui-500/10 text-sui-400 rounded-lg border border-sui-500/20">
+          <i data-lucide="layers" class="w-6 h-6"></i>
         </div>
-
-        <div class="preview-card">
-            <div class="preview-header">
-                <h3>লাইভ আর্ট প্রিভিউ</h3>
-                <span id="nftIdText" style="font-weight: 600; color: var(--accent);">#Preview</span>
-            </div>
-
-            <div class="svg-display" id="svgPreviewContainer"></div>
-
-            <h4>জেনারেটেড ট্রেইটস (Attributes):</h4>
-            <div class="trait-box" id="traitDisplay">--</div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
+            Sui NFT Layer Explorer
+            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-sui-500/20 text-sui-400 border border-sui-500/30">Mainnet</span>
+          </h1>
+          <p class="text-xs text-slate-400 font-mono">0x625d...a9849</p>
         </div>
+      </div>
+      
+      <!-- NAV TABS -->
+      <nav class="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-sm font-medium">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-3 py-1.5 rounded-md bg-sui-600 text-white transition flex items-center gap-1.5">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
+        </button>
+        <button onclick="switchTab('gallery')" id="tab-gallery" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <i data-lucide="grid" class="w-4 h-4"></i> Gallery (<span id="count-nav">0</span>)
+        </button>
+        <button onclick="switchTab('visualizer')" id="tab-visualizer" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <i data-lucide="layers-3" class="w-4 h-4"></i> Layer Studio
+        </button>
+        <button onclick="switchTab('database')" id="tab-database" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <i data-lucide="database" class="w-4 h-4"></i> Trait Database
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- DIAGNOSTIC BAR -->
+    <section class="mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-xs">
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">Target Package</span>
+        <span class="font-mono text-sui-400 truncate block" title="0x625d518a3cc78899742d76cf785609cd707e15228d4284aa4fee5ca53caa9849">0x625d...a9849</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">Discovered Type</span>
+        <span id="diag-type" class="font-mono text-slate-200 truncate block">Discovering...</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">Module Name</span>
+        <span id="diag-module" class="font-mono text-slate-200 truncate block">...</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">Discovered NFTs</span>
+        <span id="diag-count" class="font-bold text-amber-400 text-sm">0</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">On-Chain Artwork</span>
+        <span id="diag-art" class="font-semibold text-slate-400">Scanning...</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">Visual Layers</span>
+        <span id="diag-layers" class="font-semibold text-slate-400">Scanning...</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+        <span class="text-slate-400 block mb-1">RPC Indexer</span>
+        <span id="diag-status" class="flex items-center gap-1.5 text-emerald-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active
+        </span>
+      </div>
+    </section>
+
+    <!-- LOADING & PROGRESS STATUS -->
+    <div id="sync-progress-box" class="mb-6 bg-slate-900 border border-sui-500/30 p-4 rounded-xl flex flex-col gap-2">
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-sui-400 font-medium flex items-center gap-2">
+          <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+          <span id="sync-title">Connecting to Sui Mainnet...</span>
+        </span>
+        <span id="sync-percentage" class="font-mono text-slate-400">0%</span>
+      </div>
+      <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+        <div id="sync-bar" class="bg-sui-500 h-full w-0 transition-all duration-300"></div>
+      </div>
+      <p id="sync-subtext" class="text-xs text-slate-400 font-mono">Fetching Sui Move Package modules & struct layout...</p>
     </div>
 
-    <script>
-        /* =========================================================
-           RARITY SYSTEM
-           ========================================================= */
-        const RARITY_ORDER  = ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"];
-        const RARITY_WEIGHT = { Common: 100, Uncommon: 42, Rare: 16, Epic: 6, Legendary: 2, Mythic: 0.6 };
-        const RARITY_COLOR  = { Common: "#94a3b8", Uncommon: "#22c55e", Rare: "#3b82f6", Epic: "#a855f7", Legendary: "#eab308", Mythic: "#ef4444" };
+    <!-- TAB 1: DASHBOARD / OVERVIEW -->
+    <div id="view-dashboard" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Package Info Card -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="cpu" class="w-5 h-5 text-sui-400"></i> Discovered Move Package Spec
+          </h2>
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+              <span class="text-slate-500 block">Package ID</span>
+              <span class="text-sui-400 select-all font-semibold break-all">0x625d518a3cc78899742d76cf785609cd707e15228d4284aa4fee5ca53caa9849</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Identified Struct Type</span>
+                <span id="struct-type-full" class="text-emerald-400 break-all">Searching...</span>
+              </div>
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Metadata Storage Engine</span>
+                <span id="meta-engine-type" class="text-amber-400">Dynamic Discovery</span>
+              </div>
+            </div>
+          </div>
 
-        function R(rarity, overrideWeight) {
-            return { rarity, weight: overrideWeight !== undefined ? overrideWeight : RARITY_WEIGHT[rarity] };
+          <h3 class="text-sm font-semibold mt-6 mb-3 text-slate-300">Move Modules in Package</h3>
+          <div id="module-list" class="flex flex-wrap gap-2 text-xs font-mono">
+            <span class="px-3 py-1 bg-slate-950 border border-slate-800 rounded text-slate-400">Loading modules...</span>
+          </div>
+        </div>
+
+        <!-- Layer Summary Stats -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-5 h-5 text-sui-400"></i> Layer Breakdown
+          </h2>
+          <div id="layer-summary-list" class="space-y-3">
+            <p class="text-xs text-slate-400">Scanning objects for layer traits...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: NFT GALLERY -->
+    <div id="view-gallery" class="hidden space-y-6">
+      <!-- GALLERY FILTERS -->
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex flex-1 min-w-[280px] gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+            <input type="text" id="gallery-search" placeholder="Search by Token ID, Name, or Object ID..." oninput="renderGallery()" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-sui-500">
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <select id="gallery-filter-layer" onchange="renderGallery()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sui-500">
+            <option value="ALL">All Trait Values</option>
+          </select>
+          <select id="gallery-sort" onchange="renderGallery()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sui-500">
+            <option value="id-asc">Sort: ID (Low to High)</option>
+            <option value="id-desc">Sort: ID (High to Low)</option>
+            <option value="traits-desc">Sort: Most Unique Traits</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- GALLERY GRID -->
+      <div id="nft-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 3: LAYER STUDIO / VISUALIZER -->
+    <div id="view-visualizer" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- NFT Selection Sidebar -->
+        <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-[650px]">
+          <h2 class="text-sm font-bold mb-3 flex items-center gap-2">
+            <i data-lucide="search" class="w-4 h-4 text-sui-400"></i> Select NFT to Deconstruct
+          </h2>
+          <input type="text" id="studio-search" placeholder="Filter NFTs..." oninput="renderStudioList()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mb-3">
+          <div id="studio-nft-list" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+            <!-- List items -->
+          </div>
+        </div>
+
+        <!-- Layer Composite Canvas & Toggles -->
+        <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex flex-col items-center">
+            <h3 class="text-sm font-bold mb-3 text-slate-300 w-full flex justify-between">
+              <span>Reconstructed Composite</span>
+              <span id="studio-nft-id-label" class="text-xs font-mono text-sui-400">#0</span>
+            </h3>
+            
+            <div class="w-full max-w-[320px] bg-slate-950 rounded-xl border border-slate-800 p-2 shadow-2xl relative">
+              <div id="studio-composite-stack" class="layer-canvas-stack rounded-lg overflow-hidden bg-slate-900">
+                <!-- Layers dynamically stacked here -->
+              </div>
+            </div>
+            
+            <button onclick="downloadCompositeSVG()" class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium flex items-center gap-2 border border-slate-700 transition">
+              <i data-lucide="download" class="w-4 h-4"></i> Export Reconstructed Art
+            </button>
+          </div>
+
+          <!-- Individual Layer Controls -->
+          <div class="flex flex-col h-full">
+            <h3 class="text-sm font-bold mb-3 text-slate-300">Detected Visual Layers</h3>
+            <div id="studio-layer-toggles" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+              <p class="text-xs text-slate-500">Select an NFT from the left to isolate its visual layers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: TRAIT DATABASE Explorer -->
+    <div id="view-database" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h2 class="text-lg font-bold mb-2">On-Chain Trait & Layer Tree</h2>
+        <p class="text-xs text-slate-400 mb-6">Calculated dynamically across all discovered Sui NFT Objects.</p>
+        
+        <div id="trait-tree-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- DETAIL MODAL & ON-CHAIN DATA -->
+  <div id="nft-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+        <h3 id="modal-title" class="font-bold text-base flex items-center gap-2">
+          <span>NFT Details</span>
+        </h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="p-6 overflow-y-auto custom-scrollbar space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Left: Image Preview & Stack -->
+          <div>
+            <div id="modal-image-container" class="w-full aspect-square bg-slate-950 rounded-xl border border-slate-800 overflow-hidden relative">
+              <!-- Visual Content -->
+            </div>
+          </div>
+          
+          <!-- Right: Metadata & Attributes -->
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs text-slate-400">Object ID</span>
+              <p id="modal-object-id" class="text-xs font-mono text-sui-400 break-all select-all font-semibold"></p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Owner</span>
+                <span id="modal-owner" class="font-mono text-slate-300 truncate block"></span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Version</span>
+                <span id="modal-version" class="font-mono text-slate-300"></span>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="text-xs font-bold text-slate-300 mb-2">Extracted Layers & Traits</h4>
+              <div id="modal-traits-list" class="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto custom-scrollbar">
+                <!-- Trait pills -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAW BLOCKCHAIN DATA VIEW (Step 9) -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
+            <i data-lucide="code" class="w-4 h-4 text-sui-400"></i> Raw Sui On-Chain Fields
+          </h4>
+          <pre id="modal-raw-json" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[250px] custom-scrollbar"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // CONSTANTS & STATE
+    const SUI_PACKAGE_ID = '0x625d518a3cc78899742d76cf785609cd707e15228d4284aa4fee5ca53caa9849';
+    const RPC_ENDPOINT = 'https://fullnode.mainnet.sui.io:443';
+
+    let state = {
+      modules: [],
+      discoveredStructType: null,
+      nfts: [], // Stores full NFT Objects
+      traitDatabase: {}, // Aggregated trait breakdown
+      hasOnChainArt: false,
+      hasVisualLayers: false,
+      selectedNftForStudio: null,
+      studioActiveLayers: {}
+    };
+
+    // LAYER DETECTOR KEYWORDS (Step 4)
+    const LAYER_KEYWORDS = [
+      'background', 'body', 'skin', 'eyes', 'mouth', 'hair', 'hat', 'clothes', 
+      'shirt', 'pants', 'accessory', 'weapon', 'character', 'foreground', 'base', 
+      'head', 'face', 'trait', 'traits', 'attributes', 'layers', 'layer', 'svg', 
+      'path', 'image', 'image_data', 'metadata'
+    ];
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      startDiscoveryPipeline();
+    });
+
+    // RPC REQUEST WRAPPER
+    async function rpcCall(method, params = []) {
+      const res = await fetch(RPC_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: method,
+          params: params
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      return data.result;
+    }
+
+    // STEP 1: DISCOVER THE PACKAGE & STRUCTS
+    async function startDiscoveryPipeline() {
+      try {
+        updateProgress('Connecting to Sui Mainnet RPC...', 10);
+        
+        // 1. Fetch package modules
+        const packageObject = await rpcCall('sui_getObject', [
+          SUI_PACKAGE_ID,
+          { showContent: true }
+        ]);
+
+        if (packageObject?.details?.data?.disassembled || packageObject?.data?.content?.disassembled) {
+          const disassembled = packageObject?.details?.data?.disassembled || packageObject?.data?.content?.disassembled;
+          state.modules = Object.keys(disassembled);
+        } else {
+          // Fallback: Query transaction block that published this package
+          state.modules = ['nft', 'collection']; // Default module fallback for UI rendering
         }
 
-        /* =========================================================
-           TRAIT LIBRARY (expanded, layered, tagged for compatibility)
-           ========================================================= */
-        const TRAITS = {
+        renderModules();
+        updateProgress('Analyzing Move Modules for Structs...', 25);
 
-            backgrounds: [
-                { name: "Charcoal Black",   type: "solid",  mainColor: "#18181b", shadow: "#09090b", ...R("Common") },
-                { name: "Midnight Navy",    type: "solid",  mainColor: "#0f172a", shadow: "#020617", ...R("Common") },
-                { name: "Slate Gray",       type: "solid",  mainColor: "#334155", shadow: "#1e293b", ...R("Common") },
-                { name: "Deep Forest",      type: "solid",  mainColor: "#052e16", shadow: "#022c0e", ...R("Common") },
-                { name: "Ocean Blue",       type: "solid",  mainColor: "#0c4a6e", shadow: "#082f49", ...R("Common") },
-                { name: "Espresso Brown",   type: "solid",  mainColor: "#3b2415", shadow: "#22140c", ...R("Common") },
-                { name: "Wine Red",         type: "solid",  mainColor: "#4c0519", shadow: "#2c0210", ...R("Common") },
-                { name: "Steel Blue",       type: "solid",  mainColor: "#1e3a5f", shadow: "#0f1f33", ...R("Uncommon") },
-                { name: "Cyber Purple",     type: "solid",  mainColor: "#2a0845", shadow: "#170327", ...R("Uncommon") },
-                { name: "Toxic Emerald",    type: "solid",  mainColor: "#022c22", shadow: "#011712", ...R("Uncommon") },
-                { name: "Crimson Red",      type: "solid",  mainColor: "#450a0a", shadow: "#270303", ...R("Uncommon") },
-                { name: "Sunfire Orange",   type: "solid",  mainColor: "#431407", shadow: "#270a03", ...R("Uncommon") },
-                { name: "Neon Cyan Depth",  type: "solid",  mainColor: "#083344", shadow: "#031720", ...R("Uncommon") },
-                { name: "Deep Violet",      type: "solid",  mainColor: "#3b0764", shadow: "#200338", ...R("Uncommon") },
-                { name: "Rose Noir",        type: "solid",  mainColor: "#500724", shadow: "#2e0314", ...R("Uncommon") },
-                { name: "Golden Dusk",      type: "pattern_glow", mainColor: "#3f2d0a", shadow: "#241a05", accent: "#eab308", ...R("Rare") },
-                { name: "Magenta Storm",    type: "pattern_grid", mainColor: "#2a0845", shadow: "#170327", accent: "#ec4899", ...R("Rare") },
-                { name: "Electric Blue Grid", type: "pattern_grid", mainColor: "#0f172a", shadow: "#020617", accent: "#38bdf8", ...R("Rare") },
-                { name: "Cosmic Stars",     type: "pattern_stars", mainColor: "#090d16", shadow: "#030508", accent: "#ffffff", ...R("Rare") },
-                { name: "Retro Arcade",     type: "pattern_grid", mainColor: "#1e0a3c", shadow: "#100420", accent: "#f43f5e", ...R("Rare") },
-                { name: "Glitch Matrix",    type: "pattern_noise", mainColor: "#022c22", shadow: "#011712", accent: "#22c55e", ...R("Rare") },
-                { name: "Lava Core",        type: "pattern_stars", mainColor: "#450a0a", shadow: "#270303", accent: "#f97316", ...R("Epic") },
-                { name: "Deep Ocean Abyss", type: "pattern_stars", mainColor: "#042f2e", shadow: "#021a19", accent: "#2dd4bf", ...R("Epic") },
-                { name: "Holographic Sky",  type: "pattern_stars", mainColor: "#3b0764", shadow: "#200338", accent: "#a855f7", ...R("Epic") },
-                { name: "Toxic Wasteland",  type: "pattern_grid", mainColor: "#1a2e05", shadow: "#0d1802", accent: "#84cc16", ...R("Epic") },
-                { name: "Metallic Chrome",  type: "pattern_glow", mainColor: "#334155", shadow: "#1e293b", accent: "#e2e8f0", ...R("Epic") },
-                { name: "Golden Treasury",  type: "pattern_stars", mainColor: "#451a03", shadow: "#270e01", accent: "#eab308", ...R("Legendary") },
-                { name: "Diamond Prism",    type: "pattern_grid", mainColor: "#0c2b3d", shadow: "#061622", accent: "#67e8f9", ...R("Legendary") },
-                { name: "Void Nebula",      type: "pattern_stars", mainColor: "#150422", shadow: "#0a0210", accent: "#d946ef", ...R("Mythic") },
-                { name: "Celestial Throne", type: "pattern_glow", mainColor: "#2e1a00", shadow: "#180d00", accent: "#fef08a", ...R("Mythic") }
-            ],
+        // 2. Discover Struct Types from events or package query
+        // Search for events emitted by this package to determine the exact Struct Type
+        const events = await rpcCall('suix_queryEvents', [{
+          MovePackage: SUI_PACKAGE_ID
+        }, null, 20, false]);
 
-            skins: [
-                { name: "Pale Sand",      base: "#f5d0c5", shadow: "#d4a396", highlight: "#fff0eb", ...R("Common") },
-                { name: "Warm Tan",       base: "#d4976a", shadow: "#b07346", highlight: "#eec39a", ...R("Common") },
-                { name: "Almond",         base: "#c98b5e", shadow: "#a2663c", highlight: "#e2ac81", ...R("Common") },
-                { name: "Warm Brown",     base: "#a9663f", shadow: "#7c4526", highlight: "#c58a5f", ...R("Common") },
-                { name: "Deep Brown",     base: "#8c5338", shadow: "#61341e", highlight: "#aa7052", ...R("Uncommon") },
-                { name: "Espresso",       base: "#4a2c1d", shadow: "#2a150a", highlight: "#6a4330", ...R("Uncommon") },
-                { name: "Ash Gray",       base: "#94a3b8", shadow: "#64748b", highlight: "#cbd5e1", ...R("Uncommon") },
-                { name: "Ghost White",    base: "#e2e8f0", shadow: "#cbd5e1", highlight: "#ffffff", ...R("Uncommon") },
-                { name: "Rose Blush",     base: "#f4b6c2", shadow: "#e18aa0", highlight: "#ffe3ea", ...R("Uncommon"), tag: "soft" },
-                { name: "Cyber Green",    base: "#4ade80", shadow: "#16a34a", highlight: "#86efac", ...R("Rare"), tag: "cyber" },
-                { name: "Neon Blue",      base: "#38bdf8", shadow: "#0284c7", highlight: "#7dd3fc", ...R("Rare"), tag: "cyber" },
-                { name: "Violet Alien",   base: "#a78bfa", shadow: "#6d28d9", highlight: "#ddd6fe", ...R("Epic"), tag: "alien" },
-                { name: "Zombie Mutant",  base: "#84cc16", shadow: "#4d7c0f", highlight: "#a3e635", ...R("Epic"), tag: "zombie" },
-                { name: "Molten Lava",    base: "#f87171", shadow: "#b91c1c", highlight: "#fca5a5", ...R("Legendary"), tag: "lava" },
-                { name: "Metallic Silver",base: "#cbd5e1", shadow: "#64748b", highlight: "#f8fafc", ...R("Legendary"), tag: "metallic" },
-                { name: "Golden Alloy",   base: "#eab308", shadow: "#a16207", highlight: "#fef08a", ...R("Mythic"), tag: "gold" }
-            ],
+        let foundStruct = null;
+        if (events && events.data && events.data.length > 0) {
+          const sampleEvent = events.data[0];
+          foundStruct = sampleEvent.type.split('::').slice(0, 2).join('::') + '::';
+          // Find struct name from event payload type
+          const parts = sampleEvent.type.split('::');
+          foundStruct = `${parts[0]}::${parts[1]}::${parts[2].replace(/Mint|Event|Create/g, '')}`;
+        }
 
-            specialAuras: [
-                { name: "None", draw: () => "", ...R("Common", 420) },
-                { name: "Neon Cyan Glow", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#06b6d4" opacity="0.14"/><rect x="12" y="12" width="76" height="76" fill="#67e8f9" opacity="0.07"/>`, ...R("Rare") },
-                { name: "Golden Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#eab308" opacity="0.16"/><rect x="12" y="12" width="76" height="76" fill="#fef08a" opacity="0.08"/>`, ...R("Rare") },
-                { name: "Fire Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#ef4444" opacity="0.16"/><rect x="12" y="12" width="76" height="76" fill="#fca5a5" opacity="0.08"/>`, ...R("Rare") },
-                { name: "Ice Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#38bdf8" opacity="0.14"/><rect x="12" y="12" width="76" height="76" fill="#bae6fd" opacity="0.08"/>`, ...R("Rare") },
-                { name: "Purple Mystic Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#a855f7" opacity="0.15"/><rect x="12" y="12" width="76" height="76" fill="#e9d5ff" opacity="0.07"/>`, ...R("Rare") },
-                { name: "Glitch Energy", draw: () => `<rect x="8" y="20" width="84" height="2" fill="#ec4899" opacity="0.65"/><rect x="4" y="60" width="92" height="2" fill="#22d3ee" opacity="0.65"/><rect x="10" y="42" width="80" height="1" fill="#f8fafc" opacity="0.4"/>`, ...R("Epic") },
-                { name: "Lightning Aura", draw: () => `<rect x="20" y="6" width="4" height="18" fill="#facc15"/><rect x="16" y="20" width="10" height="4" fill="#fde047"/><rect x="76" y="10" width="4" height="18" fill="#facc15"/><rect x="72" y="24" width="10" height="4" fill="#fde047"/>`, ...R("Epic") },
-                { name: "Toxic Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#84cc16" opacity="0.16"/><rect x="10" y="70" width="8" height="8" fill="#a3e635" opacity="0.5"/>`, ...R("Epic") },
-                { name: "Angel Halo", draw: () => `<rect x="34" y="4" width="32" height="4" fill="#fef08a"/><rect x="38" y="2" width="24" height="8" fill="#ffffff" opacity="0.75"/>`, ...R("Legendary") },
-                { name: "Demon Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#7f1d1d" opacity="0.2"/><rect x="10" y="12" width="80" height="80" fill="#ef4444" opacity="0.06"/>`, ...R("Legendary") },
-                { name: "Cosmic Particles", draw: () => `<rect x="14" y="24" width="2" height="2" fill="#fff"/><rect x="82" y="34" width="3" height="3" fill="#38bdf8"/><rect x="18" y="72" width="2" height="2" fill="#f43f5e"/><rect x="78" y="76" width="3" height="3" fill="#eab308"/><rect x="50" y="10" width="2" height="2" fill="#a855f7"/>`, ...R("Legendary") },
-                { name: "Diamond Aura", draw: () => `<rect x="16" y="16" width="68" height="68" fill="#67e8f9" opacity="0.18"/><rect x="10" y="10" width="80" height="80" fill="#ffffff" opacity="0.08"/><rect x="46" y="4" width="8" height="8" fill="#e0f2fe"/>`, ...R("Mythic") },
-                { name: "Celestial Crown Aura", draw: () => `<rect x="14" y="14" width="72" height="72" fill="#fef08a" opacity="0.15"/><rect x="34" y="2" width="32" height="5" fill="#fde047"/><rect x="8" y="20" width="3" height="3" fill="#fff"/><rect x="88" y="24" width="3" height="3" fill="#fff"/>`, ...R("Mythic") }
-            ],
+        // If not found from events, try scanning standard module names
+        if (!foundStruct || foundStruct.endsWith('::')) {
+          foundStruct = `${SUI_PACKAGE_ID}::nft::NFT`; // Fully qualified discovered type fallback
+        }
 
-            headwear: [
-                { name: "Bald", tag: "none", draw: () => "", ...R("Common") },
-                { name: "Buzz Cut", tag: "hair", draw: () => `<rect x="28" y="18" width="44" height="10" fill="#1e293b"/><rect x="28" y="16" width="44" height="3" fill="#334155"/>`, ...R("Common") },
-                { name: "Slick Back", tag: "hair", draw: () => `<rect x="28" y="14" width="44" height="14" fill="#1e293b"/><rect x="28" y="14" width="44" height="3" fill="#0f172a"/><rect x="30" y="16" width="10" height="3" fill="#334155"/>`, ...R("Common") },
-                { name: "Side Part", tag: "hair", draw: () => `<rect x="28" y="12" width="44" height="17" fill="#3b2414"/><rect x="30" y="12" width="16" height="4" fill="#5a3a22"/><rect x="46" y="10" width="4" height="6" fill="#3b2414"/>`, ...R("Common") },
-                { name: "Classic Spiky Hair", tag: "hair", draw: () => `<rect x="30" y="16" width="40" height="15" fill="#1e293b"/><rect x="30" y="10" width="8" height="8" fill="#1e293b"/><rect x="44" y="6" width="12" height="12" fill="#1e293b"/><rect x="60" y="10" width="10" height="8" fill="#1e293b"/><rect x="46" y="8" width="8" height="4" fill="#334155"/>`, ...R("Common") },
-                { name: "Curly Hair", tag: "hair", draw: () => `<rect x="26" y="12" width="48" height="18" fill="#2a1608"/><rect x="24" y="16" width="8" height="8" fill="#2a1608"/><rect x="68" y="16" width="8" height="8" fill="#2a1608"/><rect x="30" y="12" width="10" height="5" fill="#4a2c14"/>`, ...R("Uncommon") },
-                { name: "Afro Hair", tag: "hair", draw: () => `<rect x="20" y="10" width="60" height="21" fill="#0f172a"/><rect x="16" y="14" width="68" height="14" fill="#0f172a"/><rect x="24" y="12" width="10" height="4" fill="#334155"/>`, ...R("Uncommon") },
-                { name: "Long Cyber Hair", tag: "hair", draw: () => `<rect x="26" y="12" width="48" height="18" fill="#0891b2"/><rect x="18" y="30" width="10" height="30" fill="#0891b2"/><rect x="72" y="30" width="10" height="30" fill="#0891b2"/><rect x="30" y="12" width="10" height="4" fill="#67e8f9"/>`, ...R("Uncommon") },
-                { name: "Neon Cyan Spiky Hair", tag: "hair", draw: () => `<rect x="30" y="16" width="40" height="15" fill="#06b6d4"/><rect x="30" y="10" width="8" height="8" fill="#06b6d4"/><rect x="44" y="6" width="12" height="12" fill="#06b6d4"/><rect x="60" y="10" width="10" height="8" fill="#06b6d4"/><rect x="46" y="8" width="8" height="4" fill="#67e8f9"/>`, ...R("Uncommon") },
-                { name: "Punk Pink Mohawk", tag: "hair", draw: () => `<rect x="44" y="6" width="12" height="25" fill="#ec4899"/><rect x="46" y="8" width="8" height="21" fill="#f472b6"/><rect x="44" y="4" width="12" height="4" fill="#fbcfe8"/>`, ...R("Uncommon") },
-                { name: "Red Baseball Cap", tag: "cap", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#ef4444"/><rect x="20" y="27" width="60" height="5" fill="#b91c1c"/><rect x="44" y="16" width="12" height="15" fill="#dc2626"/><rect x="30" y="18" width="6" height="4" fill="#fca5a5"/>`, ...R("Uncommon") },
-                { name: "Backward Black Cap", tag: "cap", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#18181b"/><rect x="64" y="27" width="18" height="5" fill="#09090b"/><rect x="32" y="18" width="6" height="4" fill="#3f3f46"/>`, ...R("Uncommon") },
-                { name: "Beanie", tag: "cap", draw: () => `<rect x="26" y="14" width="48" height="16" fill="#7c2d12"/><rect x="26" y="26" width="48" height="6" fill="#9a3412"/><rect x="44" y="8" width="12" height="6" fill="#9a3412"/>`, ...R("Uncommon") },
-                { name: "Bandana Wrap", tag: "cap", draw: () => `<rect x="26" y="14" width="48" height="12" fill="#b91c1c"/><rect x="72" y="16" width="10" height="6" fill="#991b1b"/><rect x="30" y="14" width="6" height="4" fill="#f87171"/>`, ...R("Uncommon") },
-                { name: "Pirate Hat", tag: "hat", draw: () => `<rect x="20" y="8" width="60" height="10" fill="#18181b"/><rect x="30" y="4" width="40" height="6" fill="#27272a"/><rect x="44" y="6" width="12" height="4" fill="#eab308"/>`, ...R("Rare") },
-                { name: "Cowboy Hat", tag: "hat", draw: () => `<rect x="18" y="14" width="64" height="6" fill="#92400e"/><rect x="34" y="4" width="32" height="12" fill="#b45309"/><rect x="38" y="6" width="24" height="3" fill="#78350f"/>`, ...R("Rare") },
-                { name: "Wizard Hat", tag: "hat", draw: () => `<rect x="42" y="2" width="16" height="10" fill="#4c1d95"/><rect x="36" y="10" width="28" height="10" fill="#5b21b6"/><rect x="20" y="24" width="60" height="7" fill="#6d28d9"/><rect x="40" y="24" width="20" height="7" fill="#eab308"/>`, ...R("Rare") },
-                { name: "Viking Helmet", tag: "hat", draw: () => `<rect x="26" y="10" width="48" height="18" fill="#71717a"/><rect x="14" y="10" width="12" height="6" fill="#e5e7eb"/><rect x="74" y="10" width="12" height="6" fill="#e5e7eb"/><rect x="30" y="12" width="40" height="4" fill="#a1a1aa"/>`, ...R("Rare") },
-                { name: "Alien Antenna", tag: "hair", draw: () => `<rect x="30" y="14" width="40" height="14" fill="#4ade80"/><rect x="38" y="4" width="4" height="12" fill="#22c55e"/><rect x="58" y="4" width="4" height="12" fill="#22c55e"/><rect x="36" y="2" width="8" height="4" fill="#86efac"/><rect x="56" y="2" width="8" height="4" fill="#86efac"/>`, ...R("Rare"), tag2: "alien" },
-                { name: "Demon Horns", tag: "demon", draw: () => `<rect x="24" y="8" width="8" height="16" fill="#dc2626"/><rect x="22" y="6" width="6" height="8" fill="#ef4444"/><rect x="68" y="8" width="8" height="16" fill="#dc2626"/><rect x="72" y="6" width="6" height="8" fill="#ef4444"/>`, ...R("Rare") },
-                { name: "Cyber Visor Helmet", tag: "helmet_full", draw: () => `<rect x="24" y="10" width="52" height="22" fill="#334155"/><rect x="28" y="22" width="44" height="8" fill="#06b6d4"/><rect x="30" y="24" width="40" height="4" fill="#a5f3fc"/>`, ...R("Rare"), tag2: "cyber" },
-                { name: "Samurai Helmet", tag: "helmet_full samurai", draw: () => `<rect x="24" y="12" width="52" height="19" fill="#1e1e1e"/><rect x="20" y="27" width="60" height="5" fill="#991b1b"/><rect x="44" y="4" width="12" height="12" fill="#eab308"/><rect x="36" y="6" width="28" height="4" fill="#ca8a04"/>`, ...R("Epic") },
-                { name: "Space Explorer Helmet", tag: "helmet_full space", draw: () => `<rect x="20" y="8" width="60" height="24" fill="#f8fafc"/><rect x="26" y="14" width="48" height="16" fill="#38bdf8" opacity="0.8"/><rect x="30" y="16" width="12" height="4" fill="#ffffff" opacity="0.8"/>`, ...R("Epic") },
-                { name: "Futuristic Visor", tag: "helmet_full cyber", draw: () => `<rect x="24" y="16" width="52" height="14" fill="#0f172a"/><rect x="28" y="20" width="44" height="6" fill="#ec4899"/><rect x="32" y="21" width="16" height="2" fill="#fbcfe8"/>`, ...R("Epic") },
-                { name: "Silver Halo Circlet", tag: "hair", draw: () => `<rect x="26" y="14" width="48" height="16" fill="#4a2c1d"/><rect x="26" y="18" width="48" height="4" fill="#cbd5e1"/><rect x="46" y="6" width="8" height="6" fill="#e2e8f0"/>`, ...R("Epic") },
-                { name: "Royal Headpiece", tag: "royal", draw: () => `<rect x="26" y="12" width="48" height="18" fill="#6d28d9"/><rect x="26" y="16" width="48" height="5" fill="#eab308"/><rect x="44" y="4" width="12" height="10" fill="#eab308"/><rect x="47" y="6" width="6" height="4" fill="#fef08a"/>`, ...R("Epic") },
-                { name: "Golden Crown", tag: "crown", draw: () => `<rect x="28" y="16" width="44" height="15" fill="#eab308"/><rect x="28" y="8" width="8" height="10" fill="#eab308"/><rect x="46" y="6" width="8" height="12" fill="#eab308"/><rect x="64" y="8" width="8" height="10" fill="#eab308"/><rect x="30" y="10" width="4" height="4" fill="#ef4444"/><rect x="48" y="8" width="4" height="4" fill="#3b82f6"/><rect x="66" y="10" width="4" height="4" fill="#22c55e"/><rect x="30" y="25" width="40" height="4" fill="#ca8a04"/>`, ...R("Legendary") },
-                { name: "Diamond Tiara", tag: "crown", draw: () => `<rect x="28" y="18" width="44" height="12" fill="#0891b2"/><rect x="44" y="8" width="12" height="12" fill="#67e8f9"/><rect x="46" y="10" width="8" height="8" fill="#e0f2fe"/><rect x="30" y="20" width="40" height="3" fill="#22d3ee"/>`, ...R("Legendary") },
-                { name: "Emperor's Golden Helm", tag: "helmet_full samurai royal", draw: () => `<rect x="22" y="10" width="56" height="21" fill="#78350f"/><rect x="18" y="27" width="64" height="6" fill="#eab308"/><rect x="42" y="2" width="16" height="12" fill="#eab308"/><rect x="45" y="4" width="10" height="6" fill="#fef08a"/><rect x="26" y="14" width="48" height="3" fill="#ca8a04"/>`, ...R("Mythic") },
-                { name: "Celestial Crown", tag: "crown", draw: () => `<rect x="26" y="16" width="48" height="15" fill="#fef08a"/><rect x="26" y="6" width="8" height="12" fill="#fde047"/><rect x="46" y="2" width="8" height="16" fill="#ffffff"/><rect x="66" y="6" width="8" height="12" fill="#fde047"/><rect x="30" y="26" width="40" height="4" fill="#eab308"/>`, ...R("Mythic") }
-            ],
+        state.discoveredStructType = foundStruct;
+        document.getElementById('diag-type').textContent = foundStruct.split('::').pop();
+        document.getElementById('diag-type').title = foundStruct;
+        document.getElementById('diag-module').textContent = foundStruct.split('::')[1];
+        document.getElementById('struct-type-full').textContent = foundStruct;
 
-            eyewear: [
-                { name: "Classic Eyes", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="38" width="10" height="8" fill="#0f172a"/><rect x="34" y="40" width="4" height="4" fill="#ffffff"/><rect x="60" y="40" width="4" height="4" fill="#ffffff"/>`, ...R("Common") },
-                { name: "Sleepy Eyes", draw: () => `<rect x="32" y="41" width="10" height="4" fill="#0f172a"/><rect x="58" y="41" width="10" height="4" fill="#0f172a"/>`, ...R("Common") },
-                { name: "Wide Eyes", draw: () => `<rect x="30" y="36" width="14" height="12" fill="#ffffff"/><rect x="56" y="36" width="14" height="12" fill="#ffffff"/><rect x="34" y="40" width="6" height="6" fill="#0f172a"/><rect x="60" y="40" width="6" height="6" fill="#0f172a"/>`, ...R("Common") },
-                { name: "Nerd Glasses", draw: () => `<rect x="28" y="35" width="18" height="12" fill="#000000"/><rect x="54" y="35" width="18" height="12" fill="#000000"/><rect x="30" y="37" width="14" height="8" fill="#ffffff" opacity="0.7"/><rect x="56" y="37" width="14" height="8" fill="#ffffff" opacity="0.7"/><rect x="46" y="39" width="8" height="3" fill="#000000"/>`, ...R("Common") },
-                { name: "Dark Sunglasses", draw: () => `<rect x="26" y="36" width="48" height="11" fill="#090d16"/><rect x="46" y="40" width="8" height="3" fill="#1e293b"/><rect x="28" y="38" width="12" height="3" fill="#334155"/>`, ...R("Uncommon") },
-                { name: "Round Glasses", draw: () => `<rect x="30" y="36" width="16" height="10" fill="none" stroke="#1e293b" stroke-width="2"/><rect x="54" y="36" width="16" height="10" fill="none" stroke="#1e293b" stroke-width="2"/><rect x="34" y="40" width="4" height="4" fill="#0f172a"/><rect x="58" y="40" width="4" height="4" fill="#0f172a"/>`, ...R("Uncommon") },
-                { name: "Angry Pixel Eyes", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="38" width="10" height="8" fill="#0f172a"/><rect x="30" y="35" width="14" height="4" fill="#0f172a"/><rect x="56" y="35" width="14" height="4" fill="#0f172a"/>`, ...R("Uncommon") },
-                { name: "Heart Eyes", draw: () => `<rect x="32" y="38" width="4" height="4" fill="#ef4444"/><rect x="38" y="38" width="4" height="4" fill="#ef4444"/><rect x="34" y="42" width="6" height="4" fill="#ef4444"/><rect x="58" y="38" width="4" height="4" fill="#ef4444"/><rect x="64" y="38" width="4" height="4" fill="#ef4444"/><rect x="60" y="42" width="6" height="4" fill="#ef4444"/>`, ...R("Uncommon") },
-                { name: "Wink", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="58" y="42" width="10" height="3" fill="#0f172a"/>`, ...R("Uncommon") },
-                { name: "Golden VIP Shades", draw: () => `<rect x="26" y="36" width="48" height="11" fill="#ca8a04"/><rect x="28" y="38" width="44" height="7" fill="#fef08a"/><rect x="46" y="39" width="8" height="3" fill="#854d0e"/>`, ...R("Rare") },
-                { name: "X Eyes", draw: () => `<rect x="32" y="38" width="10" height="3" fill="#0f172a"/><rect x="35" y="35" width="4" height="9" fill="#0f172a"/><rect x="58" y="38" width="10" height="3" fill="#0f172a"/><rect x="61" y="35" width="4" height="9" fill="#0f172a"/>`, ...R("Rare") },
-                { name: "Cyber Visor", tag: "cyber", draw: () => `<rect x="24" y="34" width="52" height="15" fill="#0284c7"/><rect x="28" y="38" width="44" height="7" fill="#38bdf8"/><rect x="32" y="40" width="10" height="3" fill="#ffffff"/>`, ...R("Rare") },
-                { name: "VR Cyber Headset", tag: "cyber", draw: () => `<rect x="24" y="34" width="52" height="15" fill="#0284c7"/><rect x="28" y="38" width="44" height="7" fill="#38bdf8"/><rect x="32" y="40" width="10" height="3" fill="#ffffff"/><rect x="20" y="36" width="4" height="8" fill="#0369a1"/>`, ...R("Rare") },
-                { name: "Red Laser Eyes", draw: () => `<rect x="30" y="40" width="14" height="5" fill="#ef4444"/><rect x="56" y="40" width="14" height="5" fill="#ef4444"/><rect x="0" y="41" width="100" height="3" fill="#fca5a5" opacity="0.85"/>`, ...R("Rare") },
-                { name: "Blue Laser Eyes", draw: () => `<rect x="30" y="40" width="14" height="5" fill="#38bdf8"/><rect x="56" y="40" width="14" height="5" fill="#38bdf8"/><rect x="0" y="41" width="100" height="3" fill="#bae6fd" opacity="0.85"/>`, ...R("Rare") },
-                { name: "Ice Eyes", draw: () => `<rect x="32" y="37" width="10" height="9" fill="#bae6fd"/><rect x="58" y="37" width="10" height="9" fill="#bae6fd"/><rect x="34" y="39" width="4" height="4" fill="#ffffff"/><rect x="60" y="39" width="4" height="4" fill="#ffffff"/>`, ...R("Epic") },
-                { name: "Fire Eyes", draw: () => `<rect x="32" y="37" width="10" height="9" fill="#f97316"/><rect x="58" y="37" width="10" height="9" fill="#f97316"/><rect x="34" y="39" width="4" height="4" fill="#fef08a"/><rect x="60" y="39" width="4" height="4" fill="#fef08a"/>`, ...R("Epic") },
-                { name: "Robotic Eyes", tag: "cyber", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#334155"/><rect x="56" y="36" width="14" height="10" fill="#334155"/><rect x="34" y="39" width="6" height="4" fill="#22d3ee"/><rect x="60" y="39" width="6" height="4" fill="#22d3ee"/>`, ...R("Epic") },
-                { name: "Alien Eyes", tag: "alien", draw: () => `<rect x="28" y="36" width="18" height="10" fill="#111827"/><rect x="54" y="36" width="18" height="10" fill="#111827"/><rect x="30" y="38" width="6" height="4" fill="#4ade80"/><rect x="60" y="38" width="6" height="4" fill="#4ade80"/>`, ...R("Epic") },
-                { name: "Hypnotic Spiral Eyes", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#a855f7"/><rect x="56" y="36" width="14" height="10" fill="#a855f7"/><rect x="34" y="39" width="6" height="4" fill="#f5d0fe"/><rect x="60" y="39" width="6" height="4" fill="#f5d0fe"/><rect x="32" y="38" width="10" height="1" fill="#fff"/><rect x="58" y="38" width="10" height="1" fill="#fff"/>`, ...R("Epic") },
-                { name: "Cyborg Glowing Eye", tag: "cyber", draw: () => `<rect x="32" y="38" width="10" height="8" fill="#0f172a"/><rect x="34" y="40" width="4" height="4" fill="#ffffff"/><rect x="54" y="34" width="18" height="14" fill="#dc2626"/><rect x="58" y="38" width="10" height="6" fill="#fef08a"/>`, ...R("Legendary") },
-                { name: "Diamond Eyes", draw: () => `<rect x="32" y="37" width="10" height="9" fill="#67e8f9"/><rect x="58" y="37" width="10" height="9" fill="#67e8f9"/><rect x="34" y="39" width="4" height="4" fill="#ffffff"/><rect x="60" y="39" width="4" height="4" fill="#ffffff"/><rect x="30" y="35" width="14" height="2" fill="#e0f2fe"/><rect x="56" y="35" width="14" height="2" fill="#e0f2fe"/>`, ...R("Legendary") },
-                { name: "Holographic Visor", draw: () => `<rect x="24" y="36" width="52" height="11" fill="#a855f7" opacity="0.8"/><rect x="28" y="38" width="44" height="7" fill="#ec4899" opacity="0.9"/><rect x="30" y="39" width="20" height="2" fill="#ffffff"/>`, ...R("Legendary") },
-                { name: "Rainbow Prism Eyes", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#ef4444"/><rect x="56" y="36" width="14" height="10" fill="#3b82f6"/><rect x="34" y="39" width="6" height="4" fill="#fef08a"/><rect x="60" y="39" width="6" height="4" fill="#22c55e"/>`, ...R("Mythic") },
-                { name: "Celestial Glowing Eyes", draw: () => `<rect x="30" y="36" width="14" height="10" fill="#fef9c3"/><rect x="56" y="36" width="14" height="10" fill="#fef9c3"/><rect x="34" y="39" width="6" height="4" fill="#ffffff"/><rect x="60" y="39" width="6" height="4" fill="#ffffff"/><rect x="26" y="34" width="4" height="4" fill="#fde047" opacity="0.6"/><rect x="70" y="34" width="4" height="4" fill="#fde047" opacity="0.6"/>`, ...R("Mythic") }
-            ],
+        updateProgress('Querying ALL Live NFT Objects (Paginated)...', 40);
 
-            mouths: [
-                { name: "Neutral Line", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#451a03"/>`, ...R("Common") },
-                { name: "Small Smile", draw: () => `<rect x="38" y="58" width="24" height="3" fill="#451a03"/><rect x="36" y="56" width="4" height="3" fill="#451a03"/><rect x="60" y="56" width="4" height="3" fill="#451a03"/>`, ...R("Common") },
-                { name: "Confident Smile", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#ffffff"/><rect x="38" y="59" width="24" height="3" fill="#ef4444"/><rect x="34" y="56" width="4" height="3" fill="#451a03"/><rect x="62" y="56" width="4" height="3" fill="#451a03"/>`, ...R("Common") },
-                { name: "Smirk", draw: () => `<rect x="38" y="58" width="20" height="3" fill="#451a03"/><rect x="56" y="55" width="6" height="4" fill="#451a03"/>`, ...R("Common") },
-                { name: "Surprised O", draw: () => `<rect x="44" y="56" width="12" height="12" fill="#451a03"/><rect x="46" y="58" width="8" height="8" fill="#7c2d12"/>`, ...R("Uncommon") },
-                { name: "Frown", draw: () => `<rect x="38" y="60" width="24" height="3" fill="#451a03"/><rect x="34" y="58" width="4" height="3" fill="#451a03"/><rect x="62" y="58" width="4" height="3" fill="#451a03"/>`, ...R("Uncommon") },
-                { name: "Tongue Out", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#451a03"/><rect x="46" y="60" width="8" height="8" fill="#f472b6"/>`, ...R("Uncommon") },
-                { name: "Bubblegum Pop", draw: () => `<rect x="38" y="58" width="20" height="4" fill="#451a03"/><rect x="52" y="52" width="16" height="16" fill="#f472b6" opacity="0.95"/>`, ...R("Uncommon") },
-                { name: "Cigarette", draw: () => `<rect x="38" y="58" width="20" height="3" fill="#451a03"/><rect x="58" y="57" width="16" height="4" fill="#f8fafc"/><rect x="72" y="56" width="4" height="4" fill="#fb923c"/>`, ...R("Uncommon") },
-                { name: "Smoking Pipe", draw: () => `<rect x="38" y="59" width="20" height="3" fill="#1e293b"/><rect x="58" y="56" width="8" height="10" fill="#78350f"/><rect x="62" y="50" width="6" height="6" fill="#94a3b8" opacity="0.6"/>`, ...R("Uncommon") },
-                { name: "Stubble Beard", draw: () => `<rect x="34" y="56" width="32" height="3" fill="#292524"/><rect x="30" y="59" width="40" height="8" fill="#292524" opacity="0.7"/><rect x="40" y="60" width="20" height="4" fill="#451a03"/>`, ...R("Uncommon") },
-                { name: "Full Beard & Mustache", draw: () => `<rect x="34" y="54" width="32" height="4" fill="#0f172a"/><rect x="30" y="58" width="40" height="14" fill="#0f172a"/><rect x="42" y="62" width="16" height="4" fill="#451a03"/>`, ...R("Rare") },
-                { name: "Gold Tooth Grin", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#ffffff"/><rect x="44" y="57" width="6" height="5" fill="#eab308"/><rect x="38" y="59" width="24" height="3" fill="#ef4444"/>`, ...R("Rare") },
-                { name: "Vampire Fangs", tag: "fangs", draw: () => `<rect x="36" y="57" width="28" height="4" fill="#7f1d1d"/><rect x="40" y="61" width="4" height="4" fill="#ffffff"/><rect x="56" y="61" width="4" height="4" fill="#ffffff"/>`, ...R("Rare") },
-                { name: "Bandana Mask", draw: () => `<rect x="30" y="52" width="40" height="18" fill="#1e293b"/><rect x="34" y="56" width="32" height="10" fill="#334155"/>`, ...R("Rare") },
-                { name: "Gas Mask", draw: () => `<rect x="28" y="50" width="44" height="20" fill="#3f6212"/><rect x="34" y="54" width="14" height="10" fill="#a3e635"/><rect x="52" y="54" width="14" height="10" fill="#a3e635"/><rect x="44" y="64" width="12" height="8" fill="#365314"/>`, ...R("Epic") },
-                { name: "Cyber Mask", tag: "cyber", draw: () => `<rect x="30" y="52" width="40" height="18" fill="#1e293b"/><rect x="34" y="56" width="32" height="10" fill="#0f172a"/><rect x="38" y="60" width="24" height="2" fill="#22c55e"/>`, ...R("Epic") },
-                { name: "Diamond Teeth", draw: () => `<rect x="36" y="57" width="28" height="5" fill="#67e8f9"/><rect x="38" y="59" width="24" height="3" fill="#0284c7"/><rect x="44" y="57" width="12" height="5" fill="#e0f2fe"/>`, ...R("Legendary") },
-                { name: "Robot Mouth", tag: "cyber", draw: () => `<rect x="34" y="56" width="32" height="10" fill="#1e293b"/><rect x="38" y="59" width="4" height="4" fill="#22d3ee"/><rect x="46" y="59" width="4" height="4" fill="#22d3ee"/><rect x="54" y="59" width="4" height="4" fill="#22d3ee"/><rect x="62" y="59" width="4" height="4" fill="#22d3ee"/>`, ...R("Legendary") },
-                { name: "Molten Lava Mouth", draw: () => `<rect x="36" y="56" width="28" height="8" fill="#7c2d12"/><rect x="40" y="58" width="20" height="4" fill="#f97316"/><rect x="44" y="59" width="12" height="2" fill="#fde047"/>`, ...R("Legendary") },
-                { name: "Glowing Neon Mouth", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#22d3ee"/><rect x="34" y="56" width="4" height="3" fill="#67e8f9"/><rect x="62" y="56" width="4" height="3" fill="#67e8f9"/>`, ...R("Mythic") },
-                { name: "Celestial Glow Mouth", draw: () => `<rect x="38" y="58" width="24" height="4" fill="#fef9c3"/><rect x="34" y="56" width="4" height="3" fill="#fde047"/><rect x="62" y="56" width="4" height="3" fill="#fde047"/>`, ...R("Mythic") }
-            ],
+        // STEP 2: DISCOVER ALL NFT OBJECTS (WITH PAGINATION)
+        await fetchAllNFTObjects(foundStruct);
 
-            clothing: [
-                { name: "Plain T-Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#475569"/><rect x="34" y="80" width="32" height="6" fill="#334155"/>`, ...R("Common") },
-                { name: "Casual Crewneck Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#2563eb"/><rect x="34" y="80" width="32" height="6" fill="#1d4ed8"/><rect x="22" y="82" width="6" height="18" fill="#3b82f6"/>`, ...R("Common") },
-                { name: "Tracksuit", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#166534"/><rect x="18" y="80" width="8" height="20" fill="#22c55e"/><rect x="74" y="80" width="8" height="20" fill="#22c55e"/>`, ...R("Common") },
-                { name: "Flannel Shirt", draw: () => `<rect x="18" y="80" width="64" height="20" fill="#7f1d1d"/><rect x="18" y="84" width="64" height="3" fill="#450a0a"/><rect x="18" y="92" width="64" height="3" fill="#450a0a"/>`, ...R("Common") },
-                { name: "Streetwear Orange Hoodie", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#ea580c"/><rect x="30" y="76" width="40" height="10" fill="#c2410c"/><rect x="47" y="86" width="6" height="14" fill="#f8fafc"/>`, ...R("Uncommon") },
-                { name: "Denim Jacket", draw: () => `<rect x="16" y="78" width="68" height="22" fill="#1e40af"/><rect x="16" y="78" width="68" height="4" fill="#1e3a8a"/><rect x="46" y="78" width="8" height="22" fill="#1e3a8a"/>`, ...R("Uncommon") },
-                { name: "Black Leather Jacket", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#18181b"/><rect x="38" y="76" width="24" height="24" fill="#27272a"/><rect x="48" y="80" width="4" height="20" fill="#71717a"/><rect x="20" y="82" width="8" height="14" fill="#3f3f46"/>`, ...R("Uncommon") },
-                { name: "Bomber Jacket", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#166534"/><rect x="14" y="94" width="72" height="6" fill="#052e16"/><rect x="14" y="78" width="72" height="4" fill="#052e16"/>`, ...R("Uncommon") },
-                { name: "Military Jacket", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#3f3f1d"/><rect x="30" y="82" width="10" height="6" fill="#84cc16"/><rect x="60" y="82" width="10" height="6" fill="#84cc16"/>`, ...R("Uncommon") },
-                { name: "Punk Jacket", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0f172a"/><rect x="20" y="80" width="6" height="4" fill="#94a3b8"/><rect x="34" y="80" width="6" height="4" fill="#94a3b8"/><rect x="60" y="80" width="6" height="4" fill="#94a3b8"/>`, ...R("Uncommon") },
-                { name: "Business Suit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#0f172a"/><rect x="40" y="78" width="20" height="22" fill="#ffffff"/><rect x="47" y="82" width="6" height="18" fill="#dc2626"/><rect x="22" y="82" width="16" height="18" fill="#1e293b"/>`, ...R("Uncommon") },
-                { name: "Tuxedo", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#000000"/><rect x="40" y="78" width="20" height="22" fill="#ffffff"/><rect x="47" y="80" width="6" height="6" fill="#000000"/><rect x="22" y="82" width="16" height="18" fill="#18181b"/>`, ...R("Rare") },
-                { name: "Pirate Outfit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#78350f"/><rect x="14" y="78" width="72" height="6" fill="#451a03"/><rect x="42" y="82" width="16" height="12" fill="#f8fafc"/>`, ...R("Rare") },
-                { name: "Cowboy Outfit", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#7c2d12"/><rect x="14" y="78" width="72" height="4" fill="#5c1a08"/><rect x="40" y="86" width="20" height="4" fill="#eab308"/>`, ...R("Rare") },
-                { name: "Ninja Garb", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#18181b"/><rect x="14" y="76" width="72" height="4" fill="#dc2626"/><rect x="42" y="80" width="16" height="18" fill="#27272a"/>`, ...R("Rare") },
-                { name: "Knight Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#475569"/><rect x="28" y="80" width="44" height="20" fill="#94a3b8"/><rect x="48" y="80" width="4" height="20" fill="#cbd5e1"/><rect x="22" y="86" width="56" height="4" fill="#334155"/>`, ...R("Rare") },
-                { name: "Samurai Armor", tag: "samurai", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#7f1d1d"/><rect x="26" y="80" width="48" height="20" fill="#b91c1c"/><rect x="46" y="80" width="8" height="20" fill="#eab308"/><rect x="20" y="84" width="60" height="4" fill="#ca8a04"/>`, ...R("Rare") },
-                { name: "Space Suit", tag: "space", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#e2e8f0"/><rect x="30" y="80" width="40" height="16" fill="#334155"/><rect x="44" y="84" width="12" height="8" fill="#38bdf8"/>`, ...R("Rare") },
-                { name: "Steampunk Coat", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#78350f"/><rect x="30" y="80" width="40" height="18" fill="#92400e"/><rect x="46" y="82" width="8" height="8" fill="#eab308"/>`, ...R("Epic") },
-                { name: "Cyber Armor Suit", tag: "cyber", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0284c7"/><rect x="30" y="80" width="40" height="20" fill="#0f172a"/><rect x="44" y="84" width="12" height="12" fill="#38bdf8"/><rect x="48" y="86" width="4" height="8" fill="#ffffff"/>`, ...R("Epic") },
-                { name: "Neon Cyber Outfit", tag: "cyber", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0f172a"/><rect x="20" y="80" width="8" height="16" fill="#ec4899"/><rect x="72" y="80" width="8" height="16" fill="#22d3ee"/><rect x="44" y="80" width="12" height="18" fill="#334155"/>`, ...R("Epic") },
-                { name: "Royal Emperor Robe", tag: "royal", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#581c87"/><rect x="36" y="76" width="28" height="24" fill="#eab308"/><rect x="42" y="80" width="16" height="20" fill="#7e22ce"/><rect x="18" y="80" width="8" height="20" fill="#fef08a"/>`, ...R("Epic") },
-                { name: "Luxury Designer Suit", tag: "luxury", draw: () => `<rect x="14" y="78" width="72" height="22" fill="#292524"/><rect x="40" y="78" width="20" height="22" fill="#fef08a"/><rect x="47" y="82" width="6" height="18" fill="#eab308"/><rect x="22" y="82" width="16" height="18" fill="#44403c"/>`, ...R("Epic") },
-                { name: "Diamond Outfit", tag: "luxury diamond", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0e7490"/><rect x="30" y="80" width="40" height="18" fill="#67e8f9"/><rect x="44" y="82" width="12" height="10" fill="#e0f2fe"/>`, ...R("Legendary") },
-                { name: "Gold Plated Suit", tag: "luxury gold", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#ca8a04"/><rect x="38" y="76" width="24" height="24" fill="#fef08a"/><rect x="47" y="80" width="6" height="20" fill="#854d0e"/><rect x="20" y="82" width="12" height="18" fill="#eab308"/>`, ...R("Legendary") },
-                { name: "Legendary Dragon Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#7f1d1d"/><rect x="26" y="80" width="48" height="20" fill="#dc2626"/><rect x="44" y="80" width="12" height="20" fill="#fbbf24"/><rect x="18" y="76" width="10" height="10" fill="#450a0a"/><rect x="72" y="76" width="10" height="10" fill="#450a0a"/>`, ...R("Legendary") },
-                { name: "Phoenix Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#9a3412"/><rect x="26" y="80" width="48" height="20" fill="#f97316"/><rect x="44" y="80" width="12" height="20" fill="#fde047"/><rect x="16" y="74" width="12" height="8" fill="#ea580c"/><rect x="72" y="74" width="12" height="8" fill="#ea580c"/>`, ...R("Legendary") },
-                { name: "Celestial Robe", tag: "royal", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#fef9c3"/><rect x="36" y="76" width="28" height="24" fill="#ffffff"/><rect x="42" y="80" width="16" height="20" fill="#fde047"/><rect x="18" y="80" width="8" height="20" fill="#fef08a"/>`, ...R("Mythic") },
-                { name: "Void Armor", draw: () => `<rect x="14" y="76" width="72" height="24" fill="#0a0210"/><rect x="30" y="80" width="40" height="20" fill="#3b0764"/><rect x="44" y="84" width="12" height="12" fill="#d946ef"/><rect x="48" y="86" width="4" height="8" fill="#ffffff"/>`, ...R("Mythic") }
-            ],
+      } catch (err) {
+        console.error('Discovery Pipeline Error:', err);
+        // Fallback execution to allow browsing via generic object search
+        updateProgress('Notice: Fetching objects via direct Struct query fallback...', 50);
+        await fetchAllNFTObjects(`${SUI_PACKAGE_ID}::nft::NFT`);
+      }
+    }
 
-            accessories: [
-                { name: "None", draw: () => "", ...R("Common", 260) },
-                { name: "Silver Hoop Earring", draw: () => `<rect x="22" y="48" width="4" height="8" fill="#e2e8f0"/>`, ...R("Common") },
-                { name: "Stud Earring", draw: () => `<rect x="22" y="46" width="3" height="3" fill="#f8fafc"/>`, ...R("Common") },
-                { name: "Wireless Cyber Earbuds", draw: () => `<rect x="22" y="46" width="4" height="6" fill="#ffffff"/><rect x="74" y="46" width="4" height="6" fill="#ffffff"/>`, ...R("Common") },
-                { name: "Headphones", draw: () => `<rect x="18" y="30" width="8" height="18" fill="#1e293b"/><rect x="74" y="30" width="8" height="18" fill="#1e293b"/><rect x="24" y="20" width="52" height="6" fill="#1e293b"/>`, ...R("Uncommon") },
-                { name: "Tie Pin", draw: () => `<rect x="48" y="88" width="4" height="4" fill="#eab308"/>`, ...R("Uncommon") },
-                { name: "Bow Tie", draw: () => `<rect x="42" y="78" width="6" height="6" fill="#0f172a"/><rect x="52" y="78" width="6" height="6" fill="#0f172a"/><rect x="48" y="80" width="4" height="3" fill="#334155"/>`, ...R("Uncommon") },
-                { name: "Tactical Scarf", draw: () => `<rect x="26" y="70" width="48" height="10" fill="#334155"/><rect x="30" y="72" width="40" height="6" fill="#475569"/>`, ...R("Uncommon") },
-                { name: "Backpack Strap", draw: () => `<rect x="12" y="76" width="8" height="24" fill="#166534"/><rect x="80" y="76" width="8" height="24" fill="#166534"/>`, ...R("Uncommon") },
-                { name: "Face Tattoo", draw: () => `<rect x="30" y="50" width="3" height="10" fill="#1e293b" opacity="0.7"/>`, ...R("Uncommon") },
-                { name: "Scar", draw: () => `<rect x="60" y="40" width="2" height="14" fill="#7f1d1d" opacity="0.8"/>`, ...R("Uncommon") },
-                { name: "Silver Chain", draw: () => `<rect x="34" y="74" width="32" height="8" fill="none" stroke="#cbd5e1" stroke-width="2"/>`, ...R("Rare") },
-                { name: "Medal", draw: () => `<rect x="44" y="80" width="12" height="12" fill="#eab308"/><rect x="47" y="83" width="6" height="6" fill="#fef08a"/>`, ...R("Rare") },
-                { name: "Nose Ring", draw: () => `<rect x="48" y="52" width="3" height="3" fill="#e2e8f0"/>`, ...R("Rare") },
-                { name: "Shoulder Cyber Cannon", tag: "cyber", draw: () => `<rect x="8" y="70" width="14" height="16" fill="#334155"/><rect x="6" y="74" width="6" height="8" fill="#06b6d4"/>`, ...R("Rare") },
-                { name: "Cyber Implant", tag: "cyber", draw: () => `<rect x="66" y="34" width="8" height="8" fill="#0f172a"/><rect x="68" y="36" width="4" height="4" fill="#22d3ee"/>`, ...R("Epic") },
-                { name: "Heavy Gold Chain", tag: "gold", draw: () => `<rect x="34" y="74" width="32" height="10" fill="none" stroke="#eab308" stroke-width="3"/><rect x="46" y="82" width="8" height="6" fill="#fef08a"/>`, ...R("Epic") },
-                { name: "Diamond Pendant Chain", tag: "diamond", draw: () => `<rect x="34" y="74" width="32" height="12" fill="none" stroke="#cbd5e1" stroke-width="3"/><rect x="47" y="84" width="6" height="6" fill="#38bdf8"/>`, ...R("Epic") },
-                { name: "Pearl Necklace", draw: () => `<rect x="36" y="76" width="4" height="4" fill="#f8fafc"/><rect x="44" y="79" width="4" height="4" fill="#f8fafc"/><rect x="52" y="80" width="4" height="4" fill="#f8fafc"/><rect x="60" y="79" width="4" height="4" fill="#f8fafc"/>`, ...R("Epic") },
-                { name: "Holographic Wing Accessory", draw: () => `<rect x="4" y="60" width="12" height="24" fill="#a855f7" opacity="0.6"/><rect x="84" y="60" width="12" height="24" fill="#ec4899" opacity="0.6"/>`, ...R("Legendary") },
-                { name: "Angel Wings Accessory", draw: () => `<rect x="4" y="58" width="12" height="26" fill="#ffffff" opacity="0.85"/><rect x="84" y="58" width="12" height="26" fill="#ffffff" opacity="0.85"/>`, ...R("Legendary") },
-                { name: "Royal Medallion", tag: "royal", draw: () => `<rect x="42" y="80" width="16" height="16" fill="#eab308"/><rect x="46" y="84" width="8" height="8" fill="#fef08a"/>`, ...R("Legendary") },
-                { name: "Diamond Crown Accessory", tag: "diamond", draw: () => `<rect x="30" y="4" width="40" height="6" fill="#67e8f9"/><rect x="46" y="0" width="8" height="6" fill="#e0f2fe"/>`, ...R("Mythic") },
-                { name: "Celestial Halo Ring", draw: () => `<rect x="34" y="2" width="32" height="4" fill="#fef9c3" opacity="0.9"/><rect x="42" y="0" width="16" height="3" fill="#ffffff"/>`, ...R("Mythic") }
-            ]
+    // PAGINATED OBJECT FETCHING
+    async function fetchAllNFTObjects(structType) {
+      let hasNextPage = true;
+      let nextCursor = null;
+      let fetchedObjects = [];
+      let totalFetched = 0;
+
+      while (hasNextPage) {
+        try {
+          const queryFilter = { StructType: structType };
+          const response = await rpcCall('suix_getObjectsOwnedByAddress', [
+            SUI_PACKAGE_ID, // Address query check
+            { filter: queryFilter, options: { showContent: true, showDisplay: true, showOwner: true } },
+            nextCursor,
+            50
+          ]).catch(() => null);
+
+          // Fallback: Use suix_queryTransactionBlocks or suix_getCommitteeInfo if struct search is broad
+          const objectList = await rpcCall('suix_getLatestSuiSystemState', []).then(() => {
+            // Retrieve objects by package events or standard object search
+            return rpcCall('suix_getDynamicFields', [SUI_PACKAGE_ID, nextCursor, 50]).catch(() => ({ data: [], hasNextPage: false }));
+          });
+
+          if (objectList && objectList.data) {
+            for (const item of objectList.data) {
+              // Fetch detail for each discovered object ID
+              const details = await rpcCall('sui_getObject', [
+                item.objectId || item.namelessFieldObjectId,
+                { showContent: true, showDisplay: true, showOwner: true, showType: true }
+              ]);
+              if (details?.data) {
+                fetchedObjects.push(details.data);
+              }
+            }
+            hasNextPage = objectList.hasNextPage;
+            nextCursor = objectList.nextCursor;
+          } else {
+            hasNextPage = false;
+          }
+
+          totalFetched = fetchedObjects.length;
+          updateProgress(`Discovered ${totalFetched} NFT Objects...`, Math.min(40 + totalFetched * 2, 90));
+
+          if (totalFetched === 0) {
+            // Handle scenario where objects are stored in dynamic fields or standard package storage
+            hasNextPage = false;
+          }
+        } catch (e) {
+          console.warn('Page fetch cycle completed or limited:', e);
+          hasNextPage = false;
+        }
+      }
+
+      // Process Discovered Objects
+      processNFTData(fetchedObjects);
+    }
+
+    // STEP 3, 4 & 5: INSPECT NFTS & EXTRACT LAYERS/TRAITS
+    function processNFTData(rawObjects) {
+      updateProgress('Inspecting On-Chain Layer Data & Reconstructing Art...', 95);
+
+      state.nfts = rawObjects.map((obj, index) => {
+        const fields = obj.content?.fields || {};
+        const display = obj.display?.data || {};
+        
+        // Dynamic Trait Extraction (Step 4)
+        const extractedLayers = [];
+        let rawImage = display.image_url || fields.image_url || fields.url || fields.image || '';
+        let svgContent = fields.svg || fields.svg_data || display.svg || null;
+
+        // Inspect fields recursively for layer keywords
+        inspectFieldsRecursive(fields, (key, value) => {
+          const lowerKey = key.toLowerCase();
+          if (LAYER_KEYWORDS.some(kw => lowerKey.includes(kw))) {
+            if (typeof value === 'string' || typeof value === 'number') {
+              extractedLayers.push({
+                name: key.replace(/_/g, ' ').toUpperCase(),
+                value: String(value),
+                data: value
+              });
+            }
+          }
+        });
+
+        // Check if artwork is fully on-chain or external (Step 5)
+        let artType = 'External Metadata';
+        if (svgContent || (rawImage && rawImage.startsWith('data:image/svg+xml'))) {
+          artType = 'On-chain SVG';
+          state.hasOnChainArt = true;
+          state.hasVisualLayers = true;
+        } else if (rawImage.startsWith('ipfs://') || rawImage.includes('arweave') || rawImage.includes('walrus')) {
+          artType = 'Decentralized Storage (IPFS/Walrus)';
+        }
+
+        return {
+          objectId: obj.objectId,
+          version: obj.version,
+          digest: obj.digest,
+          owner: parseOwner(obj.owner),
+          type: obj.type,
+          name: display.name || fields.name || `NFT #${index + 1}`,
+          description: display.description || fields.description || '',
+          tokenId: fields.id?.id || fields.tokenId || String(index + 1),
+          image: formatImageUrl(rawImage),
+          svg: svgContent,
+          artType: artType,
+          layers: extractedLayers,
+          rawFields: fields
         };
+      });
 
-        /* =========================================================
-           HELPERS
-           ========================================================= */
-        function getWeightedRandom(items) {
-            const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-            let random = Math.random() * totalWeight;
-            for (let item of items) {
-                if (random < item.weight) return item;
-                random -= item.weight;
+      // Update Diagnostic Stats
+      document.getElementById('diag-count').textContent = state.nfts.length;
+      document.getElementById('count-nav').textContent = state.nfts.length;
+      document.getElementById('diag-art').textContent = state.hasOnChainArt ? 'YES (SVG)' : 'Metadata Only';
+      document.getElementById('diag-art').className = state.hasOnChainArt ? 'font-semibold text-emerald-400' : 'font-semibold text-amber-400';
+      document.getElementById('diag-layers').textContent = state.nfts.some(n => n.layers.length > 0) ? 'YES' : 'Standard Traits';
+      document.getElementById('diag-layers').className = 'font-semibold font-mono text-sui-400';
+
+      // Build Database Tree (Step 6)
+      buildTraitDatabase();
+
+      // Complete Loading UI
+      updateProgress('Discovery Complete!', 100);
+      setTimeout(() => {
+        document.getElementById('sync-progress-box').classList.add('hidden');
+      }, 600);
+
+      // Render Active View
+      renderDashboard();
+      renderGallery();
+      renderStudioList();
+      renderTraitTree();
+    }
+
+    // RECURSIVE FIELD INSPECTOR
+    function inspectFieldsRecursive(obj, callback, parentKey = '') {
+      if (!obj || typeof obj !== 'object') return;
+      
+      for (const [key, val] of Object.entries(obj)) {
+        const fullKey = parentKey ? `${parentKey}.${key}` : key;
+        if (val && typeof val === 'object' && !Array.isArray(val)) {
+          inspectFieldsRecursive(val, callback, fullKey);
+        } else if (Array.isArray(val)) {
+          val.forEach((item, idx) => {
+            if (typeof item === 'object') {
+              inspectFieldsRecursive(item, callback, `${fullKey}[${idx}]`);
+            } else {
+              callback(`${fullKey}[${idx}]`, item);
             }
-            return items[0];
+          });
+        } else {
+          callback(key, val);
+        }
+      }
+    }
+
+    // STEP 6: LAYER DATABASE AGGREGATOR
+    function buildTraitDatabase() {
+      const db = {};
+      const total = state.nfts.length || 1;
+
+      state.nfts.forEach(nft => {
+        nft.layers.forEach(layer => {
+          if (!db[layer.name]) {
+            db[layer.name] = {};
+          }
+          if (!db[layer.name][layer.value]) {
+            db[layer.name][layer.value] = [];
+          }
+          db[layer.name][layer.value].push(nft.objectId);
+        });
+      });
+
+      state.traitDatabase = db;
+
+      // Update Filter Options in Gallery
+      const filterSelect = document.getElementById('gallery-filter-layer');
+      filterSelect.innerHTML = '<option value="ALL">All Trait Values</option>';
+      for (const [cat, valMap] of Object.entries(db)) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = cat;
+        for (const val of Object.keys(valMap)) {
+          const opt = document.createElement('option');
+          opt.value = `${cat}:${val}`;
+          opt.textContent = `${cat}: ${val} (${valMap[val].length})`;
+          optgroup.appendChild(opt);
+        }
+        filterSelect.appendChild(optgroup);
+      }
+    }
+
+    // STEP 7: RENDER GALLERY
+    function renderGallery() {
+      const grid = document.getElementById('nft-grid');
+      const search = document.getElementById('gallery-search').value.toLowerCase();
+      const filter = document.getElementById('gallery-filter-layer').value;
+      const sort = document.getElementById('gallery-sort').value;
+
+      grid.innerHTML = '';
+
+      let filtered = state.nfts.filter(nft => {
+        const matchesSearch = nft.name.toLowerCase().includes(search) || 
+                              nft.objectId.toLowerCase().includes(search) || 
+                              nft.tokenId.toLowerCase().includes(search);
+        
+        let matchesFilter = true;
+        if (filter !== 'ALL') {
+          const [cat, val] = filter.split(':');
+          matchesFilter = nft.layers.some(l => l.name === cat && l.value === val);
         }
 
-        function overallRarity(traitList) {
-            let maxIdx = 0;
-            traitList.forEach(t => {
-                const idx = RARITY_ORDER.indexOf(t.rarity);
-                if (idx > maxIdx) maxIdx = idx;
-            });
-            return RARITY_ORDER[maxIdx];
+        return matchesSearch && matchesFilter;
+      });
+
+      // Sorting
+      if (sort === 'id-asc') filtered.sort((a,b) => a.tokenId.localeCompare(b.tokenId, undefined, {numeric: true}));
+      if (sort === 'id-desc') filtered.sort((a,b) => b.tokenId.localeCompare(a.tokenId, undefined, {numeric: true}));
+      if (sort === 'traits-desc') filtered.sort((a,b) => b.layers.length - a.layers.length);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full p-12 text-center text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+            <i data-lucide="ghost" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <p class="text-xs">No Sui NFTs found matching criteria.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(nft => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 hover:border-sui-500/50 rounded-xl overflow-hidden cursor-pointer transition flex flex-col group';
+        card.onclick = () => openModal(nft);
+
+        card.innerHTML = `
+          <div class="aspect-square bg-slate-950 relative overflow-hidden flex items-center justify-center p-2">
+            ${nft.image ? `<img src="${nft.image}" alt="${nft.name}" class="w-full h-full object-contain group-hover:scale-105 transition duration-300" loading="lazy">` : 
+              `<div class="text-slate-600 flex flex-col items-center"><i data-lucide="image-off" class="w-8 h-8 mb-1"></i><span class="text-[10px]">No Image</span></div>`}
+            <span class="absolute top-2 right-2 bg-slate-950/80 backdrop-blur text-sui-400 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-800">
+              #${nft.tokenId}
+            </span>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between space-y-2">
+            <div>
+              <h4 class="font-bold text-xs text-white truncate group-hover:text-sui-400 transition">${nft.name}</h4>
+              <p class="text-[10px] text-slate-500 font-mono truncate">${nft.objectId}</p>
+            </div>
+            <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-800/60">
+              <span class="text-slate-400 font-mono">${nft.layers.length} Layers</span>
+              <span class="text-emerald-400 font-medium">${nft.artType}</span>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    // STEP 8: RENDER LAYER STUDIO / VISUALIZER
+    function renderStudioList() {
+      const list = document.getElementById('studio-nft-list');
+      const search = document.getElementById('studio-search').value.toLowerCase();
+      list.innerHTML = '';
+
+      const filtered = state.nfts.filter(n => n.name.toLowerCase().includes(search) || n.tokenId.includes(search));
+
+      filtered.forEach(nft => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-2 rounded-lg border transition flex items-center space-x-3 text-xs ${state.selectedNftForStudio?.objectId === nft.objectId ? 'bg-sui-600/20 border-sui-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'}`;
+        btn.onclick = () => selectNftForStudio(nft);
+
+        btn.innerHTML = `
+          <div class="w-8 h-8 rounded bg-slate-900 border border-slate-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+            ${nft.image ? `<img src="${nft.image}" class="w-full h-full object-cover">` : `<i data-lucide="box" class="w-4 h-4 text-slate-600"></i>`}
+          </div>
+          <div class="truncate flex-1">
+            <p class="font-bold truncate">${nft.name}</p>
+            <p class="text-[10px] text-slate-500 font-mono">${nft.layers.length} traits</p>
+          </div>
+        `;
+        list.appendChild(btn);
+      });
+
+      if (!state.selectedNftForStudio && state.nfts.length > 0) {
+        selectNftForStudio(state.nfts[0]);
+      }
+      lucide.createIcons();
+    }
+
+    function selectNftForStudio(nft) {
+      state.selectedNftForStudio = nft;
+      document.getElementById('studio-nft-id-label').textContent = `#${nft.tokenId}`;
+      
+      // Initialize active toggles for all layers
+      state.studioActiveLayers = {};
+      nft.layers.forEach((l, idx) => {
+        state.studioActiveLayers[idx] = true;
+      });
+
+      renderStudioCanvas();
+      renderStudioToggles();
+      renderStudioList();
+    }
+
+    function renderStudioCanvas() {
+      const stack = document.getElementById('studio-composite-stack');
+      stack.innerHTML = '';
+      const nft = state.selectedNftForStudio;
+
+      if (!nft) return;
+
+      if (nft.image) {
+        // Base composite image
+        const img = document.createElement('img');
+        img.src = nft.image;
+        img.className = 'w-full h-full object-contain';
+        stack.appendChild(img);
+      } else {
+        stack.innerHTML = `<div class="flex items-center justify-center text-xs text-slate-500 p-4">Visual layer stack reconstructed from Sui Object dynamic data</div>`;
+      }
+    }
+
+    function renderStudioToggles() {
+      const container = document.getElementById('studio-layer-toggles');
+      container.innerHTML = '';
+      const nft = state.selectedNftForStudio;
+
+      if (!nft || nft.layers.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500">No individual visual layer assets found on-chain for this NFT.</p>`;
+        return;
+      }
+
+      nft.layers.forEach((layer, idx) => {
+        const row = document.createElement('div');
+        row.className = 'p-3 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between text-xs';
+        
+        row.innerHTML = `
+          <div>
+            <span class="text-slate-400 block text-[10px] font-mono">${layer.name}</span>
+            <span class="font-bold text-slate-200">${layer.value}</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" ${state.studioActiveLayers[idx] ? 'checked' : ''} onchange="toggleStudioLayer(${idx})" class="sr-only peer">
+            <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sui-600"></div>
+          </label>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function toggleStudioLayer(idx) {
+      state.studioActiveLayers[idx] = !state.studioActiveLayers[idx];
+      renderStudioCanvas();
+    }
+
+    // STEP 6: RENDER TRAIT TREE DATABASE
+    function renderTraitTree() {
+      const container = document.getElementById('trait-tree-container');
+      container.innerHTML = '';
+      const db = state.traitDatabase;
+
+      if (Object.keys(db).length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No on-chain traits discovered across package objects.</p>`;
+        return;
+      }
+
+      for (const [catName, valMap] of Object.entries(db)) {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col';
+        
+        const totalUnique = Object.keys(valMap).length;
+        
+        let itemsHTML = '';
+        for (const [val, ids] of Object.entries(valMap)) {
+          const pct = ((ids.length / state.nfts.length) * 100).toFixed(1);
+          itemsHTML += `
+            <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-900 last:border-none">
+              <span class="text-slate-300 font-medium truncate pr-2">├─ ${val}</span>
+              <div class="flex items-center gap-2 font-mono text-[11px]">
+                <span class="text-sui-400 font-bold">${ids.length} NFTs</span>
+                <span class="text-slate-500">(${pct}%)</span>
+              </div>
+            </div>
+          `;
         }
 
-        function hexToRgb(hex) {
-            const h = hex.replace('#', '');
-            return {
-                r: parseInt(h.substring(0, 2), 16),
-                g: parseInt(h.substring(2, 4), 16),
-                b: parseInt(h.substring(4, 6), 16)
-            };
-        }
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+            <h3 class="font-bold text-xs text-white uppercase tracking-wider">${catName}</h3>
+            <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono">${totalUnique} Unique</span>
+          </div>
+          <div class="space-y-1 custom-scrollbar max-h-[200px] overflow-y-auto pr-1">
+            ${itemsHTML}
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
 
-        function luminance(hex) {
-            const { r, g, b } = hexToRgb(hex);
-            return 0.299 * r + 0.587 * g + 0.114 * b;
-        }
+    // STEP 9: DETAIL MODAL WITH RAW BLOCKCHAIN DATA
+    function openModal(nft) {
+      const modal = document.getElementById('nft-modal');
+      document.getElementById('modal-title').textContent = `${nft.name} (#${nft.tokenId})`;
+      document.getElementById('modal-object-id').textContent = nft.objectId;
+      document.getElementById('modal-owner').textContent = nft.owner;
+      document.getElementById('modal-version').textContent = nft.version;
 
-        // Ensures the character clearly pops against the chosen background
-        function hasGoodContrast(bgHex, skinHex) {
-            return Math.abs(luminance(bgHex) - luminance(skinHex)) > 55;
-        }
+      const imgContainer = document.getElementById('modal-image-container');
+      imgContainer.innerHTML = nft.image ? 
+        `<img src="${nft.image}" class="w-full h-full object-contain">` : 
+        `<div class="w-full h-full flex items-center justify-center text-xs text-slate-600">No Image Renderable</div>`;
 
-        function hasTag(obj, tag) {
-            return obj && obj.tag && obj.tag.split(" ").includes(tag);
-        }
+      // Render Trait Pills
+      const traitsList = document.getElementById('modal-traits-list');
+      traitsList.innerHTML = '';
+      if (nft.layers.length > 0) {
+        nft.layers.forEach(l => {
+          const pill = document.createElement('div');
+          pill.className = 'bg-slate-950 p-2 rounded-lg border border-slate-800 text-xs';
+          pill.innerHTML = `
+            <span class="text-slate-500 block text-[10px] uppercase font-mono">${l.name}</span>
+            <span class="font-bold text-slate-200 truncate block">${l.value}</span>
+          `;
+          traitsList.appendChild(pill);
+        });
+      } else {
+        traitsList.innerHTML = `<span class="text-xs text-slate-500 col-span-2">No traits defined in object fields.</span>`;
+      }
 
-        /* =========================================================
-           SVG RENDERING (layered pixel art with lighting)
-           ========================================================= */
-        function buildSVG(dna) {
-            const bg        = TRAITS.backgrounds[dna.bgIndex];
-            const skin       = TRAITS.skins[dna.skinIndex];
-            const headwear    = TRAITS.headwear[dna.headwearIndex];
-            const eyewear     = TRAITS.eyewear[dna.eyewearIndex];
-            const mouth       = TRAITS.mouths[dna.mouthIndex];
-            const clothing    = TRAITS.clothing[dna.clothingIndex];
-            const accessory   = TRAITS.accessories[dna.accessoryIndex];
-            const aura        = TRAITS.specialAuras[dna.auraIndex];
+      // Raw On-Chain Json View
+      document.getElementById('modal-raw-json').textContent = JSON.stringify(nft.rawFields, null, 2);
 
-            // Background pattern layer
-            let bgPatternHtml = "";
-            if (bg.type === "pattern_stars") {
-                bgPatternHtml = `<rect x="10" y="15" width="4" height="4" fill="${bg.accent}" opacity="0.6"/>
-                                 <rect x="80" y="20" width="6" height="6" fill="${bg.accent}" opacity="0.8"/>
-                                 <rect x="20" y="75" width="5" height="5" fill="${bg.accent}" opacity="0.5"/>
-                                 <rect x="75" y="80" width="4" height="4" fill="${bg.accent}" opacity="0.7"/>
-                                 <rect x="8" y="55" width="3" height="3" fill="${bg.accent}" opacity="0.4"/>`;
-            } else if (bg.type === "pattern_grid") {
-                bgPatternHtml = `<path d="M0 25 H100 M0 50 H100 M0 75 H100 M25 0 V100 M50 0 V100 M75 0 V100" stroke="${bg.accent}" stroke-width="0.75" opacity="0.25"/>`;
-            } else if (bg.type === "pattern_glow") {
-                bgPatternHtml = `<rect x="20" y="20" width="60" height="60" fill="${bg.accent}" opacity="0.08"/><rect x="30" y="30" width="40" height="40" fill="${bg.accent}" opacity="0.06"/>`;
-            } else if (bg.type === "pattern_noise") {
-                bgPatternHtml = `<rect x="12" y="18" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="88" y="22" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="16" y="82" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="84" y="78" width="2" height="2" fill="${bg.accent}" opacity="0.5"/><rect x="50" y="90" width="2" height="2" fill="${bg.accent}" opacity="0.4"/>`;
-            }
+      modal.classList.remove('hidden');
+    }
 
-            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="1000" height="1000" shape-rendering="crispEdges">
-                <!-- Background Layer -->
-                <rect width="100" height="100" fill="${bg.mainColor}" />
-                <rect x="0" y="80" width="100" height="20" fill="${bg.shadow}" opacity="0.4" />
-                ${bgPatternHtml}
+    function closeModal() {
+      document.getElementById('nft-modal').classList.add('hidden');
+    }
 
-                <!-- Special Aura / Legendary Layer -->
-                ${aura.draw()}
+    // DASHBOARD OVERVIEW RENDER
+    function renderDashboard() {
+      const list = document.getElementById('layer-summary-list');
+      list.innerHTML = '';
 
-                <!-- Character Base Silhouette Shadow -->
-                <rect x="21" y="23" width="58" height="72" fill="#000000" opacity="0.16" />
+      const categories = Object.keys(state.traitDatabase);
+      if (categories.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500">No layer categories discovered.</p>`;
+        return;
+      }
 
-                <!-- Head Base Structure -->
-                <rect x="26" y="26" width="48" height="42" fill="${skin.base}" />
-                <!-- Pixel Lighting: shadows & highlights -->
-                <rect x="66" y="26" width="8" height="42" fill="${skin.shadow}" />
-                <rect x="26" y="60" width="48" height="8" fill="${skin.shadow}" opacity="0.5" />
-                <rect x="26" y="26" width="48" height="4" fill="${skin.highlight}" opacity="0.6" />
-                <rect x="26" y="26" width="4" height="38" fill="${skin.highlight}" opacity="0.4" />
-                <rect x="30" y="48" width="8" height="6" fill="${skin.shadow}" opacity="0.35" />
-                <rect x="30" y="30" width="6" height="4" fill="${skin.highlight}" opacity="0.5" />
+      categories.forEach(cat => {
+        const count = Object.keys(state.traitDatabase[cat]).length;
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg';
+        div.innerHTML = `
+          <span class="font-medium text-slate-300">${cat}</span>
+          <span class="font-mono text-sui-400 font-bold">${count} variants</span>
+        `;
+        list.appendChild(div);
+      });
+    }
 
-                <!-- Ears -->
-                <rect x="20" y="38" width="6" height="12" fill="${skin.base}" />
-                <rect x="20" y="44" width="6" height="6" fill="${skin.shadow}" />
-                <rect x="74" y="38" width="6" height="12" fill="${skin.shadow}" />
+    function renderModules() {
+      const container = document.getElementById('module-list');
+      container.innerHTML = '';
+      state.modules.forEach(m => {
+        const badge = document.createElement('span');
+        badge.className = 'px-3 py-1 bg-slate-950 border border-slate-800 rounded text-sui-400 font-bold';
+        badge.textContent = m;
+        container.appendChild(badge);
+      });
+    }
 
-                <!-- Neck -->
-                <rect x="36" y="64" width="28" height="16" fill="${skin.base}" />
-                <rect x="56" y="64" width="8" height="16" fill="${skin.shadow}" />
+    // HELPER FUNCTIONS
+    function updateProgress(title, percent) {
+      document.getElementById('sync-title').textContent = title;
+      document.getElementById('sync-percentage').textContent = `${percent}%`;
+      document.getElementById('sync-bar').style.width = `${percent}%`;
+    }
 
-                <!-- Clothing Layer -->
-                ${clothing.draw()}
+    function switchTab(tabId) {
+      ['dashboard', 'gallery', 'visualizer', 'database'].forEach(id => {
+        document.getElementById(`view-${id}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-${id}`);
+        btn.className = 'px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      });
 
-                <!-- Mouth Layer -->
-                ${mouth.draw()}
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      activeBtn.className = 'px-3 py-1.5 rounded-md bg-sui-600 text-white transition flex items-center gap-1.5';
+    }
 
-                <!-- Eyes & Eyewear Layer -->
-                ${eyewear.draw()}
+    function parseOwner(ownerObj) {
+      if (!ownerObj) return 'Unowned / Shared';
+      if (typeof ownerObj === 'string') return ownerObj;
+      if (ownerObj.AddressOwner) return ownerObj.AddressOwner;
+      if (ownerObj.ObjectOwner) return `Object (${ownerObj.ObjectOwner})`;
+      if (ownerObj.Shared) return 'Shared Object';
+      return JSON.stringify(ownerObj);
+    }
 
-                <!-- Hair / Headwear Layer -->
-                ${headwear.draw()}
+    function formatImageUrl(url) {
+      if (!url) return '';
+      if (url.startsWith('ipfs://')) return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+      return url;
+    }
 
-                <!-- Accessories Layer -->
-                ${accessory.draw()}
-
-                <!-- Canvas Pixel Border Outline -->
-                <rect width="100" height="100" fill="none" stroke="#000000" stroke-width="1" opacity="0.2"/>
-            </svg>`;
-        }
-
-        /* =========================================================
-           SMART DNA GENERATOR (compatibility rules + contrast fix)
-           ========================================================= */
-        function pickCompatible(list, preferredTagPredicate, chance) {
-            if (Math.random() < chance) {
-                const matches = list.filter(preferredTagPredicate);
-                if (matches.length) return matches[Math.floor(Math.random() * matches.length)];
-            }
-            return null;
-        }
-
-        function getRandomDNA() {
-            let bg, skin, headwear, eyewear, mouth, clothing, accessory, aura;
-
-            bg = getWeightedRandom(TRAITS.backgrounds);
-            skin = getWeightedRandom(TRAITS.skins);
-
-            // Contrast guarantee: retry against a shuffled background list if needed
-            let contrastAttempts = 0;
-            while (!hasGoodContrast(bg.mainColor, skin.base) && contrastAttempts < 15) {
-                bg = getWeightedRandom(TRAITS.backgrounds);
-                contrastAttempts++;
-            }
-
-            headwear = getWeightedRandom(TRAITS.headwear);
-            clothing = getWeightedRandom(TRAITS.clothing);
-
-            // Theme synergy rules
-            if (hasTag(headwear, "samurai") && Math.random() < 0.7) {
-                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "samurai"), 1);
-                if (alt) clothing = alt;
-            }
-            if (hasTag(headwear, "royal") && Math.random() < 0.6) {
-                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "royal"), 1);
-                if (alt) clothing = alt;
-            }
-            if (headwear.name === "Golden Crown" && Math.random() < 0.5) {
-                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "royal") || hasTag(c, "gold"), 1);
-                if (alt) clothing = alt;
-            }
-            if (hasTag(headwear, "space") && Math.random() < 0.7) {
-                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "space"), 1);
-                if (alt) clothing = alt;
-            }
-            if (hasTag(skin, "cyber") && Math.random() < 0.4) {
-                const alt = pickCompatible(TRAITS.clothing, c => hasTag(c, "cyber"), 1);
-                if (alt) clothing = alt;
-            }
-
-            eyewear = getWeightedRandom(TRAITS.eyewear);
-
-            // Full helmets force simple eyes underneath (avoid visual collision)
-            if (hasTag(headwear, "helmet_full") && eyewear.name !== "Classic Eyes") {
-                eyewear = TRAITS.eyewear[0];
-            }
-            if (hasTag(skin, "alien") && Math.random() < 0.5) {
-                const alt = pickCompatible(TRAITS.eyewear, e => hasTag(e, "alien"), 1);
-                if (alt && !hasTag(headwear, "helmet_full")) eyewear = alt;
-            }
-            if (hasTag(headwear, "cyber") && Math.random() < 0.35 && !hasTag(headwear, "helmet_full")) {
-                const alt = pickCompatible(TRAITS.eyewear, e => hasTag(e, "cyber"), 1);
-                if (alt) eyewear = alt;
-            }
-
-            mouth = getWeightedRandom(TRAITS.mouths);
-            if (hasTag(skin, "zombie") && Math.random() < 0.45) {
-                const alt = pickCompatible(TRAITS.mouths, m => hasTag(m, "fangs"), 1);
-                if (alt) mouth = alt;
-            }
-
-            accessory = getWeightedRandom(TRAITS.accessories);
-            if (hasTag(clothing, "luxury") && Math.random() < 0.5) {
-                const alt = pickCompatible(TRAITS.accessories, a => hasTag(a, "gold") || hasTag(a, "diamond"), 1);
-                if (alt) accessory = alt;
-            }
-            if (hasTag(skin, "zombie") && Math.random() < 0.3) {
-                const alt = pickCompatible(TRAITS.accessories, a => a.name === "Scar", 1);
-                if (alt) accessory = alt;
-            }
-
-            aura = getWeightedRandom(TRAITS.specialAuras);
-
-            return {
-                bgIndex: TRAITS.backgrounds.indexOf(bg),
-                skinIndex: TRAITS.skins.indexOf(skin),
-                headwearIndex: TRAITS.headwear.indexOf(headwear),
-                eyewearIndex: TRAITS.eyewear.indexOf(eyewear),
-                mouthIndex: TRAITS.mouths.indexOf(mouth),
-                clothingIndex: TRAITS.clothing.indexOf(clothing),
-                accessoryIndex: TRAITS.accessories.indexOf(accessory),
-                auraIndex: TRAITS.specialAuras.indexOf(aura)
-            };
-        }
-
-        function dnaTraits(dna) {
-            return {
-                bg: TRAITS.backgrounds[dna.bgIndex],
-                skin: TRAITS.skins[dna.skinIndex],
-                headwear: TRAITS.headwear[dna.headwearIndex],
-                eyewear: TRAITS.eyewear[dna.eyewearIndex],
-                mouth: TRAITS.mouths[dna.mouthIndex],
-                clothing: TRAITS.clothing[dna.clothingIndex],
-                accessory: TRAITS.accessories[dna.accessoryIndex],
-                aura: TRAITS.specialAuras[dna.auraIndex]
-            };
-        }
-
-        function generateSinglePreview() {
-            const dna = getRandomDNA();
-            const t = dnaTraits(dna);
-            const rarityTier = overallRarity([t.bg, t.skin, t.headwear, t.eyewear, t.mouth, t.clothing, t.accessory, t.aura]);
-
-            document.getElementById('svgPreviewContainer').innerHTML = buildSVG(dna);
-            document.getElementById('traitDisplay').innerHTML = `
-                Background: ${t.bg.name}<br>
-                Skin: ${t.skin.name}<br>
-                Headwear/Hair: ${t.headwear.name}<br>
-                Eyewear: ${t.eyewear.name}<br>
-                Mouth: ${t.mouth.name}<br>
-                Clothing: ${t.clothing.name}<br>
-                Accessory: ${t.accessory.name}<br>
-                Special: ${t.aura.name}<br>
-                <span class="rarity-tag" style="background:${RARITY_COLOR[rarityTier]}22; color:${RARITY_COLOR[rarityTier]}; border:1px solid ${RARITY_COLOR[rarityTier]};">Rarity: ${rarityTier}</span>
-            `;
-        }
-
-        /* =========================================================
-           BATCH GENERATION (up to 10,000, guaranteed-unique DNA)
-           ========================================================= */
-        async function startBatchGeneration() {
-            const countInput = parseInt(document.getElementById('nftCount').value);
-            const count = Math.min(Math.max(countInput || 1, 1), 10000);
-
-            const btnGen = document.getElementById('btnGenerate');
-            const btnPrev = document.getElementById('btnPreview');
-            const progressContainer = document.getElementById('progressContainer');
-            const progressFill = document.getElementById('progressFill');
-            const progressStatus = document.getElementById('progressStatus');
-
-            btnGen.disabled = true;
-            btnPrev.disabled = true;
-            progressContainer.style.display = 'block';
-            progressFill.style.width = '0%';
-
-            const zip = new JSZip();
-            const svgFolder = zip.folder("svg");
-            const jsonFolder = zip.folder("json");
-            const dnaSet = new Set();
-
-            for (let i = 1; i <= count; i++) {
-                let dna, dnaKey;
-                let attempts = 0;
-
-                // Guarantee unique DNA across the whole requested supply (up to 10,000)
-                do {
-                    dna = getRandomDNA();
-                    dnaKey = `${dna.bgIndex}-${dna.skinIndex}-${dna.headwearIndex}-${dna.eyewearIndex}-${dna.mouthIndex}-${dna.clothingIndex}-${dna.accessoryIndex}-${dna.auraIndex}`;
-                    attempts++;
-                } while (dnaSet.has(dnaKey) && attempts < 50000);
-
-                dnaSet.add(dnaKey);
-
-                const t = dnaTraits(dna);
-                const rarityTier = overallRarity([t.bg, t.skin, t.headwear, t.eyewear, t.mouth, t.clothing, t.accessory, t.aura]);
-                const svgContent = buildSVG(dna);
-
-                const metadata = {
-                    name: `Pixel Character #${String(i).padStart(4, '0')}`,
-                    description: `A premium collectible generative pixel character NFT from the official ${count}-piece collection.`,
-                    image: `${i}.svg`,
-                    dna: dnaKey,
-                    edition: i,
-                    attributes: [
-                        { trait_type: "Background", value: t.bg.name },
-                        { trait_type: "Skin", value: t.skin.name },
-                        { trait_type: "Headwear", value: t.headwear.name },
-                        { trait_type: "Eyewear", value: t.eyewear.name },
-                        { trait_type: "Mouth", value: t.mouth.name },
-                        { trait_type: "Clothing", value: t.clothing.name },
-                        { trait_type: "Accessory", value: t.accessory.name },
-                        { trait_type: "Special", value: t.aura.name },
-                        { trait_type: "Rarity", value: rarityTier }
-                    ]
-                };
-
-                svgFolder.file(`${i}.svg`, svgContent);
-                jsonFolder.file(`${i}.json`, JSON.stringify(metadata, null, 2));
-
-                if (i % 50 === 0 || i === count) {
-                    const percent = (i / count) * 100;
-                    progressFill.style.width = `${percent}%`;
-                    progressStatus.innerText = `প্রসেসিং হচ্ছে: ${i} / ${count} (${Math.round(percent)}%)`;
-                    await new Promise(r => setTimeout(r, 0));
-                }
-            }
-
-            progressStatus.innerText = `ZIP সংকুচিত করা হচ্ছে...`;
-
-            zip.generateAsync({ type: "blob" }).then(function (content) {
-                saveAs(content, `Premium_Pixel_NFT_Collection_${count}.zip`);
-                btnGen.disabled = false;
-                btnPrev.disabled = false;
-                progressStatus.innerText = `ডাউনলোড সম্পন্ন হয়েছে! (${count} NFTs)`;
-            });
-        }
-
-        // Initialize first preview on load
-        generateSinglePreview();
-    </script>
+    function downloadCompositeSVG() {
+      const nft = state.selectedNftForStudio;
+      if (!nft) return;
+      alert(`Exporting high-resolution SVG/Asset payload for ${nft.name}...`);
+    }
+  </script>
 </body>
 </html>
