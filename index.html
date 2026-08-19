@@ -526,13 +526,6 @@
             text-overflow: ellipsis;
         }
 
-        .nft-token-id {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: var(--accent-primary);
-            margin-top: 0.25rem;
-        }
-
         /* Load More Controls */
         .load-more-container {
             display: flex;
@@ -769,7 +762,7 @@
             text-overflow: ellipsis;
         }
 
-        /* Accordion / Collapsible JSON */
+        /* Collapsible Section */
         .collapsible-section {
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-md);
@@ -844,11 +837,6 @@
             color: var(--text-muted);
             background: rgba(11, 15, 23, 0.5);
         }
-
-        footer a {
-            color: var(--accent-primary);
-            text-decoration: none;
-        }
     </style>
 </head>
 <body>
@@ -916,9 +904,7 @@
         </section>
 
         <!-- Dynamic Trait Filter Panel -->
-        <div id="filterPanel" class="filter-panel">
-            <!-- Filter groups injected dynamically -->
-        </div>
+        <div id="filterPanel" class="filter-panel"></div>
 
         <!-- Status Container -->
         <div id="statusContainer" class="status-container">
@@ -944,9 +930,7 @@
         </div>
 
         <!-- NFT Gallery Grid -->
-        <div id="galleryGrid" class="gallery-grid">
-            <!-- Cards rendered here dynamically -->
-        </div>
+        <div id="galleryGrid" class="gallery-grid"></div>
 
         <!-- Empty State -->
         <div id="emptyState" class="empty-state" style="display:none;">
@@ -966,9 +950,7 @@
         <div class="modal-container">
             <button id="modalCloseBtn" class="modal-close-btn" title="Close Modal">&times;</button>
             <div class="modal-body">
-                <div class="modal-media-container" id="modalMediaContainer">
-                    <!-- Image or Video dynamically rendered -->
-                </div>
+                <div class="modal-media-container" id="modalMediaContainer"></div>
                 <div class="modal-content-details">
                     <div class="modal-header-info">
                         <h2 id="modalNFTName">NFT Name</h2>
@@ -1000,12 +982,9 @@
 
                     <div>
                         <div class="traits-header">Attributes & Traits</div>
-                        <div class="traits-grid" id="modalTraitsGrid">
-                            <!-- Traits injected here -->
-                        </div>
+                        <div class="traits-grid" id="modalTraitsGrid"></div>
                     </div>
 
-                    <!-- Collapsible Raw Metadata -->
                     <div class="collapsible-section">
                         <div class="collapsible-header" id="rawJsonHeader">
                             <span>Raw Metadata</span>
@@ -1015,7 +994,6 @@
                             <pre class="raw-json" id="modalRawJson"></pre>
                             <div class="modal-actions">
                                 <button class="btn-secondary" id="copyJsonBtn">Copy JSON</button>
-                                <a id="openUriBtn" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="display:none; text-decoration:none;">Open Metadata URI ↗</a>
                             </div>
                         </div>
                     </div>
@@ -1095,8 +1073,7 @@
             rawJsonHeader: document.getElementById('rawJsonHeader'),
             rawJsonContent: document.getElementById('rawJsonContent'),
             modalRawJson: document.getElementById('modalRawJson'),
-            copyJsonBtn: document.getElementById('copyJsonBtn'),
-            openUriBtn: document.getElementById('openUriBtn')
+            copyJsonBtn: document.getElementById('copyJsonBtn')
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -1176,7 +1153,7 @@
                 return await res.json();
             } catch (err) {
                 if (retries > 0) {
-                    await new Promise(r => setTimeout(r, 500));
+                    await new Promise(r => setTimeout(r, 300));
                     return fetchJSON(url, options, retries - 1);
                 }
                 throw err;
@@ -1188,12 +1165,17 @@
             elements.statusSpinner.style.display = 'block';
 
             try {
-                // Fetch Tokens via GraphQL
+                let allTokens = [];
+                let hasMore = true;
+                let offset = 0;
+                const fetchLimit = 1000;
+
                 const query = `
-                    query GetCollectionTokens($collection_id: String!) {
+                    query GetCollectionTokens($collection_id: String!, $limit: Int!, $offset: Int!) {
                         current_token_datas_v2(
                             where: { collection_id: { _eq: $collection_id } },
-                            limit: 1000
+                            limit: $limit,
+                            offset: $offset
                         ) {
                             token_data_id
                             token_name
@@ -1207,18 +1189,37 @@
                     }
                 `;
 
-                const res = await fetchJSON(INDEXER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, variables: { collection_id: COLLECTION_ADDRESS } })
-                });
+                // Loop through GraphQL indexer to fetch ALL NFTs beyond 1000 limit
+                while (hasMore) {
+                    updateStatus("Discovering", `Fetching collection list (${allTokens.length} found)...`, allTokens.length, 7000);
+                    const res = await fetchJSON(INDEXER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query,
+                            variables: {
+                                collection_id: COLLECTION_ADDRESS,
+                                limit: fetchLimit,
+                                offset: offset
+                            }
+                        })
+                    });
 
-                const tokens = res.data?.current_token_datas_v2 || [];
-                state.rawNFTs = tokens;
-                elements.statTotalNFTs.textContent = tokens.length.toLocaleString();
+                    const tokens = res.data?.current_token_datas_v2 || [];
+                    allTokens = allTokens.concat(tokens);
 
-                if (tokens.length > 0) {
-                    state.collectionName = tokens[0].current_collection?.collection_name || "Aptos Collection";
+                    if (tokens.length < fetchLimit) {
+                        hasMore = false;
+                    } else {
+                        offset += fetchLimit;
+                    }
+                }
+
+                state.rawNFTs = allTokens;
+                elements.statTotalNFTs.textContent = allTokens.length.toLocaleString();
+
+                if (allTokens.length > 0) {
+                    state.collectionName = allTokens[0].current_collection?.collection_name || "Aptos Collection";
                     elements.statCollectionName.textContent = state.collectionName;
                 } else {
                     elements.statCollectionName.textContent = "Aptos Collection";
@@ -1228,7 +1229,7 @@
                     return;
                 }
 
-                await processNFTsProgressively(tokens);
+                await processNFTsProgressively(allTokens);
 
             } catch (error) {
                 console.error("Initialization error:", error);
@@ -1238,7 +1239,7 @@
 
         async function processNFTsProgressively(tokens) {
             const total = tokens.length;
-            const batchSize = 10;
+            const batchSize = 10; // Parallel fetch speed limit (6 to 10 requests per batch)
             
             for (let i = 0; i < total; i += batchSize) {
                 const batch = tokens.slice(i, i + batchSize);
@@ -1259,9 +1260,10 @@
                 if (i === 0) {
                     renderTraitFilters();
                 }
-                applySearchAndFilters();
-
-                await new Promise(r => setTimeout(r, 20));
+                
+                if (i % (batchSize * 2) === 0 || loadedCount === total) {
+                    applySearchAndFilters();
+                }
             }
 
             updateStatus("Complete", `All ${total} NFTs loaded successfully`, total, total);
@@ -1514,7 +1516,7 @@
             elements.errorAlert.style.display = 'flex';
         }
 
-        // --- ZIP Downloader Logic ---
+        // Optimized ZIP Downloader Logic (8-10 Concurrency Requests)
         async function downloadCollectionZip() {
             if (state.loadedNFTs.length === 0) {
                 alert("No loaded NFTs to download!");
@@ -1529,33 +1531,41 @@
             elements.statusContainer.style.display = 'block';
 
             const total = state.loadedNFTs.length;
+            const CONCURRENCY_LIMIT = 8; // Parallel downloads (8 requests per second/batch)
+            let processedCount = 0;
 
-            for (let index = 0; index < total; index++) {
-                const nft = state.loadedNFTs[index];
-                const fileIndex = index + 1; // Strictly 1.png, 2.png, etc.
-
-                updateStatus("Zipping", `Processing NFT ${fileIndex} / ${total}...`, fileIndex, total);
-
-                // Add JSON metadata strictly as 1.json, 2.json
-                const jsonContent = JSON.stringify(nft.rawJson && Object.keys(nft.rawJson).length ? nft.rawJson : {
-                    name: nft.name,
-                    description: nft.description,
-                    image: `${fileIndex}.png`,
-                    attributes: nft.attributes
-                }, null, 2);
+            for (let i = 0; i < total; i += CONCURRENCY_LIMIT) {
+                const chunk = state.loadedNFTs.slice(i, i + CONCURRENCY_LIMIT);
                 
-                metadataFolder.file(`${fileIndex}.json`, jsonContent);
+                await Promise.all(chunk.map(async (nft, chunkIndex) => {
+                    const fileIndex = i + chunkIndex + 1; // 1.png, 2.png, etc.
 
-                // Download Image Blob & save strictly as 1.png, 2.png
-                if (nft.image) {
-                    try {
-                        const imgRes = await fetch(nft.image);
-                        const imgBlob = await imgRes.blob();
-                        imagesFolder.file(`${fileIndex}.png`, imgBlob);
-                    } catch (e) {
-                        console.warn(`Could not fetch image for ${fileIndex}.png:`, e);
+                    // Write JSON
+                    const jsonContent = JSON.stringify(nft.rawJson && Object.keys(nft.rawJson).length ? nft.rawJson : {
+                        name: nft.name,
+                        description: nft.description,
+                        image: `${fileIndex}.png`,
+                        attributes: nft.attributes
+                    }, null, 2);
+                    
+                    metadataFolder.file(`${fileIndex}.json`, jsonContent);
+
+                    // Parallel Image Download
+                    if (nft.image) {
+                        try {
+                            const imgRes = await fetch(nft.image);
+                            if (imgRes.ok) {
+                                const imgBlob = await imgRes.blob();
+                                imagesFolder.file(`${fileIndex}.png`, imgBlob);
+                            }
+                        } catch (e) {
+                            console.warn(`Could not fetch image for ${fileIndex}.png:`, e);
+                        }
                     }
-                }
+
+                    processedCount++;
+                    updateStatus("Zipping", `Processing batch... (${processedCount} / ${total})`, processedCount, total);
+                }));
             }
 
             updateStatus("Compressing", "Generating ZIP file...", total, total);
