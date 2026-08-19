@@ -1146,17 +1146,31 @@
             return uri;
         }
 
-        async function fetchJSON(url, options = {}, retries = 2) {
+        async function fetchJSON(url, options = {}, retries = 5) {
+            const maxRetries = retries;
             try {
                 const res = await fetch(url, options);
+                if (res.status === 429) {
+                    // Rate limited - respect Retry-After header if present, otherwise back off exponentially.
+                    const retryAfterHeader = res.headers.get('Retry-After');
+                    const attempt = maxRetries - retries;
+                    const backoffMs = retryAfterHeader
+                        ? parseFloat(retryAfterHeader) * 1000
+                        : Math.min(1000 * Math.pow(2, attempt), 15000);
+                    throw { isRateLimit: true, backoffMs, message: 'HTTP 429' };
+                }
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
             } catch (err) {
                 if (retries > 0) {
-                    await new Promise(r => setTimeout(r, 300));
+                    const attempt = maxRetries - retries;
+                    const waitMs = err && err.isRateLimit
+                        ? err.backoffMs
+                        : Math.min(300 * Math.pow(2, attempt), 5000);
+                    await new Promise(r => setTimeout(r, waitMs));
                     return fetchJSON(url, options, retries - 1);
                 }
-                throw err;
+                throw err && err.isRateLimit ? new Error(err.message) : err;
             }
         }
 
@@ -1225,6 +1239,12 @@
                     } else {
                         consecutiveEmptyPages = 0;
                         offset += tokens.length;
+                    }
+
+                    // Small pause between pages so we don't hammer the public indexer and trigger
+                    // another rate limit while paginating through a large (~7000 item) collection.
+                    if (hasMore) {
+                        await new Promise(r => setTimeout(r, 250));
                     }
                 }
 
