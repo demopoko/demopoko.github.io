@@ -1012,7 +1012,16 @@
 
     <script>
         const COLLECTION_ADDRESS = "0xef50cde1a5ffaea0cd0671a0f17de69ad6172eaaa673c8136d0a8e319ca9e946";
-        const INDEXER_URL = "https://indexer.mainnet.aptoslabs.com/v1/graphql";
+        // Current official Aptos Labs indexer endpoint (the old "indexer.mainnet.aptoslabs.com"
+        // host is being sunset and is much more aggressively rate-limited for anonymous traffic).
+        const INDEXER_URL = "https://api.mainnet.aptoslabs.com/v1/graphql";
+        // OPTIONAL BUT RECOMMENDED: Aptos Labs limits anonymous/no-key requests to the public
+        // indexer to a small number per IP per hour, which is why a ~7000-item collection can
+        // trigger "HTTP 429 Too Many Requests" even with retries. Get a FREE API key at
+        // https://geomi.dev (Aptos's official developer portal) and paste it below - it takes
+        // under a minute and removes the rate-limit problem entirely. Leave it as "" to keep
+        // using the low, unauthenticated limit.
+        const APTOS_API_KEY = "";
 
         const IPFS_GATEWAYS = [
             "https://ipfs.io/ipfs/",
@@ -1213,9 +1222,13 @@
                 let consecutiveEmptyPages = 0;
                 while (hasMore) {
                     updateStatus("Discovering", `Fetching collection list (${allTokens.length} found)...`, allTokens.length, 7000);
+                    const indexerHeaders = { 'Content-Type': 'application/json' };
+                    if (APTOS_API_KEY) {
+                        indexerHeaders['Authorization'] = `Bearer ${APTOS_API_KEY}`;
+                    }
                     const res = await fetchJSON(INDEXER_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: indexerHeaders,
                         body: JSON.stringify({
                             query,
                             variables: {
@@ -1266,7 +1279,10 @@
 
             } catch (error) {
                 console.error("Initialization error:", error);
-                showError(`Failed to fetch NFTs: ${error.message}`);
+                const hint = /429/.test(error.message)
+                    ? " The public Aptos indexer is rate-limiting this browser/IP. Wait a few minutes and retry, or add a free API key from https://geomi.dev (see APTOS_API_KEY near the top of the script)."
+                    : "";
+                showError(`Failed to fetch NFTs: ${error.message}.${hint}`);
             }
         }
 
