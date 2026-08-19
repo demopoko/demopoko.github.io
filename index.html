@@ -25,6 +25,7 @@
             --accent-hover: #00b377;
             --accent-glow: rgba(0, 229, 153, 0.15);
             --accent-blue: #3b82f6;
+            --danger-color: #ef4444;
             
             --text-primary: #f9fafb;
             --text-secondary: #9ca3af;
@@ -61,23 +62,11 @@
             background-attachment: fixed;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
 
-        /* Layout Container */
         .container {
             width: 100%;
             max-width: 1440px;
@@ -85,11 +74,9 @@
             padding: 0 1.5rem;
         }
 
-        /* Header */
         header {
             background: rgba(11, 15, 23, 0.8);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-glass);
             position: sticky;
             top: 0;
@@ -105,11 +92,7 @@
             flex-wrap: wrap;
         }
 
-        .brand-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
+        .brand-title { display: flex; align-items: center; gap: 0.75rem; }
 
         .brand-logo {
             width: 32px;
@@ -132,17 +115,8 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .subtitle {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .header-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
+        .subtitle { font-size: 0.85rem; color: var(--text-secondary); }
+        .header-meta { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 
         .badge {
             display: inline-flex;
@@ -190,12 +164,8 @@
             border-radius: 4px;
             transition: var(--transition);
         }
+        .btn-icon:hover { color: var(--accent-primary); }
 
-        .btn-icon:hover {
-            color: var(--accent-primary);
-        }
-
-        /* Stats Bar */
         .stats-section {
             margin: 2rem 0 1.5rem 0;
             display: grid;
@@ -209,14 +179,8 @@
             border-radius: var(--radius-md);
             padding: 1.25rem;
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             box-shadow: var(--shadow-card);
             transition: var(--transition);
-        }
-
-        .stat-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
         }
 
         .stat-label {
@@ -228,25 +192,10 @@
             margin-bottom: 0.35rem;
         }
 
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
 
-        /* Controls Section */
-        .controls-section {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 280px;
-            position: relative;
-        }
+        .controls-section { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 280px; position: relative; }
 
         .search-icon {
             position: absolute;
@@ -294,19 +243,8 @@
             color: #000;
             border: none;
         }
+        .download-btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
-        .download-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .filter-toggle-btn:hover, .filter-toggle-btn.active {
-            border-color: var(--accent-primary);
-            background: var(--accent-glow);
-            color: var(--accent-primary);
-        }
-
-        /* Filter Panel */
         .filter-panel {
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
@@ -316,21 +254,10 @@
             display: none;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 1.25rem;
-            backdrop-filter: blur(8px);
         }
+        .filter-panel.open { display: grid; }
 
-        .filter-panel.open {
-            display: grid;
-        }
-
-        .filter-group-title {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-        }
-
+        .filter-group-title { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; }
         .filter-select {
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
@@ -339,18 +266,9 @@
             padding: 0.5rem;
             color: var(--text-primary);
             outline: none;
-            font-size: 0.85rem;
         }
 
-        .filter-select:focus {
-            border-color: var(--accent-primary);
-        }
-
-        /* Status & Alert Boxes */
-        .status-container {
-            margin-bottom: 1.5rem;
-        }
-
+        .status-container { margin-bottom: 1.5rem; }
         .status-bar {
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
@@ -359,13 +277,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
-        }
-
-        .status-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
         }
 
         .spinner {
@@ -376,10 +287,7 @@
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .progress-track {
             width: 100%;
@@ -397,35 +305,6 @@
             transition: width 0.3s ease;
         }
 
-        .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: var(--radius-md);
-            padding: 1rem 1.25rem;
-            color: #fca5a5;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-
-        .btn-retry {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #fff;
-            padding: 0.4rem 0.8rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.8rem;
-            transition: var(--transition);
-        }
-
-        .btn-retry:hover {
-            background: rgba(239, 68, 68, 0.4);
-        }
-
-        /* Gallery Grid */
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -433,30 +312,19 @@
             margin-bottom: 2rem;
         }
 
-        @media (min-width: 640px) {
-            .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-        }
-        @media (min-width: 1024px) {
-            .gallery-grid { grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
-        }
-        @media (min-width: 1280px) {
-            .gallery-grid { grid-template-columns: repeat(5, 1fr); }
-        }
-        @media (min-width: 1536px) {
-            .gallery-grid { grid-template-columns: repeat(6, 1fr); }
-        }
+        @media (min-width: 640px) { .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; } }
+        @media (min-width: 1024px) { .gallery-grid { grid-template-columns: repeat(4, 1fr); gap: 1.5rem; } }
+        @media (min-width: 1280px) { .gallery-grid { grid-template-columns: repeat(5, 1fr); } }
 
-        /* NFT Card */
+        /* NFT Card with Serial & Delete */
         .nft-card {
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-md);
             overflow: hidden;
-            cursor: pointer;
             transition: var(--transition);
             display: flex;
             flex-direction: column;
-            backdrop-filter: blur(8px);
             position: relative;
         }
 
@@ -466,408 +334,113 @@
             box-shadow: var(--shadow-glow);
         }
 
+        .serial-tag {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.75);
+            color: var(--accent-primary);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            z-index: 5;
+            border: 1px solid var(--border-glass);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(239, 68, 68, 0.85);
+            color: white;
+            border: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+        .delete-btn:hover { background: var(--danger-color); transform: scale(1.1); }
+
         .nft-image-wrapper {
             width: 100%;
             aspect-ratio: 1 / 1;
             background: rgba(0, 0, 0, 0.4);
             position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            cursor: pointer;
         }
 
-        .nft-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-        .nft-card:hover .nft-image {
-            transform: scale(1.05);
-        }
-
-        .image-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-align: center;
-            padding: 1rem;
-        }
+        .nft-image { width: 100%; height: 100%; object-fit: cover; }
 
         .nft-info {
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
-            flex-grow: 1;
-            justify-content: space-between;
+            cursor: pointer;
         }
 
-        .nft-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .nft-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .nft-collection-name {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Load More Controls */
-        .load-more-container {
-            display: flex;
-            justify-content: center;
-            margin: 2rem 0 4rem 0;
-        }
-
+        .load-more-container { display: flex; justify-content: center; margin: 2rem 0 4rem 0; }
         .btn-primary {
             background: linear-gradient(135deg, var(--accent-primary), #00b377);
             color: #000;
             font-weight: 700;
-            font-size: 0.95rem;
             padding: 0.85rem 2rem;
             border-radius: var(--radius-full);
             border: none;
             cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 4px 15px rgba(0, 229, 153, 0.2);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 229, 153, 0.35);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: var(--bg-card);
-            border: 1px dashed var(--border-glass);
-            border-radius: var(--radius-lg);
-            margin: 2rem 0;
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        /* Modal */
+        /* Modal Styles */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
-
-        .modal-overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
         .modal-container {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            border-radius: var(--radius-lg);
-            max-width: 900px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
+            background: var(--bg-secondary); border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg); max-width: 800px; width: 100%; max-height: 90vh;
+            overflow-y: auto; position: relative; padding: 1.5rem;
         }
-
-        .modal-overlay.open .modal-container {
-            transform: scale(1);
-        }
-
-        .modal-close-btn {
-            position: absolute;
-            top: 1.25rem;
-            right: 1.25rem;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: var(--text-primary);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: grid;
-            place-items: center;
-            z-index: 10;
-            transition: var(--transition);
-        }
-
-        .modal-close-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: rotate(90deg);
-        }
-
-        .modal-body {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            padding: 2rem;
-        }
-
-        @media (min-width: 768px) {
-            .modal-body {
-                grid-template-columns: 400px 1fr;
-            }
-        }
-
-        .modal-media-container {
-            width: 100%;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            background: #000;
-            aspect-ratio: 1 / 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--border-glass);
-        }
-
-        .modal-media {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .modal-content-details {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .modal-header-info h2 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-        }
-
-        .modal-description {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        .details-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-glass);
-            font-size: 0.85rem;
-        }
-
-        .details-item {
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-
-        .details-label {
-            color: var(--text-muted);
-        }
-
-        .details-value {
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            word-break: break-all;
-            text-align: right;
-        }
-
-        /* Traits Grid */
-        .traits-header {
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-        }
-
-        .traits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .trait-card {
-            background: rgba(0, 229, 153, 0.04);
-            border: 1px solid rgba(0, 229, 153, 0.15);
-            border-radius: var(--radius-sm);
-            padding: 0.6rem 0.8rem;
-            text-align: center;
-        }
-
-        .trait-type {
-            font-size: 0.7rem;
-            color: var(--accent-primary);
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 0.2rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .trait-value {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Collapsible Section */
-        .collapsible-section {
-            border: 1px solid var(--border-glass);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
-
-        .collapsible-header {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 0.75rem 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .collapsible-content {
-            display: none;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.5);
-            border-top: 1px solid var(--border-glass);
-        }
-
-        .collapsible-content.open {
-            display: block;
-        }
-
-        pre.raw-json {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            color: #a7f3d0;
-            overflow-x: auto;
-            max-height: 250px;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-        }
-
-        .btn-secondary {
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            color: var(--text-primary);
-            padding: 0.4rem 0.8rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Footer */
-        footer {
-            margin-top: auto;
-            border-top: 1px solid var(--border-glass);
-            padding: 2rem 0;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            background: rgba(11, 15, 23, 0.5);
-        }
+        .modal-close-btn { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+        .modal-body { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 640px) { .modal-body { grid-template-columns: 300px 1fr; } }
+        .modal-media { width: 100%; border-radius: var(--radius-md); aspect-ratio: 1/1; object-fit: contain; background: #000; }
+        .traits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 1rem; }
+        .trait-card { background: rgba(0,229,153,0.05); border: 1px solid rgba(0,229,153,0.2); padding: 0.5rem; border-radius: 6px; text-align: center; }
+        .trait-type { font-size: 0.7rem; color: var(--accent-primary); }
+        .trait-value { font-size: 0.8rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="container header-content">
             <div class="brand-title">
                 <div class="brand-logo">A</div>
                 <div>
                     <h1>Aptos NFT Explorer</h1>
-                    <div class="subtitle">Explore every NFT from this Aptos collection</div>
+                    <div class="subtitle">Full Collection Batch Importer</div>
                 </div>
             </div>
             <div class="header-meta">
-                <div class="badge">
-                    <span class="badge-dot"></span>
-                    <span>Aptos Mainnet</span>
-                </div>
-                <div class="address-box">
-                    <span id="collectionAddressShort">0xef50...e946</span>
-                    <button class="btn-icon" id="copyAddressBtn" title="Copy Full Address">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    </button>
-                </div>
+                <div class="badge"><span class="badge-dot"></span><span>Aptos Mainnet</span></div>
+                <div class="address-box"><span id="collectionAddressShort">0xef50...e946</span></div>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <!-- Collection Stats -->
         <section class="stats-section">
             <div class="stat-card">
                 <div class="stat-label">Collection Name</div>
@@ -878,211 +451,86 @@
                 <div class="stat-value" id="statTotalNFTs">--</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Loaded Metadata</div>
+                <div class="stat-label">Active / Loaded NFTs</div>
                 <div class="stat-value" id="statLoadedNFTs">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Network</div>
-                <div class="stat-value" style="font-size:1.1rem; padding-top:0.3rem;">Aptos Mainnet</div>
             </div>
         </section>
 
-        <!-- Controls: Search, Filters & Bulk Download -->
         <section class="controls-section">
             <div class="search-box">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, token ID, trait type or trait value...">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, ID or traits...">
             </div>
-            <button id="toggleFilterBtn" class="filter-toggle-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                <span>Traits Filter</span>
-            </button>
             <button id="downloadZipBtn" class="download-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 <span>Download All (ZIP)</span>
             </button>
         </section>
 
-        <!-- Dynamic Trait Filter Panel -->
-        <div id="filterPanel" class="filter-panel"></div>
-
-        <!-- Status Container -->
         <div id="statusContainer" class="status-container">
             <div class="status-bar">
-                <div class="status-info">
-                    <div class="spinner" id="statusSpinner"></div>
-                    <div>
-                        <div id="statusState" style="font-weight:700; font-size:0.9rem;">Initial State</div>
-                        <div id="statusText" style="font-size:0.8rem; color:var(--text-secondary);">Connecting to Aptos Mainnet...</div>
-                    </div>
+                <div>
+                    <div id="statusState" style="font-weight:700;">Connecting...</div>
+                    <div id="statusText" style="font-size:0.8rem; color:var(--text-secondary);">Fetching collection dataset...</div>
                 </div>
-                <div id="statusCount" style="font-family:'JetBrains Mono', monospace; font-size:0.85rem; font-weight:600;">0 / 0</div>
+                <div id="statusCount">0 / 0</div>
             </div>
-            <div class="progress-track">
-                <div id="progressFill" class="progress-fill"></div>
-            </div>
+            <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
         </div>
 
-        <!-- Error Alert -->
-        <div id="errorAlert" class="alert-error" style="display:none; margin-bottom:1.5rem;">
-            <div id="errorMessage">Unable to fetch Aptos collection data.</div>
-            <button id="retryBtn" class="btn-retry">Retry Connection</button>
-        </div>
-
-        <!-- NFT Gallery Grid -->
         <div id="galleryGrid" class="gallery-grid"></div>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="empty-state" style="display:none;">
-            <div class="empty-state-icon">🖼️</div>
-            <h3>No NFTs Found</h3>
-            <p style="color:var(--text-secondary); margin-top:0.5rem; font-size:0.9rem;">We couldn't find any NFTs matching your search or filters in this Aptos collection.</p>
-        </div>
-
-        <!-- Load More Container -->
         <div id="loadMoreContainer" class="load-more-container" style="display:none;">
-            <button id="loadMoreBtn" class="btn-primary">Load Next Batch</button>
+            <button id="loadMoreBtn" class="btn-primary">Load More</button>
         </div>
     </main>
 
-    <!-- NFT Detail Modal -->
+    <!-- Modal -->
     <div id="nftModal" class="modal-overlay">
         <div class="modal-container">
-            <button id="modalCloseBtn" class="modal-close-btn" title="Close Modal">&times;</button>
+            <button id="modalCloseBtn" class="modal-close-btn">&times;</button>
             <div class="modal-body">
-                <div class="modal-media-container" id="modalMediaContainer"></div>
-                <div class="modal-content-details">
-                    <div class="modal-header-info">
-                        <h2 id="modalNFTName">NFT Name</h2>
-                        <div id="modalCollectionName" style="color:var(--accent-primary); font-size:0.85rem; font-weight:600;">Collection</div>
-                    </div>
-
-                    <div class="modal-description" id="modalNFTDescription">
-                        No description provided for this NFT.
-                    </div>
-
-                    <div class="details-list">
-                        <div class="details-item">
-                            <span class="details-label">Token ID / Address</span>
-                            <span class="details-value" id="modalTokenId">--</span>
-                        </div>
-                        <div class="details-item">
-                            <span class="details-label">Owner</span>
-                            <span class="details-value" id="modalOwner">--</span>
-                        </div>
-                        <div class="details-item">
-                            <span class="details-label">Creator</span>
-                            <span class="details-value" id="modalCreator">--</span>
-                        </div>
-                        <div class="details-item">
-                            <span class="details-label">Metadata URI</span>
-                            <span class="details-value" id="modalURI">--</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="traits-header">Attributes & Traits</div>
-                        <div class="traits-grid" id="modalTraitsGrid"></div>
-                    </div>
-
-                    <div class="collapsible-section">
-                        <div class="collapsible-header" id="rawJsonHeader">
-                            <span>Raw Metadata</span>
-                            <span id="rawJsonChevron">▼</span>
-                        </div>
-                        <div class="collapsible-content" id="rawJsonContent">
-                            <pre class="raw-json" id="modalRawJson"></pre>
-                            <div class="modal-actions">
-                                <button class="btn-secondary" id="copyJsonBtn">Copy JSON</button>
-                            </div>
-                        </div>
-                    </div>
-
+                <img id="modalMedia" class="modal-media" src="" alt="">
+                <div>
+                    <h2 id="modalNFTName">NFT Name</h2>
+                    <p id="modalNFTDescription" style="font-size:0.85rem; color:var(--text-secondary); margin: 0.5rem 0;"></p>
+                    <div class="traits-grid" id="modalTraitsGrid"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div>Built for Aptos Mainnet &bull; Collection Address: <span style="font-family:'JetBrains Mono', monospace;" id="footerAddress">0xef50...e946</span></div>
-        </div>
-    </footer>
-
     <script>
         const COLLECTION_ADDRESS = "0xef50cde1a5ffaea0cd0671a0f17de69ad6172eaaa673c8136d0a8e319ca9e946";
-        // Current official Aptos Labs indexer endpoint (the old "indexer.mainnet.aptoslabs.com"
-        // host is being sunset and is much more aggressively rate-limited for anonymous traffic).
-        const INDEXER_URL = "https://api.mainnet.aptoslabs.com/v1/graphql";
-        // OPTIONAL BUT RECOMMENDED: Aptos Labs limits anonymous/no-key requests to the public
-        // indexer to a small number per IP per hour, which is why a ~7000-item collection can
-        // trigger "HTTP 429 Too Many Requests" even with retries. Get a FREE API key at
-        // https://geomi.dev (Aptos's official developer portal) and paste it below - it takes
-        // under a minute and removes the rate-limit problem entirely. Leave it as "" to keep
-        // using the low, unauthenticated limit.
-        const APTOS_API_KEY = "azGUMoPxCx4XzlybaCSyc";
-
-        const IPFS_GATEWAYS = [
-            "https://ipfs.io/ipfs/",
-            "https://gateway.pinata.cloud/ipfs/",
-            "https://cloudflare-ipfs.com/ipfs/"
-        ];
+        const INDEXER_URL = "https://indexer.mainnet.aptoslabs.com/v1/graphql";
+        const IPFS_GATEWAYS = ["https://ipfs.io/ipfs/", "https://gateway.pinata.cloud/ipfs/"];
 
         const state = {
-            collectionAddress: COLLECTION_ADDRESS,
-            collectionName: "Aptos Collection",
-            rawNFTs: [],
             loadedNFTs: [],
             filteredNFTs: [],
             renderedCount: 0,
-            pageSize: 24,
-            traitsMap: {},
-            selectedFilters: {},
-            searchQuery: "",
-            isDownloading: false
+            pageSize: 50,
+            searchQuery: ""
         };
 
         const elements = {
-            collectionAddressShort: document.getElementById('collectionAddressShort'),
-            footerAddress: document.getElementById('footerAddress'),
-            copyAddressBtn: document.getElementById('copyAddressBtn'),
             statCollectionName: document.getElementById('statCollectionName'),
             statTotalNFTs: document.getElementById('statTotalNFTs'),
             statLoadedNFTs: document.getElementById('statLoadedNFTs'),
             searchInput: document.getElementById('searchInput'),
-            toggleFilterBtn: document.getElementById('toggleFilterBtn'),
             downloadZipBtn: document.getElementById('downloadZipBtn'),
-            filterPanel: document.getElementById('filterPanel'),
+            galleryGrid: document.getElementById('galleryGrid'),
+            loadMoreContainer: document.getElementById('loadMoreContainer'),
+            loadMoreBtn: document.getElementById('loadMoreBtn'),
             statusContainer: document.getElementById('statusContainer'),
             statusState: document.getElementById('statusState'),
             statusText: document.getElementById('statusText'),
             statusCount: document.getElementById('statusCount'),
-            statusSpinner: document.getElementById('statusSpinner'),
             progressFill: document.getElementById('progressFill'),
-            errorAlert: document.getElementById('errorAlert'),
-            errorMessage: document.getElementById('errorMessage'),
-            retryBtn: document.getElementById('retryBtn'),
-            galleryGrid: document.getElementById('galleryGrid'),
-            emptyState: document.getElementById('emptyState'),
-            loadMoreContainer: document.getElementById('loadMoreContainer'),
-            loadMoreBtn: document.getElementById('loadMoreBtn'),
-            
             nftModal: document.getElementById('nftModal'),
             modalCloseBtn: document.getElementById('modalCloseBtn'),
-            modalMediaContainer: document.getElementById('modalMediaContainer'),
+            modalMedia: document.getElementById('modalMedia'),
             modalNFTName: document.getElementById('modalNFTName'),
-            modalCollectionName: document.getElementById('modalCollectionName'),
             modalNFTDescription: document.getElementById('modalNFTDescription'),
-            modalTokenId: document.getElementById('modalTokenId'),
-            modalOwner: document.getElementById('modalOwner'),
-            modalCreator: document.getElementById('modalCreator'),
-            modalURI: document.getElementById('modalURI'),
-            modalTraitsGrid: document.getElementById('modalTraitsGrid'),
-            rawJsonHeader: document.getElementById('rawJsonHeader'),
-            rawJsonContent: document.getElementById('rawJsonContent'),
-            modalRawJson: document.getElementById('modalRawJson'),
-            copyJsonBtn: document.getElementById('copyJsonBtn')
+            modalTraitsGrid: document.getElementById('modalTraitsGrid')
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -1091,102 +539,36 @@
         });
 
         function setupUIHandlers() {
-            const shortAddr = shortenAddress(COLLECTION_ADDRESS);
-            elements.collectionAddressShort.textContent = shortAddr;
-            elements.footerAddress.textContent = shortAddr;
-
-            elements.copyAddressBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(COLLECTION_ADDRESS);
-                alert("Collection address copied to clipboard!");
-            });
-
-            elements.toggleFilterBtn.addEventListener('click', () => {
-                elements.filterPanel.classList.toggle('open');
-                elements.toggleFilterBtn.classList.toggle('active');
-            });
-
             elements.searchInput.addEventListener('input', (e) => {
                 state.searchQuery = e.target.value.toLowerCase().trim();
                 applySearchAndFilters();
             });
 
-            elements.loadMoreBtn.addEventListener('click', () => {
-                renderNextBatch();
-            });
-
-            elements.downloadZipBtn.addEventListener('click', () => {
-                downloadCollectionZip();
-            });
-
-            elements.retryBtn.addEventListener('click', () => {
-                elements.errorAlert.style.display = 'none';
-                initializeExplorer();
-            });
-
+            elements.loadMoreBtn.addEventListener('click', () => renderNextBatch());
+            elements.downloadZipBtn.addEventListener('click', () => downloadCollectionZip());
             elements.modalCloseBtn.addEventListener('click', closeModal);
-            elements.nftModal.addEventListener('click', (e) => {
-                if (e.target === elements.nftModal) closeModal();
-            });
-
-            elements.rawJsonHeader.addEventListener('click', () => {
-                elements.rawJsonContent.classList.toggle('open');
-            });
-
-            elements.copyJsonBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(elements.modalRawJson.textContent);
-                alert("Raw metadata copied!");
-            });
-        }
-
-        function shortenAddress(addr) {
-            if (!addr || addr.length < 12) return addr || '';
-            return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
         }
 
         function resolveURI(uri) {
             if (!uri) return '';
             uri = uri.trim();
-            if (uri.startsWith('ipfs://')) {
-                return `${IPFS_GATEWAYS[0]}${uri.replace('ipfs://', '')}`;
-            }
-            if (uri.startsWith('ar://')) {
-                return `https://arweave.net/${uri.replace('ar://', '')}`;
-            }
+            if (uri.startsWith('ipfs://')) return `${IPFS_GATEWAYS[0]}${uri.replace('ipfs://', '')}`;
+            if (uri.startsWith('ar://')) return `https://arweave.net/${uri.replace('ar://', '')}`;
             return uri;
         }
 
-        async function fetchJSON(url, options = {}, retries = 5) {
-            const maxRetries = retries;
+        async function fetchJSON(url, retries = 2) {
             try {
-                const res = await fetch(url, options);
-                if (res.status === 429) {
-                    // Rate limited - respect Retry-After header if present, otherwise back off exponentially.
-                    const retryAfterHeader = res.headers.get('Retry-After');
-                    const attempt = maxRetries - retries;
-                    const backoffMs = retryAfterHeader
-                        ? parseFloat(retryAfterHeader) * 1000
-                        : Math.min(1000 * Math.pow(2, attempt), 15000);
-                    throw { isRateLimit: true, backoffMs, message: 'HTTP 429' };
-                }
+                const res = await fetch(url);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
             } catch (err) {
-                if (retries > 0) {
-                    const attempt = maxRetries - retries;
-                    const waitMs = err && err.isRateLimit
-                        ? err.backoffMs
-                        : Math.min(300 * Math.pow(2, attempt), 5000);
-                    await new Promise(r => setTimeout(r, waitMs));
-                    return fetchJSON(url, options, retries - 1);
-                }
-                throw err && err.isRateLimit ? new Error(err.message) : err;
+                if (retries > 0) return fetchJSON(url, retries - 1);
+                return null;
             }
         }
 
         async function initializeExplorer() {
-            updateStatus("Discovering", "Querying Aptos Indexer for NFTs...", 0, 0);
-            elements.statusSpinner.style.display = 'block';
-
             try {
                 let allTokens = [];
                 let hasMore = true;
@@ -1197,7 +579,6 @@
                     query GetCollectionTokens($collection_id: String!, $limit: Int!, $offset: Int!) {
                         current_token_datas_v2(
                             where: { collection_id: { _eq: $collection_id } },
-                            order_by: { token_data_id: asc },
                             limit: $limit,
                             offset: $offset
                         ) {
@@ -1205,227 +586,85 @@
                             token_name
                             token_uri
                             description
-                            current_collection {
-                                collection_name
-                                creator_address
-                            }
+                            current_collection { collection_name creator_address }
                         }
                     }
                 `;
 
-                // Loop through GraphQL indexer to fetch ALL NFTs (collection can be ~7000+ tokens).
-                // NOTE: some public indexer endpoints silently cap each response below the requested
-                // "limit" (e.g. returning 100 rows even when 1000 were asked for). We can no longer rely
-                // on "tokens.length < fetchLimit" to mean "no more data" - we only stop once we get an
-                // empty page (confirmed twice in a row), and we advance the offset by however many rows
-                // actually came back (not by fetchLimit), so no tokens get skipped over.
-                let consecutiveEmptyPages = 0;
+                // Fetching all 7000 NFTs without hard limits
                 while (hasMore) {
-                    updateStatus("Discovering", `Fetching collection list (${allTokens.length} found)...`, allTokens.length, 7000);
-                    const indexerHeaders = { 'Content-Type': 'application/json' };
-                    if (APTOS_API_KEY) {
-                        indexerHeaders['Authorization'] = `Bearer ${APTOS_API_KEY}`;
-                    }
-                    const res = await fetchJSON(INDEXER_URL, {
+                    updateStatus("Discovering", `Fetching NFT list (${allTokens.length} fetched)...`, allTokens.length, 7000);
+                    const res = await fetch(INDEXER_URL, {
                         method: 'POST',
-                        headers: indexerHeaders,
-                        body: JSON.stringify({
-                            query,
-                            variables: {
-                                collection_id: COLLECTION_ADDRESS,
-                                limit: fetchLimit,
-                                offset: offset
-                            }
-                        })
-                    });
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query, variables: { collection_id: COLLECTION_ADDRESS, limit: fetchLimit, offset } })
+                    }).then(r => r.json());
 
                     const tokens = res.data?.current_token_datas_v2 || [];
                     allTokens = allTokens.concat(tokens);
 
-                    if (tokens.length === 0) {
-                        consecutiveEmptyPages++;
-                        if (consecutiveEmptyPages >= 2) {
-                            hasMore = false;
-                        } else {
-                            offset += fetchLimit;
-                        }
-                    } else {
-                        consecutiveEmptyPages = 0;
-                        offset += tokens.length;
-                    }
-
-                    // Small pause between pages so we don't hammer the public indexer and trigger
-                    // another rate limit while paginating through a large (~7000 item) collection.
-                    if (hasMore) {
-                        await new Promise(r => setTimeout(r, 250));
-                    }
+                    if (tokens.length < fetchLimit) hasMore = false;
+                    else offset += fetchLimit;
                 }
 
-                state.rawNFTs = allTokens;
                 elements.statTotalNFTs.textContent = allTokens.length.toLocaleString();
+                if (allTokens.length > 0) elements.statCollectionName.textContent = allTokens[0].current_collection?.collection_name || "Aptos Collection";
 
-                if (allTokens.length > 0) {
-                    state.collectionName = allTokens[0].current_collection?.collection_name || "Aptos Collection";
-                    elements.statCollectionName.textContent = state.collectionName;
-                } else {
-                    elements.statCollectionName.textContent = "Aptos Collection";
-                    updateStatus("Complete", "0 NFTs found", 0, 0);
-                    elements.statusSpinner.style.display = 'none';
-                    elements.emptyState.style.display = 'block';
-                    return;
-                }
-
-                await processNFTsProgressively(allTokens);
+                await processNFTs(allTokens);
 
             } catch (error) {
                 console.error("Initialization error:", error);
-                const hint = /429/.test(error.message)
-                    ? " The public Aptos indexer is rate-limiting this browser/IP. Wait a few minutes and retry, or add a free API key from https://geomi.dev (see APTOS_API_KEY near the top of the script)."
-                    : "";
-                showError(`Failed to fetch NFTs: ${error.message}.${hint}`);
             }
         }
 
-        async function processNFTsProgressively(tokens) {
+        async function processNFTs(tokens) {
             const total = tokens.length;
-            const batchSize = 10; // Parallel fetch speed limit (6 to 10 requests per batch)
-            
+            const batchSize = 15;
+
             for (let i = 0; i < total; i += batchSize) {
                 const batch = tokens.slice(i, i + batchSize);
+                const resolved = await Promise.all(batch.map(t => resolveMetadata(t)));
                 
-                const resolvedBatch = await Promise.all(
-                    batch.map(token => resolveNFTMetadata(token))
-                );
+                resolved.forEach(nft => state.loadedNFTs.push(nft));
+                elements.statLoadedNFTs.textContent = state.loadedNFTs.length.toLocaleString();
 
-                resolvedBatch.forEach(nft => {
-                    state.loadedNFTs.push(nft);
-                    registerTraits(nft.attributes);
-                });
-
-                const loadedCount = state.loadedNFTs.length;
-                elements.statLoadedNFTs.textContent = loadedCount.toLocaleString();
-                updateStatus("Progress", `Loaded ${loadedCount} / ${total} NFTs`, loadedCount, total);
-
-                if (i === 0) {
-                    renderTraitFilters();
-                }
+                updateStatus("Loading Metadata", `Processed ${state.loadedNFTs.length} / ${total}`, state.loadedNFTs.length, total);
                 
-                if (i % (batchSize * 2) === 0 || loadedCount === total) {
+                if (i === 0 || i % (batchSize * 3) === 0 || state.loadedNFTs.length === total) {
                     applySearchAndFilters();
                 }
             }
 
-            updateStatus("Complete", `All ${total} NFTs loaded successfully`, total, total);
-            elements.statusSpinner.style.display = 'none';
+            updateStatus("Complete", `All ${total} NFTs imported successfully`, total, total);
         }
 
-        async function resolveNFTMetadata(token) {
+        async function resolveMetadata(token) {
             let metadata = {
                 id: token.token_data_id,
                 name: token.token_name || 'NFT',
                 description: token.description || '',
                 image: '',
-                uri: token.token_uri || '',
-                collection: token.current_collection?.collection_name || state.collectionName,
-                owner: COLLECTION_ADDRESS,
-                creator: token.current_collection?.creator_address || COLLECTION_ADDRESS,
                 attributes: [],
                 rawJson: {}
             };
 
-            if (!token.token_uri) return metadata;
-
-            try {
-                const targetUrl = resolveURI(token.token_uri);
-                const json = await fetchJSON(targetUrl, {}, 1);
-
+            if (token.token_uri) {
+                const json = await fetchJSON(resolveURI(token.token_uri));
                 if (json) {
                     metadata.rawJson = json;
                     metadata.name = json.name || metadata.name;
                     metadata.description = json.description || metadata.description;
-                    metadata.image = resolveURI(json.image || json.image_url || json.uri || '');
-                    
-                    const rawAttributes = json.attributes || json.traits || [];
-                    if (Array.isArray(rawAttributes)) {
-                        metadata.attributes = rawAttributes.map(attr => ({
-                            trait_type: attr.trait_type || attr.key || 'Attribute',
-                            value: String(attr.value !== undefined ? attr.value : attr.val)
-                        }));
-                    }
+                    metadata.image = resolveURI(json.image || json.image_url || '');
+                    metadata.attributes = json.attributes || json.traits || [];
                 }
-            } catch (err) {
-                console.warn(`Failed metadata for ${token.token_name}`);
             }
-
             return metadata;
-        }
-
-        function registerTraits(attributes) {
-            if (!Array.isArray(attributes)) return;
-            attributes.forEach(attr => {
-                if (!attr.trait_type || !attr.value) return;
-                if (!state.traitsMap[attr.trait_type]) {
-                    state.traitsMap[attr.trait_type] = new Set();
-                }
-                state.traitsMap[attr.trait_type].add(attr.value);
-            });
-        }
-
-        function renderTraitFilters() {
-            elements.filterPanel.innerHTML = '';
-            const keys = Object.keys(state.traitsMap);
-
-            if (keys.length === 0) return;
-
-            keys.forEach(traitType => {
-                const group = document.createElement('div');
-                const title = document.createElement('div');
-                title.className = 'filter-group-title';
-                title.textContent = traitType;
-
-                const select = document.createElement('select');
-                select.className = 'filter-select';
-                select.innerHTML = `<option value="">All ${traitType}s</option>`;
-
-                state.traitsMap[traitType].forEach(val => {
-                    select.innerHTML += `<option value="${val}">${val}</option>`;
-                });
-
-                select.addEventListener('change', (e) => {
-                    if (e.target.value) {
-                        state.selectedFilters[traitType] = e.target.value;
-                    } else {
-                        delete state.selectedFilters[traitType];
-                    }
-                    applySearchAndFilters();
-                });
-
-                group.appendChild(title);
-                group.appendChild(select);
-                elements.filterPanel.appendChild(group);
-            });
         }
 
         function applySearchAndFilters() {
             state.filteredNFTs = state.loadedNFTs.filter(nft => {
-                if (state.searchQuery) {
-                    const q = state.searchQuery;
-                    const matchName = nft.name.toLowerCase().includes(q);
-                    const matchTrait = nft.attributes.some(a => 
-                        a.trait_type.toLowerCase().includes(q) || 
-                        a.value.toLowerCase().includes(q)
-                    );
-                    if (!matchName && !matchTrait) return false;
-                }
-
-                for (const [traitType, selectedValue] of Object.entries(state.selectedFilters)) {
-                    const hasTrait = nft.attributes.some(a => 
-                        a.trait_type === traitType && a.value === selectedValue
-                    );
-                    if (!hasTrait) return false;
-                }
-
-                return true;
+                if (!state.searchQuery) return true;
+                return nft.name.toLowerCase().includes(state.searchQuery);
             });
 
             state.renderedCount = 0;
@@ -1435,25 +674,17 @@
 
         function renderNextBatch() {
             const nextBatch = state.filteredNFTs.slice(state.renderedCount, state.renderedCount + state.pageSize);
-            
-            if (nextBatch.length === 0 && state.renderedCount === 0) {
-                elements.emptyState.style.display = 'block';
-                elements.loadMoreContainer.style.display = 'none';
-                return;
-            } else {
-                elements.emptyState.style.display = 'none';
-            }
 
-            nextBatch.forEach(nft => {
+            nextBatch.forEach((nft) => {
                 const card = createNFTCard(nft);
                 elements.galleryGrid.appendChild(card);
             });
 
             state.renderedCount += nextBatch.length;
+            updateSerialNumbers();
 
             if (state.renderedCount < state.filteredNFTs.length) {
                 elements.loadMoreContainer.style.display = 'flex';
-                elements.loadMoreBtn.textContent = `Load More (${state.filteredNFTs.length - state.renderedCount} remaining)`;
             } else {
                 elements.loadMoreContainer.style.display = 'none';
             }
@@ -1462,165 +693,140 @@
         function createNFTCard(nft) {
             const card = document.createElement('div');
             card.className = 'nft-card';
-            
+            card.dataset.id = nft.id;
+
+            const serial = document.createElement('div');
+            serial.className = 'serial-tag';
+            serial.textContent = '#--';
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'delete-btn';
+            delBtn.innerHTML = '&times;';
+            delBtn.title = "Delete NFT";
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                deleteNFT(nft.id);
+            };
+
             const imgWrapper = document.createElement('div');
             imgWrapper.className = 'nft-image-wrapper';
+            imgWrapper.onclick = () => openModal(nft);
 
             if (nft.image) {
                 const img = document.createElement('img');
                 img.className = 'nft-image';
                 img.src = nft.image;
-                img.alt = nft.name;
                 img.loading = 'lazy';
-                
-                img.onerror = () => {
-                    img.style.display = 'none';
-                    imgWrapper.innerHTML = `<div class="image-placeholder"><span>🖼️</span><span>Media Error</span></div>`;
-                };
-
                 imgWrapper.appendChild(img);
-            } else {
-                imgWrapper.innerHTML = `<div class="image-placeholder"><span>🖼️</span><span>No Image</span></div>`;
             }
 
             const info = document.createElement('div');
             info.className = 'nft-info';
-            info.innerHTML = `
-                <div>
-                    <div class="nft-name" title="${nft.name}">${nft.name}</div>
-                    <div class="nft-collection-name">${nft.collection}</div>
-                </div>
-            `;
+            info.onclick = () => openModal(nft);
+            info.innerHTML = `<div class="nft-name">${nft.name}</div>`;
 
+            card.appendChild(serial);
+            card.appendChild(delBtn);
             card.appendChild(imgWrapper);
             card.appendChild(info);
-            card.addEventListener('click', () => openModal(nft));
 
             return card;
         }
 
+        function deleteNFT(id) {
+            state.loadedNFTs = state.loadedNFTs.filter(n => n.id !== id);
+            state.filteredNFTs = state.filteredNFTs.filter(n => n.id !== id);
+            
+            const card = document.querySelector(`.nft-card[data-id="${id}"]`);
+            if (card) card.remove();
+
+            elements.statLoadedNFTs.textContent = state.loadedNFTs.length.toLocaleString();
+            updateSerialNumbers();
+        }
+
+        function updateSerialNumbers() {
+            const cards = elements.galleryGrid.querySelectorAll('.nft-card');
+            cards.forEach((card, idx) => {
+                const tag = card.querySelector('.serial-tag');
+                if (tag) tag.textContent = `#${idx + 1}`;
+            });
+        }
+
         function openModal(nft) {
-            elements.modalMediaContainer.innerHTML = '';
-            if (nft.image) {
-                const img = document.createElement('img');
-                img.className = 'modal-media';
-                img.src = nft.image;
-                img.alt = nft.name;
-                elements.modalMediaContainer.appendChild(img);
-            }
-
+            elements.modalMedia.src = nft.image || '';
             elements.modalNFTName.textContent = nft.name;
-            elements.modalCollectionName.textContent = nft.collection;
-            elements.modalNFTDescription.textContent = nft.description || 'No description provided.';
-            elements.modalTokenId.textContent = shortenAddress(nft.id);
-            elements.modalOwner.textContent = shortenAddress(nft.owner);
-            elements.modalCreator.textContent = shortenAddress(nft.creator);
-            elements.modalURI.textContent = nft.uri ? shortenAddress(nft.uri) : 'None';
-
+            elements.modalNFTDescription.textContent = nft.description;
+            
             elements.modalTraitsGrid.innerHTML = '';
-            if (nft.attributes && nft.attributes.length > 0) {
-                nft.attributes.forEach(attr => {
-                    const traitCard = document.createElement('div');
-                    traitCard.className = 'trait-card';
-                    traitCard.innerHTML = `
-                        <div class="trait-type">${attr.trait_type}</div>
-                        <div class="trait-value">${attr.value}</div>
+            if (Array.isArray(nft.attributes)) {
+                nft.attributes.forEach(a => {
+                    elements.modalTraitsGrid.innerHTML += `
+                        <div class="trait-card">
+                            <div class="trait-type">${a.trait_type || 'Trait'}</div>
+                            <div class="trait-value">${a.value}</div>
+                        </div>
                     `;
-                    elements.modalTraitsGrid.appendChild(traitCard);
                 });
-            } else {
-                elements.modalTraitsGrid.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem;">No attributes found.</div>`;
             }
-
-            elements.modalRawJson.textContent = JSON.stringify(nft.rawJson, null, 2);
             elements.nftModal.classList.add('open');
-            document.body.style.overflow = 'hidden';
         }
 
-        function closeModal() {
-            elements.nftModal.classList.remove('open');
-            document.body.style.overflow = 'auto';
-        }
+        function closeModal() { elements.nftModal.classList.remove('open'); }
 
-        function updateStatus(stateLabel, text, current = 0, total = 0) {
-            elements.statusState.textContent = stateLabel;
+        function updateStatus(label, text, current, total) {
+            elements.statusState.textContent = label;
             elements.statusText.textContent = text;
             elements.statusCount.textContent = `${current} / ${total}`;
-
-            const percentage = total > 0 ? (current / total) * 100 : 0;
-            elements.progressFill.style.width = `${percentage}%`;
-
-            if (stateLabel === 'Complete') {
-                setTimeout(() => {
-                    elements.statusContainer.style.display = 'none';
-                }, 3000);
-            } else {
-                elements.statusContainer.style.display = 'block';
-            }
+            elements.progressFill.style.width = `${total ? (current/total)*100 : 0}%`;
+            if (label === 'Complete') setTimeout(() => elements.statusContainer.style.display = 'none', 3000);
+            else elements.statusContainer.style.display = 'block';
         }
 
-        function showError(msg) {
-            elements.statusSpinner.style.display = 'none';
-            elements.errorMessage.textContent = msg;
-            elements.errorAlert.style.display = 'flex';
-        }
-
-        // Optimized ZIP Downloader Logic (8-10 Concurrency Requests)
+        // Sequential Zip Generation matching Serial numbers Exactly
         async function downloadCollectionZip() {
-            if (state.loadedNFTs.length === 0) {
-                alert("No loaded NFTs to download!");
-                return;
-            }
+            if (state.loadedNFTs.length === 0) return alert("No active NFTs to download!");
 
             const zip = new JSZip();
             const imagesFolder = zip.folder("images");
-            const metadataFolder = zip.folder("json");
+            const jsonFolder = zip.folder("json");
 
             elements.downloadZipBtn.disabled = true;
             elements.statusContainer.style.display = 'block';
 
-            const total = state.loadedNFTs.length;
-            const CONCURRENCY_LIMIT = 8; // Parallel downloads (8 requests per second/batch)
-            let processedCount = 0;
+            const activeList = state.filteredNFTs;
+            const total = activeList.length;
 
-            for (let i = 0; i < total; i += CONCURRENCY_LIMIT) {
-                const chunk = state.loadedNFTs.slice(i, i + CONCURRENCY_LIMIT);
-                
-                await Promise.all(chunk.map(async (nft, chunkIndex) => {
-                    const fileIndex = i + chunkIndex + 1; // 1.png, 2.png, etc.
+            for (let i = 0; i < total; i++) {
+                const nft = activeList[i];
+                const serialNum = i + 1; // 1, 2, 3...
 
-                    // Write JSON
-                    const jsonContent = JSON.stringify(nft.rawJson && Object.keys(nft.rawJson).length ? nft.rawJson : {
-                        name: nft.name,
-                        description: nft.description,
-                        image: `${fileIndex}.png`,
-                        attributes: nft.attributes
-                    }, null, 2);
-                    
-                    metadataFolder.file(`${fileIndex}.json`, jsonContent);
+                // Construct formatted metadata matching the filename
+                const jsonContent = {
+                    name: nft.name,
+                    description: nft.description,
+                    image: `${serialNum}.png`,
+                    attributes: nft.attributes
+                };
 
-                    // Parallel Image Download
-                    if (nft.image) {
-                        try {
-                            const imgRes = await fetch(nft.image);
-                            if (imgRes.ok) {
-                                const imgBlob = await imgRes.blob();
-                                imagesFolder.file(`${fileIndex}.png`, imgBlob);
-                            }
-                        } catch (e) {
-                            console.warn(`Could not fetch image for ${fileIndex}.png:`, e);
+                jsonFolder.file(`${serialNum}.json`, JSON.stringify(jsonContent, null, 2));
+
+                if (nft.image) {
+                    try {
+                        const imgRes = await fetch(nft.image);
+                        if (imgRes.ok) {
+                            const blob = await imgRes.blob();
+                            imagesFolder.file(`${serialNum}.png`, blob);
                         }
+                    } catch (e) {
+                        console.warn(`Could not download image #${serialNum}`, e);
                     }
+                }
 
-                    processedCount++;
-                    updateStatus("Zipping", `Processing batch... (${processedCount} / ${total})`, processedCount, total);
-                }));
+                updateStatus("Zipping", `Compressing NFT #${serialNum}...`, serialNum, total);
             }
 
-            updateStatus("Compressing", "Generating ZIP file...", total, total);
-
-            zip.generateAsync({ type: "blob" }).then(function (content) {
-                saveAs(content, "nft_collection.zip");
+            zip.generateAsync({ type: "blob" }).then(content => {
+                saveAs(content, "aptos_nfts_collection.zip");
                 updateStatus("Complete", "Download started!", total, total);
                 elements.downloadZipBtn.disabled = false;
             });
