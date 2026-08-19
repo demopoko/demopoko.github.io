@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aptos NFT Explorer</title>
+    <title>Aptos NFT Explorer & Bulk Downloader</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- JSZip and FileSaver for Zip Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <style>
         :root {
             --bg-primary: #0b0f17;
@@ -269,7 +274,7 @@
             box-shadow: var(--shadow-glow);
         }
 
-        .filter-toggle-btn {
+        .filter-toggle-btn, .download-btn {
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -282,6 +287,17 @@
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
+            color: #000;
+            border: none;
+        }
+
+        .download-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
         }
 
         .filter-toggle-btn:hover, .filter-toggle-btn.active {
@@ -700,7 +716,6 @@
 
         .details-label {
             color: var(--text-muted);
-
         }
 
         .details-value {
@@ -884,7 +899,7 @@
             </div>
         </section>
 
-        <!-- Controls: Search & Filters -->
+        <!-- Controls: Search, Filters & Bulk Download -->
         <section class="controls-section">
             <div class="search-box">
                 <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -893,6 +908,10 @@
             <button id="toggleFilterBtn" class="filter-toggle-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                 <span>Traits Filter</span>
+            </button>
+            <button id="downloadZipBtn" class="download-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Download All (ZIP)</span>
             </button>
         </section>
 
@@ -908,7 +927,7 @@
                     <div class="spinner" id="statusSpinner"></div>
                     <div>
                         <div id="statusState" style="font-weight:700; font-size:0.9rem;">Initial State</div>
-                        <div id="statusText" style="font-size:0.8rem; color:var(--text-secondary);">Connecting to Aptos Mainnet via Alchemy RPC...</div>
+                        <div id="statusText" style="font-size:0.8rem; color:var(--text-secondary);">Connecting to Aptos Mainnet...</div>
                     </div>
                 </div>
                 <div id="statusCount" style="font-family:'JetBrains Mono', monospace; font-size:0.85rem; font-weight:600;">0 / 0</div>
@@ -1014,54 +1033,29 @@
     </footer>
 
     <script>
-        /**
-         * API SECURITY NOTE:
-         * This static frontend interacts with Aptos Mainnet directly. 
-         * Frontend API keys are publicly exposed in the client-side source code.
-         * You can insert your key below to replace the placeholder.
-         */
-        const ALCHEMY_API_KEY = "YOUR_ALCHEMY_API_KEY";
         const COLLECTION_ADDRESS = "0xef50cde1a5ffaea0cd0671a0f17de69ad6172eaaa673c8136d0a8e319ca9e946";
-        
-        // RPC Endpoint Construction with fallback to public RPC if API key is unreplaced
-        const getRpcEndpoint = () => {
-            if (ALCHEMY_API_KEY && ALCHEMY_API_KEY !== "YOUR_ALCHEMY_API_KEY") {
-                return `https://aptos-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-            }
-            return "https://fullnode.mainnet.aptoslabs.com/v1";
-        };
+        const INDEXER_URL = "https://indexer.mainnet.aptoslabs.com/v1/graphql";
 
-        // Reliable Gateway Lists for IPFS / Arweave resolution
         const IPFS_GATEWAYS = [
             "https://ipfs.io/ipfs/",
             "https://gateway.pinata.cloud/ipfs/",
-            "https://cloudflare-ipfs.com/ipfs/",
-            "https://dweb.link/ipfs/"
+            "https://cloudflare-ipfs.com/ipfs/"
         ];
 
-        const ARWEAVE_GATEWAYS = [
-            "https://arweave.net/",
-            "https://arweave.dev/"
-        ];
-
-        // Global Application State
         const state = {
             collectionAddress: COLLECTION_ADDRESS,
             collectionName: "Aptos Collection",
-            detectedType: null, // "v1_resource", "v2_digital_asset", "indexer"
-            rawNFTs: [],       // Base token descriptors extracted from chain
-            loadedNFTs: [],    // Fully resolved NFT objects with metadata
-            filteredNFTs: [],  // Filtered array currently displayed
+            rawNFTs: [],
+            loadedNFTs: [],
+            filteredNFTs: [],
             renderedCount: 0,
             pageSize: 24,
-            traitsMap: {},     // trait_type -> Set of values
-            selectedFilters: {}, // trait_type -> selected value
+            traitsMap: {},
+            selectedFilters: {},
             searchQuery: "",
-            isLoading: false,
-            fetchOffset: 0
+            isDownloading: false
         };
 
-        // DOM Element Cache
         const elements = {
             collectionAddressShort: document.getElementById('collectionAddressShort'),
             footerAddress: document.getElementById('footerAddress'),
@@ -1071,6 +1065,7 @@
             statLoadedNFTs: document.getElementById('statLoadedNFTs'),
             searchInput: document.getElementById('searchInput'),
             toggleFilterBtn: document.getElementById('toggleFilterBtn'),
+            downloadZipBtn: document.getElementById('downloadZipBtn'),
             filterPanel: document.getElementById('filterPanel'),
             statusContainer: document.getElementById('statusContainer'),
             statusState: document.getElementById('statusState'),
@@ -1086,7 +1081,6 @@
             loadMoreContainer: document.getElementById('loadMoreContainer'),
             loadMoreBtn: document.getElementById('loadMoreBtn'),
             
-            // Modal Elements
             nftModal: document.getElementById('nftModal'),
             modalCloseBtn: document.getElementById('modalCloseBtn'),
             modalMediaContainer: document.getElementById('modalMediaContainer'),
@@ -1105,92 +1099,76 @@
             openUriBtn: document.getElementById('openUriBtn')
         };
 
-        // Initialization Logic
         window.addEventListener('DOMContentLoaded', () => {
             setupUIHandlers();
             initializeExplorer();
         });
 
         function setupUIHandlers() {
-            // Short Address Display
             const shortAddr = shortenAddress(COLLECTION_ADDRESS);
             elements.collectionAddressShort.textContent = shortAddr;
             elements.footerAddress.textContent = shortAddr;
 
-            // Copy Address
             elements.copyAddressBtn.addEventListener('click', () => {
                 navigator.clipboard.writeText(COLLECTION_ADDRESS);
                 alert("Collection address copied to clipboard!");
             });
 
-            // Filter Toggle
             elements.toggleFilterBtn.addEventListener('click', () => {
                 elements.filterPanel.classList.toggle('open');
                 elements.toggleFilterBtn.classList.toggle('active');
             });
 
-            // Search Filter Listener
             elements.searchInput.addEventListener('input', (e) => {
                 state.searchQuery = e.target.value.toLowerCase().trim();
                 applySearchAndFilters();
             });
 
-            // Load More Button
             elements.loadMoreBtn.addEventListener('click', () => {
                 renderNextBatch();
             });
 
-            // Retry Button
+            elements.downloadZipBtn.addEventListener('click', () => {
+                downloadCollectionZip();
+            });
+
             elements.retryBtn.addEventListener('click', () => {
                 elements.errorAlert.style.display = 'none';
                 initializeExplorer();
             });
 
-            // Modal Handlers
             elements.modalCloseBtn.addEventListener('click', closeModal);
             elements.nftModal.addEventListener('click', (e) => {
                 if (e.target === elements.nftModal) closeModal();
             });
 
-            // JSON Accordion Toggle
             elements.rawJsonHeader.addEventListener('click', () => {
                 elements.rawJsonContent.classList.toggle('open');
             });
 
-            // Copy JSON Button
             elements.copyJsonBtn.addEventListener('click', () => {
-                const jsonText = elements.modalRawJson.textContent;
-                navigator.clipboard.writeText(jsonText);
-                alert("Raw metadata copied to clipboard!");
+                navigator.clipboard.writeText(elements.modalRawJson.textContent);
+                alert("Raw metadata copied!");
             });
         }
 
-        // Helper: Address Truncation
         function shortenAddress(addr) {
             if (!addr || addr.length < 12) return addr || '';
             return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
         }
 
-        // Helper: Convert URIs (IPFS / Arweave / HTTP)
         function resolveURI(uri) {
             if (!uri) return '';
             uri = uri.trim();
-
             if (uri.startsWith('ipfs://')) {
-                const path = uri.replace('ipfs://', '');
-                return `${IPFS_GATEWAYS[0]}${path}`;
+                return `${IPFS_GATEWAYS[0]}${uri.replace('ipfs://', '')}`;
             }
             if (uri.startsWith('ar://')) {
-                const path = uri.replace('ar://', '');
-                return `${ARWEAVE_GATEWAYS[0]}${path}`;
-            }
-            if (uri.startsWith('data:application/json')) {
-                return uri;
+                return `https://arweave.net/${uri.replace('ar://', '')}`;
             }
             return uri;
         }
 
-        // Generic HTTP JSON Request Helper with Retry
         async function fetchJSON(url, options = {}, retries = 2) {
             try {
                 const res = await fetch(url, options);
@@ -1205,181 +1183,65 @@
             }
         }
 
-        // --- Core Exploration Pipeline ---
         async function initializeExplorer() {
-            updateStatus("Discovering", "Discovering NFT collection structure...", 0, 0);
+            updateStatus("Discovering", "Querying Aptos Indexer for NFTs...", 0, 0);
             elements.statusSpinner.style.display = 'block';
 
             try {
-                // Step 1: Query Aptos Account Resources for the Collection Address
-                const endpoint = getRpcEndpoint();
-                const resourcesUrl = `${endpoint}/accounts/${COLLECTION_ADDRESS}/resources`;
-                
-                let resources = [];
-                try {
-                    resources = await fetchJSON(resourcesUrl);
-                } catch (e) {
-                    console.warn("Direct resource query failed, checking account object info...", e);
-                }
+                // Fetch Tokens via GraphQL
+                const query = `
+                    query GetCollectionTokens($collection_id: String!) {
+                        current_token_datas_v2(
+                            where: { collection_id: { _eq: $collection_id } },
+                            limit: 1000
+                        ) {
+                            token_data_id
+                            token_name
+                            token_uri
+                            description
+                            current_collection {
+                                collection_name
+                                creator_address
+                            }
+                        }
+                    }
+                `;
 
-                // Step 2: Determine On-Chain Token / Digital Asset Structure
-                const detected = analyzeCollectionStructure(resources);
-                state.detectedType = detected.type;
-                state.collectionName = detected.name || "Aptos Collection";
-                elements.statCollectionName.textContent = state.collectionName;
+                const res = await fetchJSON(INDEXER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, variables: { collection_id: COLLECTION_ADDRESS } })
+                });
 
-                updateStatus("Loading", "Discovering NFTs in collection...", 0, 0);
+                const tokens = res.data?.current_token_datas_v2 || [];
+                state.rawNFTs = tokens;
+                elements.statTotalNFTs.textContent = tokens.length.toLocaleString();
 
-                // Step 3: Fetch On-Chain NFT Identifiers / Token Objects
-                const rawNFTs = await discoverCollectionTokens(COLLECTION_ADDRESS, detected);
-                state.rawNFTs = rawNFTs;
-                elements.statTotalNFTs.textContent = rawNFTs.length.toLocaleString();
-
-                if (rawNFTs.length === 0) {
-                    updateStatus("Complete", "0 NFTs loaded", 0, 0);
+                if (tokens.length > 0) {
+                    state.collectionName = tokens[0].current_collection?.collection_name || "Aptos Collection";
+                    elements.statCollectionName.textContent = state.collectionName;
+                } else {
+                    elements.statCollectionName.textContent = "Aptos Collection";
+                    updateStatus("Complete", "0 NFTs found", 0, 0);
                     elements.statusSpinner.style.display = 'none';
                     elements.emptyState.style.display = 'block';
                     return;
                 }
 
-                // Step 4: Resolve Metadata & Load Progressively
-                await processNFTsProgressively(rawNFTs);
+                await processNFTsProgressively(tokens);
 
             } catch (error) {
                 console.error("Initialization error:", error);
-                showError(`Failed to load Aptos collection: ${error.message}`);
+                showError(`Failed to fetch NFTs: ${error.message}`);
             }
         }
 
-        // On-chain Resource Analyzer
-        function analyzeCollectionStructure(resources) {
-            let info = { type: 'unknown', name: 'Aptos NFT Collection' };
-
-            if (!Array.isArray(resources)) return info;
-
-            // Search for Aptos Token v1 Collection Resource
-            const collectionResource = resources.find(r => 
-                r.type.includes('0x3::token::CollectionData') || 
-                r.type.includes('CollectionHeader')
-            );
-
-            if (collectionResource && collectionResource.data) {
-                info.type = 'v1_token';
-                info.name = collectionResource.data.name || info.name;
-                return info;
-            }
-
-            // Search for Digital Asset (v2) Resource
-            const daResource = resources.find(r => 
-                r.type.includes('0x4::collection::Collection') ||
-                r.type.includes('0x4::aptos_token::AptosTokenCollection')
-            );
-
-            if (daResource && daResource.data) {
-                info.type = 'v2_digital_asset';
-                info.name = daResource.data.name || daResource.data.collection_name || info.name;
-                return info;
-            }
-
-            // Fallback for general objects
-            info.type = 'indexer_or_view';
-            return info;
-        }
-
-        // On-Chain Token Discovery Method
-        async function discoverCollectionTokens(address, detectedStructure) {
-            const endpoint = getRpcEndpoint();
-            let discoveredTokens = [];
-
-            try {
-                // Attempt 1: Fetch Account Events for Token Minting (Token v1 & v2)
-                const eventsUrl = `${endpoint}/accounts/${address}/events/0x3::token::Collections/mint_token_events?limit=100`;
-                const mintEvents = await fetchJSON(eventsUrl).catch(() => []);
-
-                if (Array.isArray(mintEvents) && mintEvents.length > 0) {
-                    discoveredTokens = mintEvents.map(evt => ({
-                        id: evt.data.id?.name || evt.data.token_data_id?.name || evt.data.name,
-                        creator: evt.data.id?.token_data_id?.creator || address,
-                        collection: evt.data.id?.token_data_id?.collection || state.collectionName,
-                        uri: evt.data.uri || '',
-                        rawEvent: evt.data
-                    }));
-                }
-            } catch (e) {
-                console.warn("Event-based token discovery yielded no results.", e);
-            }
-
-            // Attempt 2: If event query is empty, query Aptos GraphQL Indexer via Alchemy RPC
-            if (discoveredTokens.length === 0) {
-                try {
-                    const graphqlQuery = {
-                        query: `
-                            query GetCollectionTokens($addr: String!) {
-                                current_token_datas_v2(
-                                    where: { collection_id: { _eq: $addr } }
-                                    limit: 200
-                                ) {
-                                    token_data_id
-                                    token_name
-                                    token_uri
-                                    description
-                                    current_collection {
-                                        collection_name
-                                        creator_address
-                                    }
-                                }
-                            }
-                        `,
-                        variables: { addr: address }
-                    };
-
-                    const gqlRes = await fetchJSON(`${endpoint}/graphql`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(graphqlQuery)
-                    }).catch(() => null);
-
-                    if (gqlRes && gqlRes.data && gqlRes.data.current_token_datas_v2) {
-                        discoveredTokens = gqlRes.data.current_token_datas_v2.map(t => ({
-                            id: t.token_data_id || t.token_name,
-                            name: t.token_name,
-                            uri: t.token_uri,
-                            description: t.description,
-                            creator: t.current_collection?.creator_address || address,
-                            collection: t.current_collection?.collection_name || state.collectionName
-                        }));
-                    }
-                } catch (e) {
-                    console.warn("Indexer query failed.", e);
-                }
-            }
-
-            // Fallback Discovery: Generate token references if structure is verified but indexer is unindexed
-            if (discoveredTokens.length === 0) {
-                // Query general module objects at this address
-                const res = await fetchJSON(`${endpoint}/accounts/${address}/resources`).catch(() => []);
-                const objectResources = res.filter(r => r.type.includes('0x4::token::Token') || r.type.includes('0x3::token::TokenData'));
-                
-                discoveredTokens = objectResources.map((resItem, idx) => ({
-                    id: resItem.data?.name || `Token #${idx + 1}`,
-                    name: resItem.data?.name || `NFT #${idx + 1}`,
-                    uri: resItem.data?.uri || '',
-                    description: resItem.data?.description || '',
-                    creator: address,
-                    collection: state.collectionName
-                }));
-            }
-
-            return discoveredTokens;
-        }
-
-        // Batch Metadata Processing with Concurrent Resolution
-        async function processNFTsProgressively(rawTokens) {
-            const total = rawTokens.length;
-            const batchSize = 6;
+        async function processNFTsProgressively(tokens) {
+            const total = tokens.length;
+            const batchSize = 10;
             
             for (let i = 0; i < total; i += batchSize) {
-                const batch = rawTokens.slice(i, i + batchSize);
+                const batch = tokens.slice(i, i + batchSize);
                 
                 const resolvedBatch = await Promise.all(
                     batch.map(token => resolveNFTMetadata(token))
@@ -1390,89 +1252,63 @@
                     registerTraits(nft.attributes);
                 });
 
-                // Update UI Stats
                 const loadedCount = state.loadedNFTs.length;
                 elements.statLoadedNFTs.textContent = loadedCount.toLocaleString();
                 updateStatus("Progress", `Loaded ${loadedCount} / ${total} NFTs`, loadedCount, total);
 
-                // Render dynamically as data streams in
                 if (i === 0) {
                     renderTraitFilters();
-                    applySearchAndFilters();
-                } else {
-                    applySearchAndFilters();
                 }
+                applySearchAndFilters();
 
-                // Smooth pause to keep main thread fluid
-                await new Promise(r => setTimeout(r, 50));
+                await new Promise(r => setTimeout(r, 20));
             }
 
-            updateStatus("Complete", `All ${total} NFTs loaded`, total, total);
+            updateStatus("Complete", `All ${total} NFTs loaded successfully`, total, total);
             elements.statusSpinner.style.display = 'none';
         }
 
-        // Metadata Resolver (Supports HTTPS, IPFS, Arweave, On-Chain JSON)
         async function resolveNFTMetadata(token) {
             let metadata = {
-                id: token.id || `Token`,
-                name: token.name || token.id || `NFT`,
-                description: token.description || 'No description provided.',
+                id: token.token_data_id,
+                name: token.token_name || 'NFT',
+                description: token.description || '',
                 image: '',
-                animationUrl: '',
-                uri: token.uri || '',
-                collection: token.collection || state.collectionName,
-                owner: token.owner || token.creator || COLLECTION_ADDRESS,
-                creator: token.creator || COLLECTION_ADDRESS,
+                uri: token.token_uri || '',
+                collection: token.current_collection?.collection_name || state.collectionName,
+                owner: COLLECTION_ADDRESS,
+                creator: token.current_collection?.creator_address || COLLECTION_ADDRESS,
                 attributes: [],
                 rawJson: {}
             };
 
-            if (!token.uri) {
-                return metadata;
-            }
-
-            const targetUrl = resolveURI(token.uri);
+            if (!token.token_uri) return metadata;
 
             try {
-                let json = null;
-                
-                if (targetUrl.startsWith('data:application/json')) {
-                    const base64Data = targetUrl.split(',')[1];
-                    json = JSON.parse(atob(base64Data));
-                } else {
-                    json = await fetchJSON(targetUrl, {}, 1);
-                }
+                const targetUrl = resolveURI(token.token_uri);
+                const json = await fetchJSON(targetUrl, {}, 1);
 
                 if (json) {
                     metadata.rawJson = json;
                     metadata.name = json.name || metadata.name;
                     metadata.description = json.description || metadata.description;
                     metadata.image = resolveURI(json.image || json.image_url || json.uri || '');
-                    metadata.animationUrl = resolveURI(json.animation_url || json.video || '');
                     
-                    // Standardize Attributes / Traits
                     const rawAttributes = json.attributes || json.traits || [];
                     if (Array.isArray(rawAttributes)) {
                         metadata.attributes = rawAttributes.map(attr => ({
                             trait_type: attr.trait_type || attr.key || 'Attribute',
                             value: String(attr.value !== undefined ? attr.value : attr.val)
                         }));
-                    } else if (typeof rawAttributes === 'object') {
-                        metadata.attributes = Object.entries(rawAttributes).map(([k, v]) => ({
-                            trait_type: k,
-                            value: String(v)
-                        }));
                     }
                 }
             } catch (err) {
-                console.warn(`Metadata resolution failed for ${token.uri}`, err);
-                metadata.description = 'Metadata unavailable or gateway timed out.';
+                console.warn(`Failed metadata for ${token.token_name}`);
             }
 
             return metadata;
         }
 
-        // Register Dynamic Traits for Dynamic Filter Generation
         function registerTraits(attributes) {
             if (!Array.isArray(attributes)) return;
             attributes.forEach(attr => {
@@ -1484,15 +1320,11 @@
             });
         }
 
-        // Dynamic Trait Filters Generator
         function renderTraitFilters() {
             elements.filterPanel.innerHTML = '';
             const keys = Object.keys(state.traitsMap);
 
-            if (keys.length === 0) {
-                elements.filterPanel.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem;">No traits discovered in loaded metadata.</div>`;
-                return;
-            }
+            if (keys.length === 0) return;
 
             keys.forEach(traitType => {
                 const group = document.createElement('div');
@@ -1523,22 +1355,18 @@
             });
         }
 
-        // Local Search & Trait Filter Engine
         function applySearchAndFilters() {
             state.filteredNFTs = state.loadedNFTs.filter(nft => {
-                // Search Query Match
                 if (state.searchQuery) {
                     const q = state.searchQuery;
                     const matchName = nft.name.toLowerCase().includes(q);
-                    const matchId = String(nft.id).toLowerCase().includes(q);
                     const matchTrait = nft.attributes.some(a => 
                         a.trait_type.toLowerCase().includes(q) || 
                         a.value.toLowerCase().includes(q)
                     );
-                    if (!matchName && !matchId && !matchTrait) return false;
+                    if (!matchName && !matchTrait) return false;
                 }
 
-                // Traits Filter Match
                 for (const [traitType, selectedValue] of Object.entries(state.selectedFilters)) {
                     const hasTrait = nft.attributes.some(a => 
                         a.trait_type === traitType && a.value === selectedValue
@@ -1549,13 +1377,11 @@
                 return true;
             });
 
-            // Reset Batch Pagination
             state.renderedCount = 0;
             elements.galleryGrid.innerHTML = '';
             renderNextBatch();
         }
 
-        // Render Progressive Gallery Batch
         function renderNextBatch() {
             const nextBatch = state.filteredNFTs.slice(state.renderedCount, state.renderedCount + state.pageSize);
             
@@ -1582,7 +1408,6 @@
             }
         }
 
-        // DOM Element Factory for NFT Cards
         function createNFTCard(nft) {
             const card = document.createElement('div');
             card.className = 'nft-card';
@@ -1599,22 +1424,12 @@
                 
                 img.onerror = () => {
                     img.style.display = 'none';
-                    imgWrapper.innerHTML = `
-                        <div class="image-placeholder">
-                            <span>🖼️</span>
-                            <span>Media Unavailable</span>
-                        </div>
-                    `;
+                    imgWrapper.innerHTML = `<div class="image-placeholder"><span>🖼️</span><span>Media Error</span></div>`;
                 };
 
                 imgWrapper.appendChild(img);
             } else {
-                imgWrapper.innerHTML = `
-                    <div class="image-placeholder">
-                        <span>🖼️</span>
-                        <span>No Media URI</span>
-                    </div>
-                `;
+                imgWrapper.innerHTML = `<div class="image-placeholder"><span>🖼️</span><span>No Image</span></div>`;
             }
 
             const info = document.createElement('div');
@@ -1624,60 +1439,33 @@
                     <div class="nft-name" title="${nft.name}">${nft.name}</div>
                     <div class="nft-collection-name">${nft.collection}</div>
                 </div>
-                <div class="nft-token-id">${shortenAddress(String(nft.id))}</div>
             `;
 
             card.appendChild(imgWrapper);
             card.appendChild(info);
-
             card.addEventListener('click', () => openModal(nft));
 
             return card;
         }
 
-        // Open Detailed NFT Modal
         function openModal(nft) {
-            // Render Media
             elements.modalMediaContainer.innerHTML = '';
-            if (nft.animationUrl && (nft.animationUrl.endsWith('.mp4') || nft.animationUrl.endsWith('.webm'))) {
-                const video = document.createElement('video');
-                video.className = 'modal-media';
-                video.src = nft.animationUrl;
-                video.controls = true;
-                video.autoplay = true;
-                video.loop = true;
-                elements.modalMediaContainer.appendChild(video);
-            } else if (nft.image) {
+            if (nft.image) {
                 const img = document.createElement('img');
                 img.className = 'modal-media';
                 img.src = nft.image;
                 img.alt = nft.name;
-                img.onerror = () => {
-                    elements.modalMediaContainer.innerHTML = `<div style="color:var(--text-muted); padding:2rem; text-align:center;">Unable to render media</div>`;
-                };
                 elements.modalMediaContainer.appendChild(img);
-            } else {
-                elements.modalMediaContainer.innerHTML = `<div style="color:var(--text-muted); padding:2rem; text-align:center;">No Media Provided</div>`;
             }
 
-            // Populate Info
             elements.modalNFTName.textContent = nft.name;
             elements.modalCollectionName.textContent = nft.collection;
-            elements.modalNFTDescription.textContent = nft.description;
-            elements.modalTokenId.textContent = nft.id;
+            elements.modalNFTDescription.textContent = nft.description || 'No description provided.';
+            elements.modalTokenId.textContent = shortenAddress(nft.id);
             elements.modalOwner.textContent = shortenAddress(nft.owner);
             elements.modalCreator.textContent = shortenAddress(nft.creator);
-            elements.modalURI.textContent = nft.uri ? shortenAddress(nft.uri) : 'On-Chain / None';
+            elements.modalURI.textContent = nft.uri ? shortenAddress(nft.uri) : 'None';
 
-            // External Metadata Link
-            if (nft.uri && nft.uri.startsWith('http')) {
-                elements.openUriBtn.href = resolveURI(nft.uri);
-                elements.openUriBtn.style.display = 'inline-flex';
-            } else {
-                elements.openUriBtn.style.display = 'none';
-            }
-
-            // Render Traits Grid
             elements.modalTraitsGrid.innerHTML = '';
             if (nft.attributes && nft.attributes.length > 0) {
                 nft.attributes.forEach(attr => {
@@ -1685,18 +1473,15 @@
                     traitCard.className = 'trait-card';
                     traitCard.innerHTML = `
                         <div class="trait-type">${attr.trait_type}</div>
-                        <div class="trait-value" title="${attr.value}">${attr.value}</div>
+                        <div class="trait-value">${attr.value}</div>
                     `;
                     elements.modalTraitsGrid.appendChild(traitCard);
                 });
             } else {
-                elements.modalTraitsGrid.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; grid-column:1/-1;">No attributes found for this NFT.</div>`;
+                elements.modalTraitsGrid.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem;">No attributes found.</div>`;
             }
 
-            // Render Pretty Raw JSON
             elements.modalRawJson.textContent = JSON.stringify(nft.rawJson, null, 2);
-
-            // Display Modal
             elements.nftModal.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
@@ -1704,10 +1489,8 @@
         function closeModal() {
             elements.nftModal.classList.remove('open');
             document.body.style.overflow = 'auto';
-            elements.modalMediaContainer.innerHTML = '';
         }
 
-        // Status Banner Updater
         function updateStatus(stateLabel, text, current = 0, total = 0) {
             elements.statusState.textContent = stateLabel;
             elements.statusText.textContent = text;
@@ -1725,11 +1508,63 @@
             }
         }
 
-        // Error Handler Display
         function showError(msg) {
             elements.statusSpinner.style.display = 'none';
             elements.errorMessage.textContent = msg;
             elements.errorAlert.style.display = 'flex';
+        }
+
+        // --- ZIP Downloader Logic ---
+        async function downloadCollectionZip() {
+            if (state.loadedNFTs.length === 0) {
+                alert("No loaded NFTs to download!");
+                return;
+            }
+
+            const zip = new JSZip();
+            const imagesFolder = zip.folder("images");
+            const metadataFolder = zip.folder("json");
+
+            elements.downloadZipBtn.disabled = true;
+            elements.statusContainer.style.display = 'block';
+
+            const total = state.loadedNFTs.length;
+
+            for (let index = 0; index < total; index++) {
+                const nft = state.loadedNFTs[index];
+                const fileIndex = index + 1; // Strictly 1.png, 2.png, etc.
+
+                updateStatus("Zipping", `Processing NFT ${fileIndex} / ${total}...`, fileIndex, total);
+
+                // Add JSON metadata strictly as 1.json, 2.json
+                const jsonContent = JSON.stringify(nft.rawJson && Object.keys(nft.rawJson).length ? nft.rawJson : {
+                    name: nft.name,
+                    description: nft.description,
+                    image: `${fileIndex}.png`,
+                    attributes: nft.attributes
+                }, null, 2);
+                
+                metadataFolder.file(`${fileIndex}.json`, jsonContent);
+
+                // Download Image Blob & save strictly as 1.png, 2.png
+                if (nft.image) {
+                    try {
+                        const imgRes = await fetch(nft.image);
+                        const imgBlob = await imgRes.blob();
+                        imagesFolder.file(`${fileIndex}.png`, imgBlob);
+                    } catch (e) {
+                        console.warn(`Could not fetch image for ${fileIndex}.png:`, e);
+                    }
+                }
+            }
+
+            updateStatus("Compressing", "Generating ZIP file...", total, total);
+
+            zip.generateAsync({ type: "blob" }).then(function (content) {
+                saveAs(content, "nft_collection.zip");
+                updateStatus("Complete", "Download started!", total, total);
+                elements.downloadZipBtn.disabled = false;
+            });
         }
     </script>
 </body>
