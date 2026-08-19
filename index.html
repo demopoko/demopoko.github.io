@@ -1174,6 +1174,7 @@
                     query GetCollectionTokens($collection_id: String!, $limit: Int!, $offset: Int!) {
                         current_token_datas_v2(
                             where: { collection_id: { _eq: $collection_id } },
+                            order_by: { token_data_id: asc },
                             limit: $limit,
                             offset: $offset
                         ) {
@@ -1189,7 +1190,13 @@
                     }
                 `;
 
-                // Loop through GraphQL indexer to fetch ALL NFTs beyond 1000 limit
+                // Loop through GraphQL indexer to fetch ALL NFTs (collection can be ~7000+ tokens).
+                // NOTE: some public indexer endpoints silently cap each response below the requested
+                // "limit" (e.g. returning 100 rows even when 1000 were asked for). We can no longer rely
+                // on "tokens.length < fetchLimit" to mean "no more data" - we only stop once we get an
+                // empty page (confirmed twice in a row), and we advance the offset by however many rows
+                // actually came back (not by fetchLimit), so no tokens get skipped over.
+                let consecutiveEmptyPages = 0;
                 while (hasMore) {
                     updateStatus("Discovering", `Fetching collection list (${allTokens.length} found)...`, allTokens.length, 7000);
                     const res = await fetchJSON(INDEXER_URL, {
@@ -1208,10 +1215,16 @@
                     const tokens = res.data?.current_token_datas_v2 || [];
                     allTokens = allTokens.concat(tokens);
 
-                    if (tokens.length < fetchLimit) {
-                        hasMore = false;
+                    if (tokens.length === 0) {
+                        consecutiveEmptyPages++;
+                        if (consecutiveEmptyPages >= 2) {
+                            hasMore = false;
+                        } else {
+                            offset += fetchLimit;
+                        }
                     } else {
-                        offset += fetchLimit;
+                        consecutiveEmptyPages = 0;
+                        offset += tokens.length;
                     }
                 }
 
