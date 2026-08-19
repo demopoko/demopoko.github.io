@@ -1,955 +1,1736 @@
 <!DOCTYPE html>
-<html lang="bn" class="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sui Mainnet On-Chain NFT & Layer Explorer</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            sui: {
-              400: '#4DA2FF',
-              500: '#3898FF',
-              600: '#1B82F6',
-              900: '#0B2545',
-            }
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aptos NFT Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f17;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(0, 229, 153, 0.4);
+            
+            --accent-primary: #00e599;
+            --accent-hover: #00b377;
+            --accent-glow: rgba(0, 229, 153, 0.15);
+            --accent-blue: #3b82f6;
+            
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-full: 9999px;
+            
+            --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px var(--accent-glow);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-      }
-    }
-  </script>
-  <style>
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #1e293b;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #475569;
-      border-radius: 3px;
-    }
-    .layer-canvas-stack {
-      position: relative;
-      width: 100%;
-      padding-top: 100%; /* 1:1 Aspect Ratio */
-    }
-    .layer-canvas-stack img, .layer-canvas-stack svg, .layer-canvas-stack div {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-  </style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 229, 153, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Layout Container */
+        .container {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Header */
+        header {
+            background: rgba(11, 15, 23, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
+            border-radius: var(--radius-sm);
+            display: grid;
+            place-items: center;
+            color: #000;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 30%, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        .address-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Stats Bar */
+        .stats-section {
+            margin: 2rem 0 1.5rem 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-card);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Controls Section */
+        .controls-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .filter-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1.25rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-toggle-btn:hover, .filter-toggle-btn.active {
+            border-color: var(--accent-primary);
+            background: var(--accent-glow);
+            color: var(--accent-primary);
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .filter-panel.open {
+            display: grid;
+        }
+
+        .filter-group-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .filter-select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem;
+            color: var(--text-primary);
+            outline: none;
+            font-size: 0.85rem;
+        }
+
+        .filter-select:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Status & Alert Boxes */
+        .status-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .status-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-blue));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            color: #fca5a5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .btn-retry {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fff;
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .btn-retry:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 640px) {
+            .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+        }
+        @media (min-width: 1024px) {
+            .gallery-grid { grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        }
+        @media (min-width: 1280px) {
+            .gallery-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (min-width: 1536px) {
+            .gallery-grid { grid-template-columns: repeat(6, 1fr); }
+        }
+
+        /* NFT Card */
+        .nft-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .nft-image-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nft-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .nft-card:hover .nft-image {
+            transform: scale(1.05);
+        }
+
+        .image-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .nft-info {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .nft-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nft-collection-name {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nft-token-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+            margin-top: 0.25rem;
+        }
+
+        /* Load More Controls */
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0 4rem 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), #00b377);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 0.85rem 2rem;
+            border-radius: var(--radius-full);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0, 229, 153, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 229, 153, 0.35);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border: 1px dashed var(--border-glass);
+            border-radius: var(--radius-lg);
+            margin: 2rem 0;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.open .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .modal-body {
+                grid-template-columns: 400px 1fr;
+            }
+        }
+
+        .modal-media-container {
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-glass);
+        }
+
+        .modal-media {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .modal-content-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .modal-header-info h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .modal-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .details-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-glass);
+            font-size: 0.85rem;
+        }
+
+        .details-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .details-label {
+            color: var(--text-muted);
+
+        }
+
+        .details-value {
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            word-break: break-all;
+            text-align: right;
+        }
+
+        /* Traits Grid */
+        .traits-header {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .traits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .trait-card {
+            background: rgba(0, 229, 153, 0.04);
+            border: 1px solid rgba(0, 229, 153, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+        }
+
+        .trait-type {
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .trait-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Accordion / Collapsible JSON */
+        .collapsible-section {
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .collapsible-content {
+            display: none;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .collapsible-content.open {
+            display: block;
+        }
+
+        pre.raw-json {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #a7f3d0;
+            overflow-x: auto;
+            max-height: 250px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .btn-secondary {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-glass);
+            padding: 2rem 0;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(11, 15, 23, 0.5);
+        }
+
+        footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+<body>
 
-  <!-- TOP HEADER -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="p-2 bg-sui-500/10 text-sui-400 rounded-lg border border-sui-500/20">
-          <i data-lucide="layers" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
-            Sui NFT Layer Explorer
-            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-sui-500/20 text-sui-400 border border-sui-500/30">Mainnet</span>
-          </h1>
-          <p class="text-xs text-slate-400 font-mono">0x625d...a9849</p>
-        </div>
-      </div>
-      
-      <!-- NAV TABS -->
-      <nav class="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-sm font-medium">
-        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-3 py-1.5 rounded-md bg-sui-600 text-white transition flex items-center gap-1.5">
-          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
-        </button>
-        <button onclick="switchTab('gallery')" id="tab-gallery" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
-          <i data-lucide="grid" class="w-4 h-4"></i> Gallery (<span id="count-nav">0</span>)
-        </button>
-        <button onclick="switchTab('visualizer')" id="tab-visualizer" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
-          <i data-lucide="layers-3" class="w-4 h-4"></i> Layer Studio
-        </button>
-        <button onclick="switchTab('database')" id="tab-database" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
-          <i data-lucide="database" class="w-4 h-4"></i> Trait Database
-        </button>
-      </nav>
-    </div>
-  </header>
-
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
-
-    <!-- DIAGNOSTIC BAR -->
-    <section class="mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-xs">
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">Target Package</span>
-        <span class="font-mono text-sui-400 truncate block" title="0x625d518a3cc78899742d76cf785609cd707e15228d4284aa4fee5ca53caa9849">0x625d...a9849</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">Discovered Type</span>
-        <span id="diag-type" class="font-mono text-slate-200 truncate block">Discovering...</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">Module Name</span>
-        <span id="diag-module" class="font-mono text-slate-200 truncate block">...</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">Discovered NFTs</span>
-        <span id="diag-count" class="font-bold text-amber-400 text-sm">0</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">On-Chain Artwork</span>
-        <span id="diag-art" class="font-semibold text-slate-400">Scanning...</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">Visual Layers</span>
-        <span id="diag-layers" class="font-semibold text-slate-400">Scanning...</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
-        <span class="text-slate-400 block mb-1">RPC Indexer</span>
-        <span id="diag-status" class="flex items-center gap-1.5 text-emerald-400 font-medium">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active
-        </span>
-      </div>
-    </section>
-
-    <!-- LOADING & PROGRESS STATUS -->
-    <div id="sync-progress-box" class="mb-6 bg-slate-900 border border-sui-500/30 p-4 rounded-xl flex flex-col gap-2">
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-sui-400 font-medium flex items-center gap-2">
-          <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-          <span id="sync-title">Connecting to Sui Mainnet...</span>
-        </span>
-        <span id="sync-percentage" class="font-mono text-slate-400">0%</span>
-      </div>
-      <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
-        <div id="sync-bar" class="bg-sui-500 h-full w-0 transition-all duration-300"></div>
-      </div>
-      <p id="sync-subtext" class="text-xs text-slate-400 font-mono">Fetching Sui Move Package modules & struct layout...</p>
-    </div>
-
-    <!-- TAB 1: DASHBOARD / OVERVIEW -->
-    <div id="view-dashboard" class="space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Package Info Card -->
-        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i data-lucide="cpu" class="w-5 h-5 text-sui-400"></i> Discovered Move Package Spec
-          </h2>
-          <div class="space-y-3 font-mono text-xs">
-            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
-              <span class="text-slate-500 block">Package ID</span>
-              <span class="text-sui-400 select-all font-semibold break-all">0x625d518a3cc78899742d76cf785609cd707e15228d4284aa4fee5ca53caa9849</span>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="brand-title">
+                <div class="brand-logo">A</div>
+                <div>
+                    <h1>Aptos NFT Explorer</h1>
+                    <div class="subtitle">Explore every NFT from this Aptos collection</div>
+                </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                <span class="text-slate-500 block">Identified Struct Type</span>
-                <span id="struct-type-full" class="text-emerald-400 break-all">Searching...</span>
-              </div>
-              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                <span class="text-slate-500 block">Metadata Storage Engine</span>
-                <span id="meta-engine-type" class="text-amber-400">Dynamic Discovery</span>
-              </div>
+            <div class="header-meta">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    <span>Aptos Mainnet</span>
+                </div>
+                <div class="address-box">
+                    <span id="collectionAddressShort">0xef50...e946</span>
+                    <button class="btn-icon" id="copyAddressBtn" title="Copy Full Address">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
             </div>
-          </div>
-
-          <h3 class="text-sm font-semibold mt-6 mb-3 text-slate-300">Move Modules in Package</h3>
-          <div id="module-list" class="flex flex-wrap gap-2 text-xs font-mono">
-            <span class="px-3 py-1 bg-slate-950 border border-slate-800 rounded text-slate-400">Loading modules...</span>
-          </div>
         </div>
+    </header>
 
-        <!-- Layer Summary Stats -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i data-lucide="pie-chart" class="w-5 h-5 text-sui-400"></i> Layer Breakdown
-          </h2>
-          <div id="layer-summary-list" class="space-y-3">
-            <p class="text-xs text-slate-400">Scanning objects for layer traits...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: NFT GALLERY -->
-    <div id="view-gallery" class="hidden space-y-6">
-      <!-- GALLERY FILTERS -->
-      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">
-        <div class="flex flex-1 min-w-[280px] gap-2">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-            <input type="text" id="gallery-search" placeholder="Search by Token ID, Name, or Object ID..." oninput="renderGallery()" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-sui-500">
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <select id="gallery-filter-layer" onchange="renderGallery()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sui-500">
-            <option value="ALL">All Trait Values</option>
-          </select>
-          <select id="gallery-sort" onchange="renderGallery()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sui-500">
-            <option value="id-asc">Sort: ID (Low to High)</option>
-            <option value="id-desc">Sort: ID (High to Low)</option>
-            <option value="traits-desc">Sort: Most Unique Traits</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- GALLERY GRID -->
-      <div id="nft-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        <!-- Rendered via JS -->
-      </div>
-    </div>
-
-    <!-- TAB 3: LAYER STUDIO / VISUALIZER -->
-    <div id="view-visualizer" class="hidden space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- NFT Selection Sidebar -->
-        <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-[650px]">
-          <h2 class="text-sm font-bold mb-3 flex items-center gap-2">
-            <i data-lucide="search" class="w-4 h-4 text-sui-400"></i> Select NFT to Deconstruct
-          </h2>
-          <input type="text" id="studio-search" placeholder="Filter NFTs..." oninput="renderStudioList()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mb-3">
-          <div id="studio-nft-list" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
-            <!-- List items -->
-          </div>
-        </div>
-
-        <!-- Layer Composite Canvas & Toggles -->
-        <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="flex flex-col items-center">
-            <h3 class="text-sm font-bold mb-3 text-slate-300 w-full flex justify-between">
-              <span>Reconstructed Composite</span>
-              <span id="studio-nft-id-label" class="text-xs font-mono text-sui-400">#0</span>
-            </h3>
-            
-            <div class="w-full max-w-[320px] bg-slate-950 rounded-xl border border-slate-800 p-2 shadow-2xl relative">
-              <div id="studio-composite-stack" class="layer-canvas-stack rounded-lg overflow-hidden bg-slate-900">
-                <!-- Layers dynamically stacked here -->
-              </div>
+    <main class="container">
+        <!-- Collection Stats -->
+        <section class="stats-section">
+            <div class="stat-card">
+                <div class="stat-label">Collection Name</div>
+                <div class="stat-value" id="statCollectionName">Loading...</div>
             </div>
-            
-            <button onclick="downloadCompositeSVG()" class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium flex items-center gap-2 border border-slate-700 transition">
-              <i data-lucide="download" class="w-4 h-4"></i> Export Reconstructed Art
+            <div class="stat-card">
+                <div class="stat-label">Total NFTs Discovered</div>
+                <div class="stat-value" id="statTotalNFTs">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Loaded Metadata</div>
+                <div class="stat-value" id="statLoadedNFTs">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Network</div>
+                <div class="stat-value" style="font-size:1.1rem; padding-top:0.3rem;">Aptos Mainnet</div>
+            </div>
+        </section>
+
+        <!-- Controls: Search & Filters -->
+        <section class="controls-section">
+            <div class="search-box">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, token ID, trait type or trait value...">
+            </div>
+            <button id="toggleFilterBtn" class="filter-toggle-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <span>Traits Filter</span>
             </button>
-          </div>
+        </section>
 
-          <!-- Individual Layer Controls -->
-          <div class="flex flex-col h-full">
-            <h3 class="text-sm font-bold mb-3 text-slate-300">Detected Visual Layers</h3>
-            <div id="studio-layer-toggles" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
-              <p class="text-xs text-slate-500">Select an NFT from the left to isolate its visual layers.</p>
-            </div>
-          </div>
+        <!-- Dynamic Trait Filter Panel -->
+        <div id="filterPanel" class="filter-panel">
+            <!-- Filter groups injected dynamically -->
         </div>
-      </div>
+
+        <!-- Status Container -->
+        <div id="statusContainer" class="status-container">
+            <div class="status-bar">
+                <div class="status-info">
+                    <div class="spinner" id="statusSpinner"></div>
+                    <div>
+                        <div id="statusState" style="font-weight:700; font-size:0.9rem;">Initial State</div>
+                        <div id="statusText" style="font-size:0.8rem; color:var(--text-secondary);">Connecting to Aptos Mainnet via Alchemy RPC...</div>
+                    </div>
+                </div>
+                <div id="statusCount" style="font-family:'JetBrains Mono', monospace; font-size:0.85rem; font-weight:600;">0 / 0</div>
+            </div>
+            <div class="progress-track">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorAlert" class="alert-error" style="display:none; margin-bottom:1.5rem;">
+            <div id="errorMessage">Unable to fetch Aptos collection data.</div>
+            <button id="retryBtn" class="btn-retry">Retry Connection</button>
+        </div>
+
+        <!-- NFT Gallery Grid -->
+        <div id="galleryGrid" class="gallery-grid">
+            <!-- Cards rendered here dynamically -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-state-icon">🖼️</div>
+            <h3>No NFTs Found</h3>
+            <p style="color:var(--text-secondary); margin-top:0.5rem; font-size:0.9rem;">We couldn't find any NFTs matching your search or filters in this Aptos collection.</p>
+        </div>
+
+        <!-- Load More Container -->
+        <div id="loadMoreContainer" class="load-more-container" style="display:none;">
+            <button id="loadMoreBtn" class="btn-primary">Load Next Batch</button>
+        </div>
+    </main>
+
+    <!-- NFT Detail Modal -->
+    <div id="nftModal" class="modal-overlay">
+        <div class="modal-container">
+            <button id="modalCloseBtn" class="modal-close-btn" title="Close Modal">&times;</button>
+            <div class="modal-body">
+                <div class="modal-media-container" id="modalMediaContainer">
+                    <!-- Image or Video dynamically rendered -->
+                </div>
+                <div class="modal-content-details">
+                    <div class="modal-header-info">
+                        <h2 id="modalNFTName">NFT Name</h2>
+                        <div id="modalCollectionName" style="color:var(--accent-primary); font-size:0.85rem; font-weight:600;">Collection</div>
+                    </div>
+
+                    <div class="modal-description" id="modalNFTDescription">
+                        No description provided for this NFT.
+                    </div>
+
+                    <div class="details-list">
+                        <div class="details-item">
+                            <span class="details-label">Token ID / Address</span>
+                            <span class="details-value" id="modalTokenId">--</span>
+                        </div>
+                        <div class="details-item">
+                            <span class="details-label">Owner</span>
+                            <span class="details-value" id="modalOwner">--</span>
+                        </div>
+                        <div class="details-item">
+                            <span class="details-label">Creator</span>
+                            <span class="details-value" id="modalCreator">--</span>
+                        </div>
+                        <div class="details-item">
+                            <span class="details-label">Metadata URI</span>
+                            <span class="details-value" id="modalURI">--</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="traits-header">Attributes & Traits</div>
+                        <div class="traits-grid" id="modalTraitsGrid">
+                            <!-- Traits injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Raw Metadata -->
+                    <div class="collapsible-section">
+                        <div class="collapsible-header" id="rawJsonHeader">
+                            <span>Raw Metadata</span>
+                            <span id="rawJsonChevron">▼</span>
+                        </div>
+                        <div class="collapsible-content" id="rawJsonContent">
+                            <pre class="raw-json" id="modalRawJson"></pre>
+                            <div class="modal-actions">
+                                <button class="btn-secondary" id="copyJsonBtn">Copy JSON</button>
+                                <a id="openUriBtn" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="display:none; text-decoration:none;">Open Metadata URI ↗</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- TAB 4: TRAIT DATABASE Explorer -->
-    <div id="view-database" class="hidden space-y-6">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h2 class="text-lg font-bold mb-2">On-Chain Trait & Layer Tree</h2>
-        <p class="text-xs text-slate-400 mb-6">Calculated dynamically across all discovered Sui NFT Objects.</p>
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div>Built for Aptos Mainnet &bull; Collection Address: <span style="font-family:'JetBrains Mono', monospace;" id="footerAddress">0xef50...e946</span></div>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * API SECURITY NOTE:
+         * This static frontend interacts with Aptos Mainnet directly. 
+         * Frontend API keys are publicly exposed in the client-side source code.
+         * You can insert your key below to replace the placeholder.
+         */
+        const ALCHEMY_API_KEY = "YOUR_ALCHEMY_API_KEY";
+        const COLLECTION_ADDRESS = "0xef50cde1a5ffaea0cd0671a0f17de69ad6172eaaa673c8136d0a8e319ca9e946";
         
-        <div id="trait-tree-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- DETAIL MODAL & ON-CHAIN DATA -->
-  <div id="nft-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
-      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-        <h3 id="modal-title" class="font-bold text-base flex items-center gap-2">
-          <span>NFT Details</span>
-        </h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      
-      <div class="p-6 overflow-y-auto custom-scrollbar space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Left: Image Preview & Stack -->
-          <div>
-            <div id="modal-image-container" class="w-full aspect-square bg-slate-950 rounded-xl border border-slate-800 overflow-hidden relative">
-              <!-- Visual Content -->
-            </div>
-          </div>
-          
-          <!-- Right: Metadata & Attributes -->
-          <div class="space-y-4">
-            <div>
-              <span class="text-xs text-slate-400">Object ID</span>
-              <p id="modal-object-id" class="text-xs font-mono text-sui-400 break-all select-all font-semibold"></p>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                <span class="text-slate-500 block">Owner</span>
-                <span id="modal-owner" class="font-mono text-slate-300 truncate block"></span>
-              </div>
-              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                <span class="text-slate-500 block">Version</span>
-                <span id="modal-version" class="font-mono text-slate-300"></span>
-              </div>
-            </div>
-
-            <div>
-              <h4 class="text-xs font-bold text-slate-300 mb-2">Extracted Layers & Traits</h4>
-              <div id="modal-traits-list" class="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto custom-scrollbar">
-                <!-- Trait pills -->
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- RAW BLOCKCHAIN DATA VIEW (Step 9) -->
-        <div>
-          <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
-            <i data-lucide="code" class="w-4 h-4 text-sui-400"></i> Raw Sui On-Chain Fields
-          </h4>
-          <pre id="modal-raw-json" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[250px] custom-scrollbar"></pre>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // CONSTANTS & STATE
-    const SUI_PACKAGE_ID = '0x625d518a3cc78899742d76cf785609cd707e15228d4284aa4fee5ca53caa9849';
-    const RPC_ENDPOINT = 'https://fullnode.mainnet.sui.io:443';
-
-    let state = {
-      modules: [],
-      discoveredStructType: null,
-      nfts: [], // Stores full NFT Objects
-      traitDatabase: {}, // Aggregated trait breakdown
-      hasOnChainArt: false,
-      hasVisualLayers: false,
-      selectedNftForStudio: null,
-      studioActiveLayers: {}
-    };
-
-    // LAYER DETECTOR KEYWORDS (Step 4)
-    const LAYER_KEYWORDS = [
-      'background', 'body', 'skin', 'eyes', 'mouth', 'hair', 'hat', 'clothes', 
-      'shirt', 'pants', 'accessory', 'weapon', 'character', 'foreground', 'base', 
-      'head', 'face', 'trait', 'traits', 'attributes', 'layers', 'layer', 'svg', 
-      'path', 'image', 'image_data', 'metadata'
-    ];
-
-    // INITIALIZATION
-    window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      startDiscoveryPipeline();
-    });
-
-    // RPC REQUEST WRAPPER
-    async function rpcCall(method, params = []) {
-      const res = await fetch(RPC_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: method,
-          params: params
-        })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      return data.result;
-    }
-
-    // STEP 1: DISCOVER THE PACKAGE & STRUCTS
-    async function startDiscoveryPipeline() {
-      try {
-        updateProgress('Connecting to Sui Mainnet RPC...', 10);
-        
-        // 1. Fetch package modules
-        const packageObject = await rpcCall('sui_getObject', [
-          SUI_PACKAGE_ID,
-          { showContent: true }
-        ]);
-
-        if (packageObject?.details?.data?.disassembled || packageObject?.data?.content?.disassembled) {
-          const disassembled = packageObject?.details?.data?.disassembled || packageObject?.data?.content?.disassembled;
-          state.modules = Object.keys(disassembled);
-        } else {
-          // Fallback: Query transaction block that published this package
-          state.modules = ['nft', 'collection']; // Default module fallback for UI rendering
-        }
-
-        renderModules();
-        updateProgress('Analyzing Move Modules for Structs...', 25);
-
-        // 2. Discover Struct Types from events or package query
-        // Search for events emitted by this package to determine the exact Struct Type
-        const events = await rpcCall('suix_queryEvents', [{
-          MovePackage: SUI_PACKAGE_ID
-        }, null, 20, false]);
-
-        let foundStruct = null;
-        if (events && events.data && events.data.length > 0) {
-          const sampleEvent = events.data[0];
-          foundStruct = sampleEvent.type.split('::').slice(0, 2).join('::') + '::';
-          // Find struct name from event payload type
-          const parts = sampleEvent.type.split('::');
-          foundStruct = `${parts[0]}::${parts[1]}::${parts[2].replace(/Mint|Event|Create/g, '')}`;
-        }
-
-        // If not found from events, try scanning standard module names
-        if (!foundStruct || foundStruct.endsWith('::')) {
-          foundStruct = `${SUI_PACKAGE_ID}::nft::NFT`; // Fully qualified discovered type fallback
-        }
-
-        state.discoveredStructType = foundStruct;
-        document.getElementById('diag-type').textContent = foundStruct.split('::').pop();
-        document.getElementById('diag-type').title = foundStruct;
-        document.getElementById('diag-module').textContent = foundStruct.split('::')[1];
-        document.getElementById('struct-type-full').textContent = foundStruct;
-
-        updateProgress('Querying ALL Live NFT Objects (Paginated)...', 40);
-
-        // STEP 2: DISCOVER ALL NFT OBJECTS (WITH PAGINATION)
-        await fetchAllNFTObjects(foundStruct);
-
-      } catch (err) {
-        console.error('Discovery Pipeline Error:', err);
-        // Fallback execution to allow browsing via generic object search
-        updateProgress('Notice: Fetching objects via direct Struct query fallback...', 50);
-        await fetchAllNFTObjects(`${SUI_PACKAGE_ID}::nft::NFT`);
-      }
-    }
-
-    // PAGINATED OBJECT FETCHING
-    async function fetchAllNFTObjects(structType) {
-      let hasNextPage = true;
-      let nextCursor = null;
-      let fetchedObjects = [];
-      let totalFetched = 0;
-
-      while (hasNextPage) {
-        try {
-          const queryFilter = { StructType: structType };
-          const response = await rpcCall('suix_getObjectsOwnedByAddress', [
-            SUI_PACKAGE_ID, // Address query check
-            { filter: queryFilter, options: { showContent: true, showDisplay: true, showOwner: true } },
-            nextCursor,
-            50
-          ]).catch(() => null);
-
-          // Fallback: Use suix_queryTransactionBlocks or suix_getCommitteeInfo if struct search is broad
-          const objectList = await rpcCall('suix_getLatestSuiSystemState', []).then(() => {
-            // Retrieve objects by package events or standard object search
-            return rpcCall('suix_getDynamicFields', [SUI_PACKAGE_ID, nextCursor, 50]).catch(() => ({ data: [], hasNextPage: false }));
-          });
-
-          if (objectList && objectList.data) {
-            for (const item of objectList.data) {
-              // Fetch detail for each discovered object ID
-              const details = await rpcCall('sui_getObject', [
-                item.objectId || item.namelessFieldObjectId,
-                { showContent: true, showDisplay: true, showOwner: true, showType: true }
-              ]);
-              if (details?.data) {
-                fetchedObjects.push(details.data);
-              }
+        // RPC Endpoint Construction with fallback to public RPC if API key is unreplaced
+        const getRpcEndpoint = () => {
+            if (ALCHEMY_API_KEY && ALCHEMY_API_KEY !== "YOUR_ALCHEMY_API_KEY") {
+                return `https://aptos-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
             }
-            hasNextPage = objectList.hasNextPage;
-            nextCursor = objectList.nextCursor;
-          } else {
-            hasNextPage = false;
-          }
-
-          totalFetched = fetchedObjects.length;
-          updateProgress(`Discovered ${totalFetched} NFT Objects...`, Math.min(40 + totalFetched * 2, 90));
-
-          if (totalFetched === 0) {
-            // Handle scenario where objects are stored in dynamic fields or standard package storage
-            hasNextPage = false;
-          }
-        } catch (e) {
-          console.warn('Page fetch cycle completed or limited:', e);
-          hasNextPage = false;
-        }
-      }
-
-      // Process Discovered Objects
-      processNFTData(fetchedObjects);
-    }
-
-    // STEP 3, 4 & 5: INSPECT NFTS & EXTRACT LAYERS/TRAITS
-    function processNFTData(rawObjects) {
-      updateProgress('Inspecting On-Chain Layer Data & Reconstructing Art...', 95);
-
-      state.nfts = rawObjects.map((obj, index) => {
-        const fields = obj.content?.fields || {};
-        const display = obj.display?.data || {};
-        
-        // Dynamic Trait Extraction (Step 4)
-        const extractedLayers = [];
-        let rawImage = display.image_url || fields.image_url || fields.url || fields.image || '';
-        let svgContent = fields.svg || fields.svg_data || display.svg || null;
-
-        // Inspect fields recursively for layer keywords
-        inspectFieldsRecursive(fields, (key, value) => {
-          const lowerKey = key.toLowerCase();
-          if (LAYER_KEYWORDS.some(kw => lowerKey.includes(kw))) {
-            if (typeof value === 'string' || typeof value === 'number') {
-              extractedLayers.push({
-                name: key.replace(/_/g, ' ').toUpperCase(),
-                value: String(value),
-                data: value
-              });
-            }
-          }
-        });
-
-        // Check if artwork is fully on-chain or external (Step 5)
-        let artType = 'External Metadata';
-        if (svgContent || (rawImage && rawImage.startsWith('data:image/svg+xml'))) {
-          artType = 'On-chain SVG';
-          state.hasOnChainArt = true;
-          state.hasVisualLayers = true;
-        } else if (rawImage.startsWith('ipfs://') || rawImage.includes('arweave') || rawImage.includes('walrus')) {
-          artType = 'Decentralized Storage (IPFS/Walrus)';
-        }
-
-        return {
-          objectId: obj.objectId,
-          version: obj.version,
-          digest: obj.digest,
-          owner: parseOwner(obj.owner),
-          type: obj.type,
-          name: display.name || fields.name || `NFT #${index + 1}`,
-          description: display.description || fields.description || '',
-          tokenId: fields.id?.id || fields.tokenId || String(index + 1),
-          image: formatImageUrl(rawImage),
-          svg: svgContent,
-          artType: artType,
-          layers: extractedLayers,
-          rawFields: fields
+            return "https://fullnode.mainnet.aptoslabs.com/v1";
         };
-      });
 
-      // Update Diagnostic Stats
-      document.getElementById('diag-count').textContent = state.nfts.length;
-      document.getElementById('count-nav').textContent = state.nfts.length;
-      document.getElementById('diag-art').textContent = state.hasOnChainArt ? 'YES (SVG)' : 'Metadata Only';
-      document.getElementById('diag-art').className = state.hasOnChainArt ? 'font-semibold text-emerald-400' : 'font-semibold text-amber-400';
-      document.getElementById('diag-layers').textContent = state.nfts.some(n => n.layers.length > 0) ? 'YES' : 'Standard Traits';
-      document.getElementById('diag-layers').className = 'font-semibold font-mono text-sui-400';
+        // Reliable Gateway Lists for IPFS / Arweave resolution
+        const IPFS_GATEWAYS = [
+            "https://ipfs.io/ipfs/",
+            "https://gateway.pinata.cloud/ipfs/",
+            "https://cloudflare-ipfs.com/ipfs/",
+            "https://dweb.link/ipfs/"
+        ];
 
-      // Build Database Tree (Step 6)
-      buildTraitDatabase();
+        const ARWEAVE_GATEWAYS = [
+            "https://arweave.net/",
+            "https://arweave.dev/"
+        ];
 
-      // Complete Loading UI
-      updateProgress('Discovery Complete!', 100);
-      setTimeout(() => {
-        document.getElementById('sync-progress-box').classList.add('hidden');
-      }, 600);
+        // Global Application State
+        const state = {
+            collectionAddress: COLLECTION_ADDRESS,
+            collectionName: "Aptos Collection",
+            detectedType: null, // "v1_resource", "v2_digital_asset", "indexer"
+            rawNFTs: [],       // Base token descriptors extracted from chain
+            loadedNFTs: [],    // Fully resolved NFT objects with metadata
+            filteredNFTs: [],  // Filtered array currently displayed
+            renderedCount: 0,
+            pageSize: 24,
+            traitsMap: {},     // trait_type -> Set of values
+            selectedFilters: {}, // trait_type -> selected value
+            searchQuery: "",
+            isLoading: false,
+            fetchOffset: 0
+        };
 
-      // Render Active View
-      renderDashboard();
-      renderGallery();
-      renderStudioList();
-      renderTraitTree();
-    }
+        // DOM Element Cache
+        const elements = {
+            collectionAddressShort: document.getElementById('collectionAddressShort'),
+            footerAddress: document.getElementById('footerAddress'),
+            copyAddressBtn: document.getElementById('copyAddressBtn'),
+            statCollectionName: document.getElementById('statCollectionName'),
+            statTotalNFTs: document.getElementById('statTotalNFTs'),
+            statLoadedNFTs: document.getElementById('statLoadedNFTs'),
+            searchInput: document.getElementById('searchInput'),
+            toggleFilterBtn: document.getElementById('toggleFilterBtn'),
+            filterPanel: document.getElementById('filterPanel'),
+            statusContainer: document.getElementById('statusContainer'),
+            statusState: document.getElementById('statusState'),
+            statusText: document.getElementById('statusText'),
+            statusCount: document.getElementById('statusCount'),
+            statusSpinner: document.getElementById('statusSpinner'),
+            progressFill: document.getElementById('progressFill'),
+            errorAlert: document.getElementById('errorAlert'),
+            errorMessage: document.getElementById('errorMessage'),
+            retryBtn: document.getElementById('retryBtn'),
+            galleryGrid: document.getElementById('galleryGrid'),
+            emptyState: document.getElementById('emptyState'),
+            loadMoreContainer: document.getElementById('loadMoreContainer'),
+            loadMoreBtn: document.getElementById('loadMoreBtn'),
+            
+            // Modal Elements
+            nftModal: document.getElementById('nftModal'),
+            modalCloseBtn: document.getElementById('modalCloseBtn'),
+            modalMediaContainer: document.getElementById('modalMediaContainer'),
+            modalNFTName: document.getElementById('modalNFTName'),
+            modalCollectionName: document.getElementById('modalCollectionName'),
+            modalNFTDescription: document.getElementById('modalNFTDescription'),
+            modalTokenId: document.getElementById('modalTokenId'),
+            modalOwner: document.getElementById('modalOwner'),
+            modalCreator: document.getElementById('modalCreator'),
+            modalURI: document.getElementById('modalURI'),
+            modalTraitsGrid: document.getElementById('modalTraitsGrid'),
+            rawJsonHeader: document.getElementById('rawJsonHeader'),
+            rawJsonContent: document.getElementById('rawJsonContent'),
+            modalRawJson: document.getElementById('modalRawJson'),
+            copyJsonBtn: document.getElementById('copyJsonBtn'),
+            openUriBtn: document.getElementById('openUriBtn')
+        };
 
-    // RECURSIVE FIELD INSPECTOR
-    function inspectFieldsRecursive(obj, callback, parentKey = '') {
-      if (!obj || typeof obj !== 'object') return;
-      
-      for (const [key, val] of Object.entries(obj)) {
-        const fullKey = parentKey ? `${parentKey}.${key}` : key;
-        if (val && typeof val === 'object' && !Array.isArray(val)) {
-          inspectFieldsRecursive(val, callback, fullKey);
-        } else if (Array.isArray(val)) {
-          val.forEach((item, idx) => {
-            if (typeof item === 'object') {
-              inspectFieldsRecursive(item, callback, `${fullKey}[${idx}]`);
-            } else {
-              callback(`${fullKey}[${idx}]`, item);
+        // Initialization Logic
+        window.addEventListener('DOMContentLoaded', () => {
+            setupUIHandlers();
+            initializeExplorer();
+        });
+
+        function setupUIHandlers() {
+            // Short Address Display
+            const shortAddr = shortenAddress(COLLECTION_ADDRESS);
+            elements.collectionAddressShort.textContent = shortAddr;
+            elements.footerAddress.textContent = shortAddr;
+
+            // Copy Address
+            elements.copyAddressBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(COLLECTION_ADDRESS);
+                alert("Collection address copied to clipboard!");
+            });
+
+            // Filter Toggle
+            elements.toggleFilterBtn.addEventListener('click', () => {
+                elements.filterPanel.classList.toggle('open');
+                elements.toggleFilterBtn.classList.toggle('active');
+            });
+
+            // Search Filter Listener
+            elements.searchInput.addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase().trim();
+                applySearchAndFilters();
+            });
+
+            // Load More Button
+            elements.loadMoreBtn.addEventListener('click', () => {
+                renderNextBatch();
+            });
+
+            // Retry Button
+            elements.retryBtn.addEventListener('click', () => {
+                elements.errorAlert.style.display = 'none';
+                initializeExplorer();
+            });
+
+            // Modal Handlers
+            elements.modalCloseBtn.addEventListener('click', closeModal);
+            elements.nftModal.addEventListener('click', (e) => {
+                if (e.target === elements.nftModal) closeModal();
+            });
+
+            // JSON Accordion Toggle
+            elements.rawJsonHeader.addEventListener('click', () => {
+                elements.rawJsonContent.classList.toggle('open');
+            });
+
+            // Copy JSON Button
+            elements.copyJsonBtn.addEventListener('click', () => {
+                const jsonText = elements.modalRawJson.textContent;
+                navigator.clipboard.writeText(jsonText);
+                alert("Raw metadata copied to clipboard!");
+            });
+        }
+
+        // Helper: Address Truncation
+        function shortenAddress(addr) {
+            if (!addr || addr.length < 12) return addr || '';
+            return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+        }
+
+        // Helper: Convert URIs (IPFS / Arweave / HTTP)
+        function resolveURI(uri) {
+            if (!uri) return '';
+            uri = uri.trim();
+
+            if (uri.startsWith('ipfs://')) {
+                const path = uri.replace('ipfs://', '');
+                return `${IPFS_GATEWAYS[0]}${path}`;
             }
-          });
-        } else {
-          callback(key, val);
-        }
-      }
-    }
-
-    // STEP 6: LAYER DATABASE AGGREGATOR
-    function buildTraitDatabase() {
-      const db = {};
-      const total = state.nfts.length || 1;
-
-      state.nfts.forEach(nft => {
-        nft.layers.forEach(layer => {
-          if (!db[layer.name]) {
-            db[layer.name] = {};
-          }
-          if (!db[layer.name][layer.value]) {
-            db[layer.name][layer.value] = [];
-          }
-          db[layer.name][layer.value].push(nft.objectId);
-        });
-      });
-
-      state.traitDatabase = db;
-
-      // Update Filter Options in Gallery
-      const filterSelect = document.getElementById('gallery-filter-layer');
-      filterSelect.innerHTML = '<option value="ALL">All Trait Values</option>';
-      for (const [cat, valMap] of Object.entries(db)) {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = cat;
-        for (const val of Object.keys(valMap)) {
-          const opt = document.createElement('option');
-          opt.value = `${cat}:${val}`;
-          opt.textContent = `${cat}: ${val} (${valMap[val].length})`;
-          optgroup.appendChild(opt);
-        }
-        filterSelect.appendChild(optgroup);
-      }
-    }
-
-    // STEP 7: RENDER GALLERY
-    function renderGallery() {
-      const grid = document.getElementById('nft-grid');
-      const search = document.getElementById('gallery-search').value.toLowerCase();
-      const filter = document.getElementById('gallery-filter-layer').value;
-      const sort = document.getElementById('gallery-sort').value;
-
-      grid.innerHTML = '';
-
-      let filtered = state.nfts.filter(nft => {
-        const matchesSearch = nft.name.toLowerCase().includes(search) || 
-                              nft.objectId.toLowerCase().includes(search) || 
-                              nft.tokenId.toLowerCase().includes(search);
-        
-        let matchesFilter = true;
-        if (filter !== 'ALL') {
-          const [cat, val] = filter.split(':');
-          matchesFilter = nft.layers.some(l => l.name === cat && l.value === val);
+            if (uri.startsWith('ar://')) {
+                const path = uri.replace('ar://', '');
+                return `${ARWEAVE_GATEWAYS[0]}${path}`;
+            }
+            if (uri.startsWith('data:application/json')) {
+                return uri;
+            }
+            return uri;
         }
 
-        return matchesSearch && matchesFilter;
-      });
-
-      // Sorting
-      if (sort === 'id-asc') filtered.sort((a,b) => a.tokenId.localeCompare(b.tokenId, undefined, {numeric: true}));
-      if (sort === 'id-desc') filtered.sort((a,b) => b.tokenId.localeCompare(a.tokenId, undefined, {numeric: true}));
-      if (sort === 'traits-desc') filtered.sort((a,b) => b.layers.length - a.layers.length);
-
-      if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full p-12 text-center text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
-            <i data-lucide="ghost" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-            <p class="text-xs">No Sui NFTs found matching criteria.</p>
-          </div>
-        `;
-        lucide.createIcons();
-        return;
-      }
-
-      filtered.forEach(nft => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-900 border border-slate-800 hover:border-sui-500/50 rounded-xl overflow-hidden cursor-pointer transition flex flex-col group';
-        card.onclick = () => openModal(nft);
-
-        card.innerHTML = `
-          <div class="aspect-square bg-slate-950 relative overflow-hidden flex items-center justify-center p-2">
-            ${nft.image ? `<img src="${nft.image}" alt="${nft.name}" class="w-full h-full object-contain group-hover:scale-105 transition duration-300" loading="lazy">` : 
-              `<div class="text-slate-600 flex flex-col items-center"><i data-lucide="image-off" class="w-8 h-8 mb-1"></i><span class="text-[10px]">No Image</span></div>`}
-            <span class="absolute top-2 right-2 bg-slate-950/80 backdrop-blur text-sui-400 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-800">
-              #${nft.tokenId}
-            </span>
-          </div>
-          <div class="p-3 flex-1 flex flex-col justify-between space-y-2">
-            <div>
-              <h4 class="font-bold text-xs text-white truncate group-hover:text-sui-400 transition">${nft.name}</h4>
-              <p class="text-[10px] text-slate-500 font-mono truncate">${nft.objectId}</p>
-            </div>
-            <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-800/60">
-              <span class="text-slate-400 font-mono">${nft.layers.length} Layers</span>
-              <span class="text-emerald-400 font-medium">${nft.artType}</span>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-
-      lucide.createIcons();
-    }
-
-    // STEP 8: RENDER LAYER STUDIO / VISUALIZER
-    function renderStudioList() {
-      const list = document.getElementById('studio-nft-list');
-      const search = document.getElementById('studio-search').value.toLowerCase();
-      list.innerHTML = '';
-
-      const filtered = state.nfts.filter(n => n.name.toLowerCase().includes(search) || n.tokenId.includes(search));
-
-      filtered.forEach(nft => {
-        const btn = document.createElement('button');
-        btn.className = `w-full text-left p-2 rounded-lg border transition flex items-center space-x-3 text-xs ${state.selectedNftForStudio?.objectId === nft.objectId ? 'bg-sui-600/20 border-sui-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'}`;
-        btn.onclick = () => selectNftForStudio(nft);
-
-        btn.innerHTML = `
-          <div class="w-8 h-8 rounded bg-slate-900 border border-slate-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
-            ${nft.image ? `<img src="${nft.image}" class="w-full h-full object-cover">` : `<i data-lucide="box" class="w-4 h-4 text-slate-600"></i>`}
-          </div>
-          <div class="truncate flex-1">
-            <p class="font-bold truncate">${nft.name}</p>
-            <p class="text-[10px] text-slate-500 font-mono">${nft.layers.length} traits</p>
-          </div>
-        `;
-        list.appendChild(btn);
-      });
-
-      if (!state.selectedNftForStudio && state.nfts.length > 0) {
-        selectNftForStudio(state.nfts[0]);
-      }
-      lucide.createIcons();
-    }
-
-    function selectNftForStudio(nft) {
-      state.selectedNftForStudio = nft;
-      document.getElementById('studio-nft-id-label').textContent = `#${nft.tokenId}`;
-      
-      // Initialize active toggles for all layers
-      state.studioActiveLayers = {};
-      nft.layers.forEach((l, idx) => {
-        state.studioActiveLayers[idx] = true;
-      });
-
-      renderStudioCanvas();
-      renderStudioToggles();
-      renderStudioList();
-    }
-
-    function renderStudioCanvas() {
-      const stack = document.getElementById('studio-composite-stack');
-      stack.innerHTML = '';
-      const nft = state.selectedNftForStudio;
-
-      if (!nft) return;
-
-      if (nft.image) {
-        // Base composite image
-        const img = document.createElement('img');
-        img.src = nft.image;
-        img.className = 'w-full h-full object-contain';
-        stack.appendChild(img);
-      } else {
-        stack.innerHTML = `<div class="flex items-center justify-center text-xs text-slate-500 p-4">Visual layer stack reconstructed from Sui Object dynamic data</div>`;
-      }
-    }
-
-    function renderStudioToggles() {
-      const container = document.getElementById('studio-layer-toggles');
-      container.innerHTML = '';
-      const nft = state.selectedNftForStudio;
-
-      if (!nft || nft.layers.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500">No individual visual layer assets found on-chain for this NFT.</p>`;
-        return;
-      }
-
-      nft.layers.forEach((layer, idx) => {
-        const row = document.createElement('div');
-        row.className = 'p-3 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between text-xs';
-        
-        row.innerHTML = `
-          <div>
-            <span class="text-slate-400 block text-[10px] font-mono">${layer.name}</span>
-            <span class="font-bold text-slate-200">${layer.value}</span>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" ${state.studioActiveLayers[idx] ? 'checked' : ''} onchange="toggleStudioLayer(${idx})" class="sr-only peer">
-            <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sui-600"></div>
-          </label>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    function toggleStudioLayer(idx) {
-      state.studioActiveLayers[idx] = !state.studioActiveLayers[idx];
-      renderStudioCanvas();
-    }
-
-    // STEP 6: RENDER TRAIT TREE DATABASE
-    function renderTraitTree() {
-      const container = document.getElementById('trait-tree-container');
-      container.innerHTML = '';
-      const db = state.traitDatabase;
-
-      if (Object.keys(db).length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No on-chain traits discovered across package objects.</p>`;
-        return;
-      }
-
-      for (const [catName, valMap] of Object.entries(db)) {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col';
-        
-        const totalUnique = Object.keys(valMap).length;
-        
-        let itemsHTML = '';
-        for (const [val, ids] of Object.entries(valMap)) {
-          const pct = ((ids.length / state.nfts.length) * 100).toFixed(1);
-          itemsHTML += `
-            <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-900 last:border-none">
-              <span class="text-slate-300 font-medium truncate pr-2">├─ ${val}</span>
-              <div class="flex items-center gap-2 font-mono text-[11px]">
-                <span class="text-sui-400 font-bold">${ids.length} NFTs</span>
-                <span class="text-slate-500">(${pct}%)</span>
-              </div>
-            </div>
-          `;
+        // Generic HTTP JSON Request Helper with Retry
+        async function fetchJSON(url, options = {}, retries = 2) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, 500));
+                    return fetchJSON(url, options, retries - 1);
+                }
+                throw err;
+            }
         }
 
-        card.innerHTML = `
-          <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
-            <h3 class="font-bold text-xs text-white uppercase tracking-wider">${catName}</h3>
-            <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono">${totalUnique} Unique</span>
-          </div>
-          <div class="space-y-1 custom-scrollbar max-h-[200px] overflow-y-auto pr-1">
-            ${itemsHTML}
-          </div>
-        `;
-        container.appendChild(card);
-      }
-    }
+        // --- Core Exploration Pipeline ---
+        async function initializeExplorer() {
+            updateStatus("Discovering", "Discovering NFT collection structure...", 0, 0);
+            elements.statusSpinner.style.display = 'block';
 
-    // STEP 9: DETAIL MODAL WITH RAW BLOCKCHAIN DATA
-    function openModal(nft) {
-      const modal = document.getElementById('nft-modal');
-      document.getElementById('modal-title').textContent = `${nft.name} (#${nft.tokenId})`;
-      document.getElementById('modal-object-id').textContent = nft.objectId;
-      document.getElementById('modal-owner').textContent = nft.owner;
-      document.getElementById('modal-version').textContent = nft.version;
+            try {
+                // Step 1: Query Aptos Account Resources for the Collection Address
+                const endpoint = getRpcEndpoint();
+                const resourcesUrl = `${endpoint}/accounts/${COLLECTION_ADDRESS}/resources`;
+                
+                let resources = [];
+                try {
+                    resources = await fetchJSON(resourcesUrl);
+                } catch (e) {
+                    console.warn("Direct resource query failed, checking account object info...", e);
+                }
 
-      const imgContainer = document.getElementById('modal-image-container');
-      imgContainer.innerHTML = nft.image ? 
-        `<img src="${nft.image}" class="w-full h-full object-contain">` : 
-        `<div class="w-full h-full flex items-center justify-center text-xs text-slate-600">No Image Renderable</div>`;
+                // Step 2: Determine On-Chain Token / Digital Asset Structure
+                const detected = analyzeCollectionStructure(resources);
+                state.detectedType = detected.type;
+                state.collectionName = detected.name || "Aptos Collection";
+                elements.statCollectionName.textContent = state.collectionName;
 
-      // Render Trait Pills
-      const traitsList = document.getElementById('modal-traits-list');
-      traitsList.innerHTML = '';
-      if (nft.layers.length > 0) {
-        nft.layers.forEach(l => {
-          const pill = document.createElement('div');
-          pill.className = 'bg-slate-950 p-2 rounded-lg border border-slate-800 text-xs';
-          pill.innerHTML = `
-            <span class="text-slate-500 block text-[10px] uppercase font-mono">${l.name}</span>
-            <span class="font-bold text-slate-200 truncate block">${l.value}</span>
-          `;
-          traitsList.appendChild(pill);
-        });
-      } else {
-        traitsList.innerHTML = `<span class="text-xs text-slate-500 col-span-2">No traits defined in object fields.</span>`;
-      }
+                updateStatus("Loading", "Discovering NFTs in collection...", 0, 0);
 
-      // Raw On-Chain Json View
-      document.getElementById('modal-raw-json').textContent = JSON.stringify(nft.rawFields, null, 2);
+                // Step 3: Fetch On-Chain NFT Identifiers / Token Objects
+                const rawNFTs = await discoverCollectionTokens(COLLECTION_ADDRESS, detected);
+                state.rawNFTs = rawNFTs;
+                elements.statTotalNFTs.textContent = rawNFTs.length.toLocaleString();
 
-      modal.classList.remove('hidden');
-    }
+                if (rawNFTs.length === 0) {
+                    updateStatus("Complete", "0 NFTs loaded", 0, 0);
+                    elements.statusSpinner.style.display = 'none';
+                    elements.emptyState.style.display = 'block';
+                    return;
+                }
 
-    function closeModal() {
-      document.getElementById('nft-modal').classList.add('hidden');
-    }
+                // Step 4: Resolve Metadata & Load Progressively
+                await processNFTsProgressively(rawNFTs);
 
-    // DASHBOARD OVERVIEW RENDER
-    function renderDashboard() {
-      const list = document.getElementById('layer-summary-list');
-      list.innerHTML = '';
+            } catch (error) {
+                console.error("Initialization error:", error);
+                showError(`Failed to load Aptos collection: ${error.message}`);
+            }
+        }
 
-      const categories = Object.keys(state.traitDatabase);
-      if (categories.length === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-500">No layer categories discovered.</p>`;
-        return;
-      }
+        // On-chain Resource Analyzer
+        function analyzeCollectionStructure(resources) {
+            let info = { type: 'unknown', name: 'Aptos NFT Collection' };
 
-      categories.forEach(cat => {
-        const count = Object.keys(state.traitDatabase[cat]).length;
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg';
-        div.innerHTML = `
-          <span class="font-medium text-slate-300">${cat}</span>
-          <span class="font-mono text-sui-400 font-bold">${count} variants</span>
-        `;
-        list.appendChild(div);
-      });
-    }
+            if (!Array.isArray(resources)) return info;
 
-    function renderModules() {
-      const container = document.getElementById('module-list');
-      container.innerHTML = '';
-      state.modules.forEach(m => {
-        const badge = document.createElement('span');
-        badge.className = 'px-3 py-1 bg-slate-950 border border-slate-800 rounded text-sui-400 font-bold';
-        badge.textContent = m;
-        container.appendChild(badge);
-      });
-    }
+            // Search for Aptos Token v1 Collection Resource
+            const collectionResource = resources.find(r => 
+                r.type.includes('0x3::token::CollectionData') || 
+                r.type.includes('CollectionHeader')
+            );
 
-    // HELPER FUNCTIONS
-    function updateProgress(title, percent) {
-      document.getElementById('sync-title').textContent = title;
-      document.getElementById('sync-percentage').textContent = `${percent}%`;
-      document.getElementById('sync-bar').style.width = `${percent}%`;
-    }
+            if (collectionResource && collectionResource.data) {
+                info.type = 'v1_token';
+                info.name = collectionResource.data.name || info.name;
+                return info;
+            }
 
-    function switchTab(tabId) {
-      ['dashboard', 'gallery', 'visualizer', 'database'].forEach(id => {
-        document.getElementById(`view-${id}`).classList.add('hidden');
-        const btn = document.getElementById(`tab-${id}`);
-        btn.className = 'px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5';
-      });
+            // Search for Digital Asset (v2) Resource
+            const daResource = resources.find(r => 
+                r.type.includes('0x4::collection::Collection') ||
+                r.type.includes('0x4::aptos_token::AptosTokenCollection')
+            );
 
-      document.getElementById(`view-${tabId}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`tab-${tabId}`);
-      activeBtn.className = 'px-3 py-1.5 rounded-md bg-sui-600 text-white transition flex items-center gap-1.5';
-    }
+            if (daResource && daResource.data) {
+                info.type = 'v2_digital_asset';
+                info.name = daResource.data.name || daResource.data.collection_name || info.name;
+                return info;
+            }
 
-    function parseOwner(ownerObj) {
-      if (!ownerObj) return 'Unowned / Shared';
-      if (typeof ownerObj === 'string') return ownerObj;
-      if (ownerObj.AddressOwner) return ownerObj.AddressOwner;
-      if (ownerObj.ObjectOwner) return `Object (${ownerObj.ObjectOwner})`;
-      if (ownerObj.Shared) return 'Shared Object';
-      return JSON.stringify(ownerObj);
-    }
+            // Fallback for general objects
+            info.type = 'indexer_or_view';
+            return info;
+        }
 
-    function formatImageUrl(url) {
-      if (!url) return '';
-      if (url.startsWith('ipfs://')) return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
-      return url;
-    }
+        // On-Chain Token Discovery Method
+        async function discoverCollectionTokens(address, detectedStructure) {
+            const endpoint = getRpcEndpoint();
+            let discoveredTokens = [];
 
-    function downloadCompositeSVG() {
-      const nft = state.selectedNftForStudio;
-      if (!nft) return;
-      alert(`Exporting high-resolution SVG/Asset payload for ${nft.name}...`);
-    }
-  </script>
+            try {
+                // Attempt 1: Fetch Account Events for Token Minting (Token v1 & v2)
+                const eventsUrl = `${endpoint}/accounts/${address}/events/0x3::token::Collections/mint_token_events?limit=100`;
+                const mintEvents = await fetchJSON(eventsUrl).catch(() => []);
+
+                if (Array.isArray(mintEvents) && mintEvents.length > 0) {
+                    discoveredTokens = mintEvents.map(evt => ({
+                        id: evt.data.id?.name || evt.data.token_data_id?.name || evt.data.name,
+                        creator: evt.data.id?.token_data_id?.creator || address,
+                        collection: evt.data.id?.token_data_id?.collection || state.collectionName,
+                        uri: evt.data.uri || '',
+                        rawEvent: evt.data
+                    }));
+                }
+            } catch (e) {
+                console.warn("Event-based token discovery yielded no results.", e);
+            }
+
+            // Attempt 2: If event query is empty, query Aptos GraphQL Indexer via Alchemy RPC
+            if (discoveredTokens.length === 0) {
+                try {
+                    const graphqlQuery = {
+                        query: `
+                            query GetCollectionTokens($addr: String!) {
+                                current_token_datas_v2(
+                                    where: { collection_id: { _eq: $addr } }
+                                    limit: 200
+                                ) {
+                                    token_data_id
+                                    token_name
+                                    token_uri
+                                    description
+                                    current_collection {
+                                        collection_name
+                                        creator_address
+                                    }
+                                }
+                            }
+                        `,
+                        variables: { addr: address }
+                    };
+
+                    const gqlRes = await fetchJSON(`${endpoint}/graphql`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(graphqlQuery)
+                    }).catch(() => null);
+
+                    if (gqlRes && gqlRes.data && gqlRes.data.current_token_datas_v2) {
+                        discoveredTokens = gqlRes.data.current_token_datas_v2.map(t => ({
+                            id: t.token_data_id || t.token_name,
+                            name: t.token_name,
+                            uri: t.token_uri,
+                            description: t.description,
+                            creator: t.current_collection?.creator_address || address,
+                            collection: t.current_collection?.collection_name || state.collectionName
+                        }));
+                    }
+                } catch (e) {
+                    console.warn("Indexer query failed.", e);
+                }
+            }
+
+            // Fallback Discovery: Generate token references if structure is verified but indexer is unindexed
+            if (discoveredTokens.length === 0) {
+                // Query general module objects at this address
+                const res = await fetchJSON(`${endpoint}/accounts/${address}/resources`).catch(() => []);
+                const objectResources = res.filter(r => r.type.includes('0x4::token::Token') || r.type.includes('0x3::token::TokenData'));
+                
+                discoveredTokens = objectResources.map((resItem, idx) => ({
+                    id: resItem.data?.name || `Token #${idx + 1}`,
+                    name: resItem.data?.name || `NFT #${idx + 1}`,
+                    uri: resItem.data?.uri || '',
+                    description: resItem.data?.description || '',
+                    creator: address,
+                    collection: state.collectionName
+                }));
+            }
+
+            return discoveredTokens;
+        }
+
+        // Batch Metadata Processing with Concurrent Resolution
+        async function processNFTsProgressively(rawTokens) {
+            const total = rawTokens.length;
+            const batchSize = 6;
+            
+            for (let i = 0; i < total; i += batchSize) {
+                const batch = rawTokens.slice(i, i + batchSize);
+                
+                const resolvedBatch = await Promise.all(
+                    batch.map(token => resolveNFTMetadata(token))
+                );
+
+                resolvedBatch.forEach(nft => {
+                    state.loadedNFTs.push(nft);
+                    registerTraits(nft.attributes);
+                });
+
+                // Update UI Stats
+                const loadedCount = state.loadedNFTs.length;
+                elements.statLoadedNFTs.textContent = loadedCount.toLocaleString();
+                updateStatus("Progress", `Loaded ${loadedCount} / ${total} NFTs`, loadedCount, total);
+
+                // Render dynamically as data streams in
+                if (i === 0) {
+                    renderTraitFilters();
+                    applySearchAndFilters();
+                } else {
+                    applySearchAndFilters();
+                }
+
+                // Smooth pause to keep main thread fluid
+                await new Promise(r => setTimeout(r, 50));
+            }
+
+            updateStatus("Complete", `All ${total} NFTs loaded`, total, total);
+            elements.statusSpinner.style.display = 'none';
+        }
+
+        // Metadata Resolver (Supports HTTPS, IPFS, Arweave, On-Chain JSON)
+        async function resolveNFTMetadata(token) {
+            let metadata = {
+                id: token.id || `Token`,
+                name: token.name || token.id || `NFT`,
+                description: token.description || 'No description provided.',
+                image: '',
+                animationUrl: '',
+                uri: token.uri || '',
+                collection: token.collection || state.collectionName,
+                owner: token.owner || token.creator || COLLECTION_ADDRESS,
+                creator: token.creator || COLLECTION_ADDRESS,
+                attributes: [],
+                rawJson: {}
+            };
+
+            if (!token.uri) {
+                return metadata;
+            }
+
+            const targetUrl = resolveURI(token.uri);
+
+            try {
+                let json = null;
+                
+                if (targetUrl.startsWith('data:application/json')) {
+                    const base64Data = targetUrl.split(',')[1];
+                    json = JSON.parse(atob(base64Data));
+                } else {
+                    json = await fetchJSON(targetUrl, {}, 1);
+                }
+
+                if (json) {
+                    metadata.rawJson = json;
+                    metadata.name = json.name || metadata.name;
+                    metadata.description = json.description || metadata.description;
+                    metadata.image = resolveURI(json.image || json.image_url || json.uri || '');
+                    metadata.animationUrl = resolveURI(json.animation_url || json.video || '');
+                    
+                    // Standardize Attributes / Traits
+                    const rawAttributes = json.attributes || json.traits || [];
+                    if (Array.isArray(rawAttributes)) {
+                        metadata.attributes = rawAttributes.map(attr => ({
+                            trait_type: attr.trait_type || attr.key || 'Attribute',
+                            value: String(attr.value !== undefined ? attr.value : attr.val)
+                        }));
+                    } else if (typeof rawAttributes === 'object') {
+                        metadata.attributes = Object.entries(rawAttributes).map(([k, v]) => ({
+                            trait_type: k,
+                            value: String(v)
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.warn(`Metadata resolution failed for ${token.uri}`, err);
+                metadata.description = 'Metadata unavailable or gateway timed out.';
+            }
+
+            return metadata;
+        }
+
+        // Register Dynamic Traits for Dynamic Filter Generation
+        function registerTraits(attributes) {
+            if (!Array.isArray(attributes)) return;
+            attributes.forEach(attr => {
+                if (!attr.trait_type || !attr.value) return;
+                if (!state.traitsMap[attr.trait_type]) {
+                    state.traitsMap[attr.trait_type] = new Set();
+                }
+                state.traitsMap[attr.trait_type].add(attr.value);
+            });
+        }
+
+        // Dynamic Trait Filters Generator
+        function renderTraitFilters() {
+            elements.filterPanel.innerHTML = '';
+            const keys = Object.keys(state.traitsMap);
+
+            if (keys.length === 0) {
+                elements.filterPanel.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem;">No traits discovered in loaded metadata.</div>`;
+                return;
+            }
+
+            keys.forEach(traitType => {
+                const group = document.createElement('div');
+                const title = document.createElement('div');
+                title.className = 'filter-group-title';
+                title.textContent = traitType;
+
+                const select = document.createElement('select');
+                select.className = 'filter-select';
+                select.innerHTML = `<option value="">All ${traitType}s</option>`;
+
+                state.traitsMap[traitType].forEach(val => {
+                    select.innerHTML += `<option value="${val}">${val}</option>`;
+                });
+
+                select.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        state.selectedFilters[traitType] = e.target.value;
+                    } else {
+                        delete state.selectedFilters[traitType];
+                    }
+                    applySearchAndFilters();
+                });
+
+                group.appendChild(title);
+                group.appendChild(select);
+                elements.filterPanel.appendChild(group);
+            });
+        }
+
+        // Local Search & Trait Filter Engine
+        function applySearchAndFilters() {
+            state.filteredNFTs = state.loadedNFTs.filter(nft => {
+                // Search Query Match
+                if (state.searchQuery) {
+                    const q = state.searchQuery;
+                    const matchName = nft.name.toLowerCase().includes(q);
+                    const matchId = String(nft.id).toLowerCase().includes(q);
+                    const matchTrait = nft.attributes.some(a => 
+                        a.trait_type.toLowerCase().includes(q) || 
+                        a.value.toLowerCase().includes(q)
+                    );
+                    if (!matchName && !matchId && !matchTrait) return false;
+                }
+
+                // Traits Filter Match
+                for (const [traitType, selectedValue] of Object.entries(state.selectedFilters)) {
+                    const hasTrait = nft.attributes.some(a => 
+                        a.trait_type === traitType && a.value === selectedValue
+                    );
+                    if (!hasTrait) return false;
+                }
+
+                return true;
+            });
+
+            // Reset Batch Pagination
+            state.renderedCount = 0;
+            elements.galleryGrid.innerHTML = '';
+            renderNextBatch();
+        }
+
+        // Render Progressive Gallery Batch
+        function renderNextBatch() {
+            const nextBatch = state.filteredNFTs.slice(state.renderedCount, state.renderedCount + state.pageSize);
+            
+            if (nextBatch.length === 0 && state.renderedCount === 0) {
+                elements.emptyState.style.display = 'block';
+                elements.loadMoreContainer.style.display = 'none';
+                return;
+            } else {
+                elements.emptyState.style.display = 'none';
+            }
+
+            nextBatch.forEach(nft => {
+                const card = createNFTCard(nft);
+                elements.galleryGrid.appendChild(card);
+            });
+
+            state.renderedCount += nextBatch.length;
+
+            if (state.renderedCount < state.filteredNFTs.length) {
+                elements.loadMoreContainer.style.display = 'flex';
+                elements.loadMoreBtn.textContent = `Load More (${state.filteredNFTs.length - state.renderedCount} remaining)`;
+            } else {
+                elements.loadMoreContainer.style.display = 'none';
+            }
+        }
+
+        // DOM Element Factory for NFT Cards
+        function createNFTCard(nft) {
+            const card = document.createElement('div');
+            card.className = 'nft-card';
+            
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'nft-image-wrapper';
+
+            if (nft.image) {
+                const img = document.createElement('img');
+                img.className = 'nft-image';
+                img.src = nft.image;
+                img.alt = nft.name;
+                img.loading = 'lazy';
+                
+                img.onerror = () => {
+                    img.style.display = 'none';
+                    imgWrapper.innerHTML = `
+                        <div class="image-placeholder">
+                            <span>🖼️</span>
+                            <span>Media Unavailable</span>
+                        </div>
+                    `;
+                };
+
+                imgWrapper.appendChild(img);
+            } else {
+                imgWrapper.innerHTML = `
+                    <div class="image-placeholder">
+                        <span>🖼️</span>
+                        <span>No Media URI</span>
+                    </div>
+                `;
+            }
+
+            const info = document.createElement('div');
+            info.className = 'nft-info';
+            info.innerHTML = `
+                <div>
+                    <div class="nft-name" title="${nft.name}">${nft.name}</div>
+                    <div class="nft-collection-name">${nft.collection}</div>
+                </div>
+                <div class="nft-token-id">${shortenAddress(String(nft.id))}</div>
+            `;
+
+            card.appendChild(imgWrapper);
+            card.appendChild(info);
+
+            card.addEventListener('click', () => openModal(nft));
+
+            return card;
+        }
+
+        // Open Detailed NFT Modal
+        function openModal(nft) {
+            // Render Media
+            elements.modalMediaContainer.innerHTML = '';
+            if (nft.animationUrl && (nft.animationUrl.endsWith('.mp4') || nft.animationUrl.endsWith('.webm'))) {
+                const video = document.createElement('video');
+                video.className = 'modal-media';
+                video.src = nft.animationUrl;
+                video.controls = true;
+                video.autoplay = true;
+                video.loop = true;
+                elements.modalMediaContainer.appendChild(video);
+            } else if (nft.image) {
+                const img = document.createElement('img');
+                img.className = 'modal-media';
+                img.src = nft.image;
+                img.alt = nft.name;
+                img.onerror = () => {
+                    elements.modalMediaContainer.innerHTML = `<div style="color:var(--text-muted); padding:2rem; text-align:center;">Unable to render media</div>`;
+                };
+                elements.modalMediaContainer.appendChild(img);
+            } else {
+                elements.modalMediaContainer.innerHTML = `<div style="color:var(--text-muted); padding:2rem; text-align:center;">No Media Provided</div>`;
+            }
+
+            // Populate Info
+            elements.modalNFTName.textContent = nft.name;
+            elements.modalCollectionName.textContent = nft.collection;
+            elements.modalNFTDescription.textContent = nft.description;
+            elements.modalTokenId.textContent = nft.id;
+            elements.modalOwner.textContent = shortenAddress(nft.owner);
+            elements.modalCreator.textContent = shortenAddress(nft.creator);
+            elements.modalURI.textContent = nft.uri ? shortenAddress(nft.uri) : 'On-Chain / None';
+
+            // External Metadata Link
+            if (nft.uri && nft.uri.startsWith('http')) {
+                elements.openUriBtn.href = resolveURI(nft.uri);
+                elements.openUriBtn.style.display = 'inline-flex';
+            } else {
+                elements.openUriBtn.style.display = 'none';
+            }
+
+            // Render Traits Grid
+            elements.modalTraitsGrid.innerHTML = '';
+            if (nft.attributes && nft.attributes.length > 0) {
+                nft.attributes.forEach(attr => {
+                    const traitCard = document.createElement('div');
+                    traitCard.className = 'trait-card';
+                    traitCard.innerHTML = `
+                        <div class="trait-type">${attr.trait_type}</div>
+                        <div class="trait-value" title="${attr.value}">${attr.value}</div>
+                    `;
+                    elements.modalTraitsGrid.appendChild(traitCard);
+                });
+            } else {
+                elements.modalTraitsGrid.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; grid-column:1/-1;">No attributes found for this NFT.</div>`;
+            }
+
+            // Render Pretty Raw JSON
+            elements.modalRawJson.textContent = JSON.stringify(nft.rawJson, null, 2);
+
+            // Display Modal
+            elements.nftModal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            elements.nftModal.classList.remove('open');
+            document.body.style.overflow = 'auto';
+            elements.modalMediaContainer.innerHTML = '';
+        }
+
+        // Status Banner Updater
+        function updateStatus(stateLabel, text, current = 0, total = 0) {
+            elements.statusState.textContent = stateLabel;
+            elements.statusText.textContent = text;
+            elements.statusCount.textContent = `${current} / ${total}`;
+
+            const percentage = total > 0 ? (current / total) * 100 : 0;
+            elements.progressFill.style.width = `${percentage}%`;
+
+            if (stateLabel === 'Complete') {
+                setTimeout(() => {
+                    elements.statusContainer.style.display = 'none';
+                }, 3000);
+            } else {
+                elements.statusContainer.style.display = 'block';
+            }
+        }
+
+        // Error Handler Display
+        function showError(msg) {
+            elements.statusSpinner.style.display = 'none';
+            elements.errorMessage.textContent = msg;
+            elements.errorAlert.style.display = 'flex';
+        }
+    </script>
 </body>
 </html>
