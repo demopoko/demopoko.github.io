@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Referrer Policy সেট করা হলো যাতে CDN থেকে ইমেজ ব্লক না করে -->
     <meta name="referrer" content="no-referrer">
-    <title>Direct NFT Image Loader (1 - 7000)</title>
+    <title>Direct NFT Image Loader & Exporter</title>
+    <!-- ZIP তৈরি এবং ডাউনলোডের জন্য প্রয়োজনীয় JS libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -30,23 +32,39 @@
             margin-bottom: 10px;
         }
 
-        .pagination-controls {
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .row-controls {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-top: 15px;
             flex-wrap: wrap;
         }
 
         button {
-            padding: 10px 18px;
+            padding: 9px 16px;
             background-color: #0284c7;
             color: white;
             border: none;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0369a1;
         }
 
         button:disabled {
@@ -54,14 +72,30 @@
             cursor: not-allowed;
         }
 
+        .btn-download {
+            background-color: #10b981;
+        }
+
+        .btn-download:hover {
+            background-color: #059669;
+        }
+
         input {
             padding: 9px;
             border-radius: 6px;
             border: 1px solid #334155;
-            background-color: #1e293b;
+            background-color: #0f172a;
             color: white;
+            outline: none;
+        }
+
+        input[type="number"] {
             width: 100px;
             text-align: center;
+        }
+
+        input[type="text"] {
+            width: 250px;
         }
 
         .gallery-grid {
@@ -81,6 +115,25 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            position: relative;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 7px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc2626;
         }
 
         .img-wrapper {
@@ -127,15 +180,24 @@
             text-decoration: underline;
             word-break: break-all;
         }
+
+        #download-status {
+            font-size: 13px;
+            color: #38bdf8;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>NFT Direct Viewer</h1>
+        <h1>NFT Direct Viewer & Downloader</h1>
         <p>মোট আইটেম: ৭,০০০টি (প্রতি পেজে ১০০টি করে দেখানো হচ্ছে)</p>
+    </header>
 
-        <div class="pagination-controls">
+    <div class="controls-container">
+        <!-- Pagination & Direct Jump -->
+        <div class="row-controls">
             <button id="prev-btn" onclick="changePage(-1)">← আগের ১০০টি</button>
             <span>পেজ: <strong id="page-num">১</strong> / ৭০</span>
             <button id="next-btn" onclick="changePage(1)">পরের ১০০টি →</button>
@@ -144,7 +206,15 @@
             <input type="number" id="jump-id" min="1" max="7000" placeholder="ID (1-7000)">
             <button onclick="jumpToID()">Go</button>
         </div>
-    </header>
+
+        <!-- Trait / Metadata Search & Download Actions -->
+        <div class="row-controls">
+            <input type="text" id="trait-search" placeholder="আইডি/ট্রেইট দিয়ে ফিল্টার করুন..." oninput="filterTraits()">
+            <button class="btn-download" id="download-btn" onclick="downloadVisibleZIP()">ZIP আকারে ডাউনলোড করুন</button>
+        </div>
+
+        <div id="download-status"></div>
+    </div>
 
     <div class="gallery-grid" id="gallery"></div>
 
@@ -152,11 +222,13 @@
         const baseUrl = "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/";
         const itemsPerPage = 100;
         let currentPage = 1;
+        let visibleItemIDs = []; // বর্তমান পেজে দৃশ্যমান আইডি ট্র্যাক রাখার জন্য
 
         function loadPage(page) {
             currentPage = page;
             const gallery = document.getElementById('gallery');
-            gallery.innerHTML = ''; // আগেরগুলো পরিষ্কার করা
+            gallery.innerHTML = ''; 
+            visibleItemIDs = [];
 
             const startID = (page - 1) * itemsPerPage + 1;
             const endID = Math.min(page * itemsPerPage, 7000);
@@ -164,36 +236,69 @@
             document.getElementById('page-num').innerText = page;
             document.getElementById('prev-btn').disabled = (page === 1);
             document.getElementById('next-btn').disabled = (page === 70);
+            document.getElementById('trait-search').value = '';
 
             for (let id = startID; id <= endID; id++) {
-                const imgUrl = `${baseUrl}${id}.jpeg`;
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.id = `card-${id}`;
-
-                card.innerHTML = `
-                    <div class="img-wrapper">
-                        <img 
-                            src="${imgUrl}" 
-                            alt="NFT #${id}"
-                            onerror="showError(${id})"
-                        >
-                        <div class="error-box" id="error-${id}">
-                            <span>ছবি লোড হয়নি</span>
-                            <button class="retry-btn" onclick="reloadSingleImg(${id})">🔄 রিফ্রেশ</button>
-                            <a href="${imgUrl}" target="_blank" class="direct-link">সরাসরি লিংক খুলুন</a>
-                        </div>
-                    </div>
-                    <div>
-                        <strong>Item #${id}</strong>
-                    </div>
-                `;
-
-                gallery.appendChild(card);
+                visibleItemIDs.push(id);
+                createCard(id, gallery);
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function createCard(id, gallery) {
+            const imgUrl = `${baseUrl}${id}.jpeg`;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = `card-${id}`;
+            card.setAttribute('data-id', id);
+
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteCard(${id})">✕ Delete</button>
+                <div class="img-wrapper">
+                    <img 
+                        src="${imgUrl}" 
+                        alt="NFT #${id}"
+                        onerror="showError(${id})"
+                        crossorigin="anonymous"
+                    >
+                    <div class="error-box" id="error-${id}">
+                        <span>ছবি লোড হয়নি</span>
+                        <button class="retry-btn" onclick="reloadSingleImg(${id})">🔄 রিফ্রেশ</button>
+                        <a href="${imgUrl}" target="_blank" class="direct-link">সরাসরি লিংক খুলুন</a>
+                    </div>
+                </div>
+                <div>
+                    <strong>Item #${id}</strong>
+                </div>
+            `;
+
+            gallery.appendChild(card);
+        }
+
+        // কার্ড ডিলিট ফাংশন
+        function deleteCard(id) {
+            const card = document.getElementById(`card-${id}`);
+            if (card) {
+                card.remove();
+                visibleItemIDs = visibleItemIDs.filter(itemID => itemID !== id);
+            }
+        }
+
+        // ট্রেইট/আইডি ফিল্টার ফাংশন
+        function filterTraits() {
+            const query = document.getElementById('trait-search').value.trim().toLowerCase();
+            const cards = document.querySelectorAll('.card');
+
+            cards.forEach(card => {
+                const id = card.getAttribute('data-id');
+                if (query === '' || id.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
         function showError(id) {
@@ -214,8 +319,6 @@
                 
                 errorBox.style.display = 'none';
                 img.style.display = 'block';
-
-                // Bypass cache with unique URL
                 img.src = `${baseUrl}${id}.jpeg?t=${new Date().getTime()}`;
             }
         }
@@ -234,6 +337,58 @@
                 loadPage(targetPage);
             } else {
                 alert('১ থেকে ৭০০০ এর মধ্যে আইডি লিখুন।');
+            }
+        }
+
+        // ZIP ফাইল তৈরি ও ডাউনলোড ফাংশন (শুধুমাত্র ১.png, ২.png নাম দিয়ে)
+        async function downloadVisibleZIP() {
+            const zip = new JSZip();
+            const statusDiv = document.getElementById('download-status');
+            const downloadBtn = document.getElementById('download-btn');
+
+            // ফিল্টার বা ডিলিট করার পর যেগুলো বাস্তবে ডিসপ্লেতে দৃশ্যমান আছে সেগুলোর আইডি সংগ্রহ
+            const visibleCards = Array.from(document.querySelectorAll('.card'))
+                .filter(card => card.style.display !== 'none');
+
+            if (visibleCards.length === 0) {
+                alert('ডাউনলোড করার মত কোনো ছবি নেই!');
+                return;
+            }
+
+            downloadBtn.disabled = true;
+            statusDiv.innerText = "ছবিগুলো প্রস্তুত করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...";
+
+            let count = 0;
+
+            for (let i = 0; i < visibleCards.length; i++) {
+                const card = visibleCards[i];
+                const id = card.getAttribute('data-id');
+                const imgUrl = `${baseUrl}${id}.jpeg`;
+
+                try {
+                    const response = await fetch(imgUrl);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        // নাম হবে শুধু 1.png, 2.png বা আইডি অনুযায়ী {id}.png
+                        zip.file(`${id}.png`, blob);
+                        count++;
+                        statusDiv.innerText = `প্রসেসিং হচ্ছে: ${count}/${visibleCards.length}`;
+                    }
+                } catch (err) {
+                    console.error(`ID #${id} ডাউনলোড করা যায়নি:`, err);
+                }
+            }
+
+            if (count > 0) {
+                statusDiv.innerText = "ZIP তৈরি হচ্ছে...";
+                zip.generateAsync({ type: "blob" }).then(function (content) {
+                    saveAs(content, `NFT_Batch_Page_${currentPage}.zip`);
+                    statusDiv.innerText = "ডাউনলোড সম্পন্ন হয়েছে!";
+                    downloadBtn.disabled = false;
+                });
+            } else {
+                statusDiv.innerText = "কোনো ছবি ডাউনলোড করা সম্ভব হয়নি।";
+                downloadBtn.disabled = false;
             }
         }
 
