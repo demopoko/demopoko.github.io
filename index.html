@@ -90,7 +90,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Collection Dashboard</h2>
-            <p class="text-xs text-gray-400">অটোমেটিক ৭,০০০টি মেটাডাটা লোড হচ্ছে।</p>
+            <p class="text-xs text-gray-400">Automatically loading 7,000 metadata items.</p>
           </div>
           <button id="btnStartLoad" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs shadow-lg transition">
             <i class="fa-solid fa-rotate mr-1.5"></i> Restart Auto-Fetch
@@ -105,7 +105,7 @@
           <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden p-0.5">
             <div id="loadProgressBar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full w-0 rounded-full transition-all duration-150"></div>
           </div>
-          <div id="loadStatusMsg" class="text-[11px] text-gray-400 font-mono text-center">মাল্টি-গেটওয়ে ফেচিং চালু হচ্ছে...</div>
+          <div id="loadStatusMsg" class="text-[11px] text-gray-400 font-mono text-center">Starting multi-gateway fetching...</div>
         </div>
       </div>
 
@@ -124,7 +124,7 @@
         </div>
 
         <div id="nftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হচ্ছে...</div>
+          <div class="col-span-full text-center py-12 text-gray-500 italic">Loading metadata...</div>
         </div>
       </div>
 
@@ -132,14 +132,14 @@
       <div id="view-editor" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Bulk Layer Add & Replace Engine</h2>
-          <p class="text-xs text-gray-400">টার্গেট এট্রিবিউট সিলেক্ট করে একসাথে সব NFT-তে নতুন লেয়ার লাগান।</p>
+          <p class="text-xs text-gray-400">Select a target attribute to apply a new layer to all matching NFTs at once.</p>
         </div>
 
         <div class="grid grid-cols-12 gap-6">
           <div class="col-span-7 glass-panel p-6 rounded-xl space-y-5 border border-indigo-500/30">
             <!-- STEP 1 -->
             <div class="space-y-3">
-              <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">১. টার্গেট এট্রিবিউট সিলেক্ট করুন</h3>
+              <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">1. Select Target Attribute</h3>
               <div class="grid grid-cols-2 gap-4 bg-black/30 p-3 rounded-lg border border-dark-border">
                 <div>
                   <label class="block text-[11px] text-gray-400 mb-1">Trait Type</label>
@@ -156,14 +156,14 @@
               </div>
 
               <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-300 flex items-center justify-between">
-                <span>ম্যাচিং NFT সংখ্যা:</span>
+                <span>Matching NFT Count:</span>
                 <span id="editorMatchCount" class="font-bold font-mono text-sm text-white">0 tokens</span>
               </div>
             </div>
 
             <!-- STEP 2 -->
             <div class="space-y-3">
-              <h3 class="font-bold text-xs text-pink-400 uppercase tracking-wider">২. নতুন PNG লেয়ার সিলেক্ট করুন</h3>
+              <h3 class="font-bold text-xs text-pink-400 uppercase tracking-wider">2. Select New PNG Layer</h3>
               <select id="editorLayerSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-pink-500 focus:outline-none">
                 <option value="">-- Select PNG Layer --</option>
               </select>
@@ -171,16 +171,16 @@
 
             <button id="btnApplyBulk" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center space-x-2">
               <i class="fa-solid fa-bolt text-sm"></i>
-              <span>একসাথে সবগুলোতে এপ্লাই করুন</span>
+              <span>Apply To All</span>
             </button>
           </div>
 
           <!-- LOG PANEL -->
           <div class="col-span-5 glass-panel p-6 rounded-xl flex flex-col justify-between">
             <div>
-              <h3 class="font-bold text-sm text-white mb-3">পরিবর্তনের ইতিহাস (Log)</h3>
+              <h3 class="font-bold text-sm text-white mb-3">Change History (Log)</h3>
               <div id="changeHistoryLog" class="space-y-2 overflow-y-auto max-h-[280px] text-xs">
-                <div class="text-gray-500 italic p-4 text-center border border-dashed border-dark-border rounded-lg">কোনো পরিবর্তন হয়নি।</div>
+                <div class="text-gray-500 italic p-4 text-center border border-dashed border-dark-border rounded-lg">No changes yet.</div>
               </div>
             </div>
           </div>
@@ -191,11 +191,11 @@
       <div id="view-edited" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Edited NFTs (Live Overlay)</h2>
-          <p class="text-xs text-gray-400">যে সকল NFT-তে লেয়ার রিপ্লেস বা এড করা হয়েছে সেগুলোর লাইব ক্যানভাস প্রিভিউ।</p>
+          <p class="text-xs text-gray-400">Live canvas preview of NFTs that have had layers replaced or added.</p>
         </div>
 
         <div id="editedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          <div class="col-span-full text-center py-12 text-gray-500 italic">এখনো কোনো NFT এডিট করা হয়নি।</div>
+          <div class="col-span-full text-center py-12 text-gray-500 italic">No NFTs have been edited yet.</div>
         </div>
       </div>
 
@@ -204,7 +204,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Layer Library</h2>
-            <p class="text-xs text-gray-400">ট্রান্সপারেন্ট PNG ফাইল আপলোড করুন।</p>
+            <p class="text-xs text-gray-400">Upload transparent PNG files.</p>
           </div>
           <label class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs rounded-lg cursor-pointer transition flex items-center space-x-2">
             <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -220,7 +220,7 @@
       <div id="view-export" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Export Suite</h2>
-          <p class="text-xs text-gray-400">আপডেট হওয়া সকল ৭০০০টি মেটাডাটা ZIP ফাইলে ডাউনলোড করুন।</p>
+          <p class="text-xs text-gray-400">Download all 7,000 updated metadata files as a ZIP.</p>
         </div>
 
         <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
@@ -232,14 +232,23 @@
   </div>
 
   <script>
-    // 5 Fast IPFS Gateways with Fallback
-    const GATEWAYS = [
-      'https://gateway.pinata.cloud/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
-      'https://ipfs.io/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
-      'https://cloudflare-ipfs.com/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
-      'https://dweb.link/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
-      'https://gateway.ipfs.io/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/'
+    // Bare IPFS gateway hosts (no CID baked in) - used to resolve any ipfs:// URI,
+    // including per-image CIDs that differ from the metadata folder's CID.
+    // NOTE: cloudflare-ipfs.com was decommissioned in Aug 2024 and no longer
+    // resolves IPFS content, so it has been replaced below with a live gateway.
+    const GATEWAY_BASES = [
+      'https://gateway.pinata.cloud/ipfs/',
+      'https://ipfs.io/ipfs/',
+      'https://dweb.link/ipfs/',
+      'https://nftstorage.link/ipfs/',
+      'https://w3s.link/ipfs/'
     ];
+
+    // Metadata folder CID for this collection - combined with GATEWAY_BASES
+    // to build the 5 fast fallback gateways used for fetching token JSON.
+    const METADATA_CID = 'bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq';
+    const GATEWAYS = GATEWAY_BASES.map(base => `${base}${METADATA_CID}/`);
+
     const TOTAL_TOKENS = 7000;
     const PAGE_SIZE = 48;
 
@@ -347,7 +356,7 @@
       }
 
       state.isLoading = false;
-      $('loadStatusMsg').textContent = "সব ৭,০০০টি মেটাডাটা সম্পূর্ণ লোড হয়েছে!";
+      $('loadStatusMsg').textContent = "All 7,000 metadata items fully loaded!";
       populateEditorDropdowns();
       renderGallery();
     }
@@ -360,7 +369,7 @@
       $('loadPercentage').textContent = `${pct}%`;
       $('loadProgressBar').style.width = `${pct}%`;
       $('statActiveCount').textContent = `${count} / ${TOTAL_TOKENS} Loaded`;
-      $('loadStatusMsg').textContent = `অটোমেটিক লোড হচ্ছে... (${count} টি ডাটা রেডি)`;
+      $('loadStatusMsg').textContent = `Auto-loading... (${count} items ready)`;
     }
 
     // 2. PAGINATED NFT GALLERY FOR FULL 7,000 LOAD
@@ -369,7 +378,7 @@
       grid.innerHTML = '';
 
       if (state.tokens.size === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হচ্ছে, কিছুক্ষন অপেক্ষা করুন...</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">Loading metadata, please wait...</div>`;
         return;
       }
 
@@ -383,13 +392,14 @@
 
       items.forEach(([id, data]) => {
         const meta = data.edited || data.original;
-        const imgUrl = fixIpfsUrl(meta.image);
+        const rawImg = meta.image || '';
+        const imgUrl = rawImg ? fixIpfsUrl(rawImg, 0) : placeholderImage(id);
 
         const card = document.createElement('div');
         card.className = 'glass-panel rounded-xl p-2 border border-dark-border flex flex-col space-y-2';
         card.innerHTML = `
           <div class="aspect-square bg-black/50 rounded-lg overflow-hidden relative">
-            <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150/0b0f17/ffffff?text=NFT+#${id}'">
+            <img src="${imgUrl}" data-raw="${rawImg.replace(/"/g, '&quot;')}" data-gw="0" loading="lazy" class="w-full h-full object-cover" onerror="handleImgError(this, ${id})">
             ${data.edited ? `<span class="absolute top-1.5 right-1.5 bg-emerald-500 text-black font-bold text-[9px] px-1.5 py-0.5 rounded">EDITED</span>` : ''}
           </div>
           <div class="font-bold text-xs text-white truncate">${meta.name || `#${id}`}</div>
@@ -460,7 +470,7 @@
       const layerId = $('editorLayerSelect').value;
 
       if (!traitType || !traitValue || !layerId) {
-        alert('সকল ফিল্ড সঠিক ভাবে সিলেক্ট করুন!');
+        alert('Please select all fields correctly!');
         return;
       }
 
@@ -491,12 +501,12 @@
       entry.className = "p-2.5 bg-black/40 border border-dark-border rounded-lg space-y-1";
       entry.innerHTML = `
         <div class="font-bold text-indigo-400">${traitType} = "${traitValue}"</div>
-        <div class="text-[11px] text-gray-300">নতুন লেয়ার: <strong>${layerObj.name}</strong></div>
-        <div class="text-[10px] text-emerald-400 font-mono">${affected} টি NFT আপডেট করা হয়েছে।</div>
+        <div class="text-[11px] text-gray-300">New Layer: <strong>${layerObj.name}</strong></div>
+        <div class="text-[10px] text-emerald-400 font-mono">${affected} NFTs updated.</div>
       `;
       log.prepend(entry);
 
-      alert(`সফলভাবে ${affected} টি NFT-তে "${layerObj.name}" লেয়ার যুক্ত করা হয়েছে!`);
+      alert(`Successfully added layer "${layerObj.name}" to ${affected} NFTs!`);
     }
 
     // 4. EDITED NFTS PREVIEW
@@ -507,7 +517,7 @@
       let editedTokens = Array.from(state.tokens.entries()).filter(([_, data]) => data.edited !== null);
 
       if (editedTokens.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">এখনো কোনো NFT এডিট করা হয়নি।</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">No NFTs have been edited yet.</div>`;
         return;
       }
 
@@ -530,24 +540,41 @@
           const canvas = document.getElementById(canvasId);
           if (!canvas) return;
           const ctx = canvas.getContext('2d');
-          
-          const baseImg = new Image();
-          baseImg.crossOrigin = 'anonymous';
-          baseImg.src = fixIpfsUrl(meta.image);
 
-          baseImg.onload = () => {
-            canvas.width = baseImg.width || 500;
-            canvas.height = baseImg.height || 500;
-            ctx.drawImage(baseImg, 0, 0);
+          const drawBase = (gatewayIndex) => {
+            const baseImg = new Image();
+            baseImg.crossOrigin = 'anonymous';
+            baseImg.src = meta.image ? fixIpfsUrl(meta.image, gatewayIndex) : placeholderImage(id);
 
-            if (meta.newOverlay) {
-              const layerImg = new Image();
-              layerImg.src = meta.newOverlay;
-              layerImg.onload = () => {
-                ctx.drawImage(layerImg, 0, 0, canvas.width, canvas.height);
-              };
-            }
+            baseImg.onload = () => {
+              canvas.width = baseImg.width || 500;
+              canvas.height = baseImg.height || 500;
+              ctx.drawImage(baseImg, 0, 0);
+
+              if (meta.newOverlay) {
+                const layerImg = new Image();
+                layerImg.src = meta.newOverlay;
+                layerImg.onload = () => {
+                  ctx.drawImage(layerImg, 0, 0, canvas.width, canvas.height);
+                };
+              }
+            };
+
+            baseImg.onerror = () => {
+              // Try the next IPFS gateway before giving up on the base image.
+              if (meta.image && meta.image.startsWith('ipfs://') && gatewayIndex + 1 < GATEWAY_BASES.length) {
+                drawBase(gatewayIndex + 1);
+              } else {
+                canvas.width = 300;
+                canvas.height = 300;
+                const fallback = new Image();
+                fallback.src = placeholderImage(id);
+                fallback.onload = () => ctx.drawImage(fallback, 0, 0);
+              }
+            };
           };
+
+          drawBase(0);
         }, 80);
       });
     }
@@ -576,7 +603,7 @@
       const grid = $('layerLibraryGrid');
       grid.innerHTML = '';
       if (state.layerLibrary.length === 0) {
-        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">কোনো লেয়ার পাওয়া যায়নি।</div>`;
+        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">No layers found.</div>`;
         return;
       }
       state.layerLibrary.forEach(layer => {
@@ -601,18 +628,49 @@
     }
 
     // UTILS
-    function fixIpfsUrl(url) {
+    // Resolves an ipfs:// URI using the image's OWN cid/path (not the metadata
+    // folder's CID). gatewayIndex lets callers cycle through gateways on error.
+    function fixIpfsUrl(url, gatewayIndex = 0) {
       if (!url) return '';
       if (url.startsWith('ipfs://')) {
-        return url.replace('ipfs://', GATEWAYS[0]);
+        const path = url.replace('ipfs://', '').replace(/^ipfs\//, '');
+        const base = GATEWAY_BASES[gatewayIndex % GATEWAY_BASES.length];
+        return `${base}${path}`;
       }
       return url;
+    }
+
+    // Small inline placeholder (no external network dependency, unlike the old
+    // via.placeholder.com service which no longer reliably serves images).
+    function placeholderImage(id) {
+      const label = `NFT #${id}`;
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'>`
+        + `<rect width='100%' height='100%' fill='#0b0f17'/>`
+        + `<text x='50%' y='50%' fill='#9ca3af' font-family='sans-serif' font-size='18' text-anchor='middle' dominant-baseline='middle'>${label}</text>`
+        + `</svg>`;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    // Called from an <img onerror>: cycles through remaining IPFS gateways
+    // before finally falling back to the inline placeholder, so a single slow
+    // or blocked gateway doesn't leave NFT images broken.
+    function handleImgError(imgEl, id) {
+      const raw = imgEl.dataset.raw || '';
+      const nextIndex = parseInt(imgEl.dataset.gw || '0', 10) + 1;
+
+      if (raw.startsWith('ipfs://') && nextIndex < GATEWAY_BASES.length) {
+        imgEl.dataset.gw = String(nextIndex);
+        imgEl.src = fixIpfsUrl(raw, nextIndex);
+      } else {
+        imgEl.onerror = null;
+        imgEl.src = placeholderImage(id);
+      }
     }
 
     // EXPORT
     async function exportMetadataZip() {
       if (state.tokens.size === 0) {
-        alert('আগে মেটাডাটা লোড হতে দিন।');
+        alert('Please let the metadata load first.');
         return;
       }
       const zip = new JSZip();
