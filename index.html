@@ -4,213 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>Direct NFT Image Loader & Exporter</title>
-    <!-- ZIP তৈরি এবং ডাউনলোডের জন্য প্রয়োজনীয় JS libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.min.js"></script>
+    <title>NFT Layer & Metadata Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #0f172a;
-            color: #ffffff;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        h1 {
-            color: #38bdf8;
-            margin-bottom: 10px;
-        }
-
-        .controls-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 1200px;
-            margin: 0 auto 20px auto;
-            background-color: #1e293b;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-        }
-
-        .row-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 9px 16px;
-            background-color: #0284c7;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #0369a1;
-        }
-
-        button:disabled {
-            background-color: #334155;
-            cursor: not-allowed;
-        }
-
-        .btn-download {
-            background-color: #10b981;
-        }
-
-        .btn-download:hover {
-            background-color: #059669;
-        }
-
-        input {
-            padding: 9px;
-            border-radius: 6px;
-            border: 1px solid #334155;
-            background-color: #0f172a;
-            color: white;
-            outline: none;
-        }
-
-        input[type="number"] {
-            width: 100px;
-            text-align: center;
-        }
-
-        input[type="text"] {
-            width: 250px;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            max-width: 1400px;
-            margin: 20px auto;
-        }
-
-        .card {
-            background-color: #1e293b;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            padding: 10px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 3px 7px;
-            font-size: 11px;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .delete-btn:hover {
-            background-color: #dc2626;
-        }
-
-        .img-wrapper {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background-color: #0f172a;
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .error-box {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background-color: #1e293b;
-            color: #f87171;
-            font-size: 13px;
-            padding: 10px;
-        }
-
-        .retry-btn {
-            background-color: #ef4444;
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-
-        .direct-link {
-            font-size: 11px;
-            color: #38bdf8;
-            text-decoration: underline;
-            word-break: break-all;
-        }
-
-        #download-status {
-            font-size: 13px;
-            color: #38bdf8;
-            text-align: center;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #0f172a; color: #ffffff; padding: 20px; }
+        header { text-align: center; margin-bottom: 25px; }
+        h1 { color: #38bdf8; margin-bottom: 10px; }
+        .controls-container { display: flex; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto 20px auto; background-color: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
+        .row-controls { display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; }
+        button { padding: 9px 16px; background-color: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0369a1; }
+        button:disabled { background-color: #334155; cursor: not-allowed; }
+        .btn-download { background-color: #10b981; }
+        .btn-download:hover { background-color: #059669; }
+        .btn-edit { background-color: #f59e0b; }
+        .btn-edit:hover { background-color: #d97706; }
+        select, input { padding: 9px; border-radius: 6px; border: 1px solid #334155; background-color: #0f172a; color: white; outline: none; }
+        input[type="number"] { width: 100px; text-align: center; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; max-width: 1400px; margin: 20px auto; }
+        .card { background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; padding: 10px; text-align: center; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 11px; cursor: pointer; z-index: 10; }
+        .img-wrapper { width: 100%; aspect-ratio: 1 / 1; background-color: #0f172a; border-radius: 6px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+        img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 8px; width: 400px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #38bdf8; }
+        #download-status { font-size: 13px; color: #38bdf8; text-align: center; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>NFT Direct Viewer & Downloader</h1>
-        <p>মোট আইটেম: ৭,০০০টি (প্রতি পেজে ১০০টি করে দেখানো হচ্ছে)</p>
+        <h1>NFT Layer & Metadata Manager</h1>
+        <p>মোট আইটেম: ৭,০০০টি (প্রতি পেজে ১০০টি)</p>
     </header>
 
     <div class="controls-container">
-        <!-- Pagination & Direct Jump -->
+        <!-- Pagination -->
         <div class="row-controls">
             <button id="prev-btn" onclick="changePage(-1)">← আগের ১০০টি</button>
             <span>পেজ: <strong id="page-num">১</strong> / ৭০</span>
             <button id="next-btn" onclick="changePage(1)">পরের ১০০টি →</button>
-            
             <span style="margin-left: 15px;">সরাসরি যান:</span>
             <input type="number" id="jump-id" min="1" max="7000" placeholder="ID (1-7000)">
             <button onclick="jumpToID()">Go</button>
         </div>
 
-        <!-- Trait / Metadata Search & Download Actions -->
+        <!-- Dynamic Layer Filter & Layer Edit -->
         <div class="row-controls">
-            <input type="text" id="trait-search" placeholder="আইডি/ট্রেইট দিয়ে ফিল্টার করুন..." oninput="filterTraits()">
-            <button class="btn-download" id="download-btn" onclick="downloadVisibleZIP()">ZIP আকারে ডাউনলোড করুন</button>
+            <select id="layer-type-select" onchange="updateTraitValueDropdown()">
+                <option value="">-- লেয়ার টাইপ নির্বাচন করুন --</option>
+            </select>
+
+            <select id="trait-value-select" onchange="filterNFTsByLayer()">
+                <option value="">-- ফিল্টার ভ্যালু নির্বাচন করুন --</option>
+            </select>
+
+            <button class="btn-edit" onclick="openEditModal()">সিলেক্ট করা লেয়ার এডিট করুন</button>
+            <button class="btn-download" id="download-btn" onclick="downloadVisibleZIP()">ZIP ডাউনলোড করুন</button>
         </div>
 
         <div id="download-status"></div>
@@ -218,181 +72,296 @@
 
     <div class="gallery-grid" id="gallery"></div>
 
+    <!-- Modal for Editing Layer -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h3>লেয়ার এডিট করুন</h3>
+            <label>নতুন ট্রেইট/মেটাডেটা নাম:</label>
+            <input type="text" id="new-trait-name" placeholder="যেমন: Dark Red">
+            
+            <label>নতুন ছবি আপলোড (সকল নির্দিষ্ট NFT-তে যুক্ত হবে):</label>
+            <input type="file" id="new-layer-image" accept="image/*">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button style="background-color: #64748b;" onclick="closeEditModal()">বাতিল</button>
+                <button onclick="applyLayerEdit()">সেভ ও আপডেট করুন</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const baseUrl = "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/";
         const itemsPerPage = 100;
         let currentPage = 1;
-        let visibleItemIDs = []; // বর্তমান পেজে দৃশ্যমান আইডি ট্র্যাক রাখার জন্য
+        let nftDataStore = {}; // মেটাডেটা ও ইমেজ ক্যাশ রাখার জন্য Storage
 
-        function loadPage(page) {
+        async function loadPage(page) {
             currentPage = page;
             const gallery = document.getElementById('gallery');
-            gallery.innerHTML = ''; 
-            visibleItemIDs = [];
+            gallery.innerHTML = 'লোড হচ্ছে...';
+            document.getElementById('page-num').innerText = page;
 
             const startID = (page - 1) * itemsPerPage + 1;
             const endID = Math.min(page * itemsPerPage, 7000);
 
-            document.getElementById('page-num').innerText = page;
-            document.getElementById('prev-btn').disabled = (page === 1);
-            document.getElementById('next-btn').disabled = (page === 70);
-            document.getElementById('trait-search').value = '';
+            // Fetch metadata and images for current page
+            const fetchPromises = [];
+            for (let id = startID; id <= endID; id++) {
+                if (!nftDataStore[id]) {
+                    fetchPromises.push(fetchNFTData(id));
+                }
+            }
+            await Promise.all(fetchPromises);
+
+            renderGallery(startID, endID);
+            populateLayerDropdowns();
+        }
+
+        async function fetchNFTData(id) {
+            const imgUrl = `${baseUrl}${id}.jpeg`;
+            const jsonUrl = `${baseUrl}${id}.json`;
+
+            let metadata = { attributes: [] };
+            try {
+                const res = await fetch(jsonUrl);
+                if (res.ok) metadata = await res.json();
+            } catch (e) {
+                console.warn(`Metadata error ID #${id}`);
+            }
+
+            nftDataStore[id] = {
+                id: id,
+                imgUrl: imgUrl,
+                customImg: null, // এডিট করা ইমেজের জন্য DataURL
+                metadata: metadata
+            };
+        }
+
+        function renderGallery(startID, endID) {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
 
             for (let id = startID; id <= endID; id++) {
-                visibleItemIDs.push(id);
-                createCard(id, gallery);
-            }
+                const item = nftDataStore[id];
+                if (!item) continue;
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = `card-${id}`;
+                card.setAttribute('data-id', id);
 
-        function createCard(id, gallery) {
-            const imgUrl = `${baseUrl}${id}.jpeg`;
+                const displayImg = item.customImg ? item.customImg : item.imgUrl;
 
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.id = `card-${id}`;
-            card.setAttribute('data-id', id);
-
-            card.innerHTML = `
-                <button class="delete-btn" onclick="deleteCard(${id})">✕ Delete</button>
-                <div class="img-wrapper">
-                    <img 
-                        src="${imgUrl}" 
-                        alt="NFT #${id}"
-                        onerror="showError(${id})"
-                        crossorigin="anonymous"
-                    >
-                    <div class="error-box" id="error-${id}">
-                        <span>ছবি লোড হয়নি</span>
-                        <button class="retry-btn" onclick="reloadSingleImg(${id})">🔄 রিফ্রেশ</button>
-                        <a href="${imgUrl}" target="_blank" class="direct-link">সরাসরি লিংক খুলুন</a>
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteCard(${id})">✕ Delete</button>
+                    <div class="img-wrapper">
+                        <img src="${displayImg}" id="img-${id}" alt="NFT #${id}">
                     </div>
-                </div>
-                <div>
-                    <strong>Item #${id}</strong>
-                </div>
-            `;
-
-            gallery.appendChild(card);
-        }
-
-        // কার্ড ডিলিট ফাংশন
-        function deleteCard(id) {
-            const card = document.getElementById(`card-${id}`);
-            if (card) {
-                card.remove();
-                visibleItemIDs = visibleItemIDs.filter(itemID => itemID !== id);
+                    <div><strong>Item #${id}</strong></div>
+                `;
+                gallery.appendChild(card);
             }
         }
 
-        // ট্রেইট/আইডি ফিল্টার ফাংশন
-        function filterTraits() {
-            const query = document.getElementById('trait-search').value.trim().toLowerCase();
+        // ডায়নামিক লেয়ার ফিল্টার তৈরি
+        function populateLayerDropdowns() {
+            const layerTypeSelect = document.getElementById('layer-type-select');
+            const selectedType = layerTypeSelect.value;
+            layerTypeSelect.innerHTML = '<option value="">-- লেয়ার টাইপ নির্বাচন করুন --</option>';
+
+            const traitsMap = {};
+
+            Object.values(nftDataStore).forEach(nft => {
+                if (nft.metadata && nft.metadata.attributes) {
+                    nft.metadata.attributes.forEach(attr => {
+                        if (!traitsMap[attr.trait_type]) {
+                            traitsMap[attr.trait_type] = new Set();
+                        }
+                        traitsMap[attr.trait_type].add(attr.value);
+                    });
+                }
+            });
+
+            for (let traitType in traitsMap) {
+                const opt = document.createElement('option');
+                opt.value = traitType;
+                opt.innerText = traitType;
+                if (traitType === selectedType) opt.selected = true;
+                layerTypeSelect.appendChild(opt);
+            }
+
+            updateTraitValueDropdown();
+        }
+
+        function updateTraitValueDropdown() {
+            const selectedType = document.getElementById('layer-type-select').value;
+            const valueSelect = document.getElementById('trait-value-select');
+            valueSelect.innerHTML = '<option value="">-- ফিল্টার ভ্যালু নির্বাচন করুন --</option>';
+
+            if (!selectedType) return;
+
+            const values = new Set();
+            Object.values(nftDataStore).forEach(nft => {
+                if (nft.metadata && nft.metadata.attributes) {
+                    nft.metadata.attributes.forEach(attr => {
+                        if (attr.trait_type === selectedType) {
+                            values.add(attr.value);
+                        }
+                    });
+                }
+            });
+
+            values.forEach(val => {
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.innerText = val;
+                valueSelect.appendChild(opt);
+            });
+        }
+
+        // নির্দিষ্ট লেয়ার সিলেক্ট করে ফিল্টার
+        function filterNFTsByLayer() {
+            const layerType = document.getElementById('layer-type-select').value;
+            const traitVal = document.getElementById('trait-value-select').value;
+
             const cards = document.querySelectorAll('.card');
 
             cards.forEach(card => {
                 const id = card.getAttribute('data-id');
-                if (query === '' || id.includes(query)) {
+                const nft = nftDataStore[id];
+
+                if (!layerType || !traitVal) {
                     card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
+                    return;
                 }
+
+                let match = false;
+                if (nft && nft.metadata && nft.metadata.attributes) {
+                    match = nft.metadata.attributes.some(attr => 
+                        attr.trait_type === layerType && String(attr.value) === String(traitVal)
+                    );
+                }
+
+                card.style.display = match ? 'flex' : 'none';
             });
         }
 
-        function showError(id) {
-            const card = document.getElementById(`card-${id}`);
-            if (card) {
-                const img = card.querySelector('img');
-                const errorBox = card.querySelector('.error-box');
-                if (img) img.style.display = 'none';
-                if (errorBox) errorBox.style.display = 'flex';
+        // লেয়ার এডিটর মডাল
+        function openEditModal() {
+            const layerType = document.getElementById('layer-type-select').value;
+            const traitVal = document.getElementById('trait-value-select').value;
+
+            if (!layerType || !traitVal) {
+                alert('অনুগ্রহ করে আগে একটি লেয়ার টাইপ এবং ভ্যালু সিলেক্ট করুন!');
+                return;
+            }
+
+            document.getElementById('new-trait-name').value = traitVal;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // লেয়ার পিকচার ও মেটাডেটা আপডেট যুক্ত করা
+        function applyLayerEdit() {
+            const layerType = document.getElementById('layer-type-select').value;
+            const oldTraitVal = document.getElementById('trait-value-select').value;
+            const newTraitName = document.getElementById('new-trait-name').value;
+            const fileInput = document.getElementById('new-layer-image');
+
+            if (!newTraitName) {
+                alert('নতুন ট্রেইটের নাম দিন!');
+                return;
+            }
+
+            const applyChanges = (imageDataUrl = null) => {
+                Object.values(nftDataStore).forEach(nft => {
+                    if (nft.metadata && nft.metadata.attributes) {
+                        nft.metadata.attributes.forEach(attr => {
+                            if (attr.trait_type === layerType && String(attr.value) === String(oldTraitVal)) {
+                                // ১. মেটাডেটা নাম পরিবর্তন
+                                attr.value = newTraitName;
+                                
+                                // ২. নতুন পিকচার যুক্ত করা
+                                if (imageDataUrl) {
+                                    nft.customImg = imageDataUrl;
+                                    const imgElem = document.getElementById(`img-${nft.id}`);
+                                    if (imgElem) imgElem.src = imageDataUrl;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                alert('সফলভাবে সিলেক্ট করা সকল NFT-এর লেয়ার এবং মেটাডেটা আপডেট হয়েছে!');
+                closeEditModal();
+                populateLayerDropdowns();
+                filterNFTsByLayer();
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    applyChanges(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                applyChanges();
             }
         }
 
-        function reloadSingleImg(id) {
+        function deleteCard(id) {
             const card = document.getElementById(`card-${id}`);
-            if (card) {
-                const img = card.querySelector('img');
-                const errorBox = card.querySelector('.error-box');
-                
-                errorBox.style.display = 'none';
-                img.style.display = 'block';
-                img.src = `${baseUrl}${id}.jpeg?t=${new Date().getTime()}`;
-            }
+            if (card) card.remove();
         }
 
         function changePage(step) {
             const newPage = currentPage + step;
-            if (newPage >= 1 && newPage <= 70) {
-                loadPage(newPage);
-            }
+            if (newPage >= 1 && newPage <= 70) loadPage(newPage);
         }
 
         function jumpToID() {
             const id = parseInt(document.getElementById('jump-id').value);
             if (id >= 1 && id <= 7000) {
-                const targetPage = Math.ceil(id / itemsPerPage);
-                loadPage(targetPage);
+                loadPage(Math.ceil(id / itemsPerPage));
             } else {
                 alert('১ থেকে ৭০০০ এর মধ্যে আইডি লিখুন।');
             }
         }
 
-        // ZIP ফাইল তৈরি ও ডাউনলোড ফাংশন (শুধুমাত্র ১.png, ২.png নাম দিয়ে)
         async function downloadVisibleZIP() {
             const zip = new JSZip();
-            const statusDiv = document.getElementById('download-status');
-            const downloadBtn = document.getElementById('download-btn');
+            const visibleCards = Array.from(document.querySelectorAll('.card')).filter(card => card.style.display !== 'none');
 
-            // ফিল্টার বা ডিলিট করার পর যেগুলো বাস্তবে ডিসপ্লেতে দৃশ্যমান আছে সেগুলোর আইডি সংগ্রহ
-            const visibleCards = Array.from(document.querySelectorAll('.card'))
-                .filter(card => card.style.display !== 'none');
+            if (visibleCards.length === 0) return alert('ডাউনলোড করার মতো ছবি নেই!');
 
-            if (visibleCards.length === 0) {
-                alert('ডাউনলোড করার মত কোনো ছবি নেই!');
-                return;
-            }
-
-            downloadBtn.disabled = true;
-            statusDiv.innerText = "ছবিগুলো প্রস্তুত করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...";
-
-            let count = 0;
-
-            for (let i = 0; i < visibleCards.length; i++) {
-                const card = visibleCards[i];
+            for (let card of visibleCards) {
                 const id = card.getAttribute('data-id');
-                const imgUrl = `${baseUrl}${id}.jpeg`;
+                const nft = nftDataStore[id];
 
-                try {
-                    const response = await fetch(imgUrl);
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        // নাম হবে শুধু 1.png, 2.png বা আইডি অনুযায়ী {id}.png
+                if (nft.customImg) {
+                    const base64Data = nft.customImg.split(',')[1];
+                    zip.file(`${id}.png`, base64Data, { base64: true });
+                } else {
+                    try {
+                        const res = await fetch(nft.imgUrl);
+                        const blob = await res.blob();
                         zip.file(`${id}.png`, blob);
-                        count++;
-                        statusDiv.innerText = `প্রসেসিং হচ্ছে: ${count}/${visibleCards.length}`;
+                    } catch (e) {
+                        console.error(`ID #${id} Image load error`);
                     }
-                } catch (err) {
-                    console.error(`ID #${id} ডাউনলোড করা যায়নি:`, err);
                 }
+                // Updated Metadata
+                zip.file(`${id}.json`, JSON.stringify(nft.metadata, null, 2));
             }
 
-            if (count > 0) {
-                statusDiv.innerText = "ZIP তৈরি হচ্ছে...";
-                zip.generateAsync({ type: "blob" }).then(function (content) {
-                    saveAs(content, `NFT_Batch_Page_${currentPage}.zip`);
-                    statusDiv.innerText = "ডাউনলোড সম্পন্ন হয়েছে!";
-                    downloadBtn.disabled = false;
-                });
-            } else {
-                statusDiv.innerText = "কোনো ছবি ডাউনলোড করা সম্ভব হয়নি।";
-                downloadBtn.disabled = false;
-            }
+            zip.generateAsync({ type: "blob" }).then(content => {
+                saveAs(content, `NFT_Updated_Batch_Page_${currentPage}.zip`);
+            });
         }
 
-        // প্রথম পেজ লোড
         loadPage(1);
     </script>
 </body>
