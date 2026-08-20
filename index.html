@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex NFT Studio - High-Performance Engine</title>
+  <title>Apex NFT Studio - Fixed High-Performance Engine</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -21,14 +21,17 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
 
   <style>
     body { background-color: #080b11; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
     .glass-panel { background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .canvas-preview { background-image: repeating-linear-gradient(45deg, #111827 25%, transparent 25%, transparent 75%, #111827 75%, #111827), repeating-linear-gradient(45deg, #111827 25%, #0b0f17 25%, #0b0f17 75%, #111827 75%, #111827); background-position: 0 0, 10px 10px; background-size: 20px 20px; }
   </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-sm select-none">
 
+  <!-- TOP HEADER -->
   <header class="h-14 glass-panel border-b border-dark-border flex items-center justify-between px-6 z-20 shrink-0">
     <div class="flex items-center space-x-3">
       <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg">
@@ -46,6 +49,7 @@
   </header>
 
   <div class="flex flex-1 overflow-hidden relative">
+    <!-- LEFT SIDEBAR -->
     <aside class="w-64 glass-panel border-r border-dark-border flex flex-col shrink-0 z-10">
       <nav class="p-3 space-y-1">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium bg-white/10 text-white">
@@ -56,6 +60,21 @@
           <i class="fa-solid fa-border-all w-5 text-purple-400"></i>
           <span>NFT Gallery</span>
         </button>
+        <button onclick="switchTab('editor')" id="nav-editor" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-wand-magic-sparkles w-5 text-pink-400"></i>
+          <span>Bulk Layer Replacer</span>
+        </button>
+        <button onclick="switchTab('edited')" id="nav-edited" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium justify-between">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-pen-to-square w-5 text-emerald-400"></i>
+            <span>Edited NFTs</span>
+          </div>
+          <span id="badgeEdited" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-mono">0</span>
+        </button>
+        <button onclick="switchTab('library')" id="nav-library" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-folder-open w-5 text-amber-400"></i>
+          <span>Layer Library</span>
+        </button>
         <button onclick="switchTab('export')" id="nav-export" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
           <i class="fa-solid fa-file-export w-5 text-blue-400"></i>
           <span>Export Suite</span>
@@ -63,8 +82,10 @@
       </nav>
     </aside>
 
+    <!-- MAIN WORKSPACE -->
     <main class="flex-1 overflow-y-auto bg-dark-bg p-6 relative">
 
+      <!-- DASHBOARD -->
       <div id="view-dashboard" class="view-panel space-y-6">
         <div class="flex justify-between items-center">
           <div>
@@ -88,19 +109,10 @@
         </div>
       </div>
 
+      <!-- NFT GALLERY -->
       <div id="view-gallery" class="view-panel hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <span class="text-xs font-bold text-gray-300"><i class="fa-solid fa-filter text-indigo-400 mr-1"></i> Filter By:</span>
-            <select id="filterTraitSelect" class="bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
-              <option value="">-- All Trait Types --</option>
-            </select>
-            <select id="filterValueSelect" class="bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" disabled>
-              <option value="">-- All Values --</option>
-            </select>
-            <button onclick="resetFilters()" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-lg transition">Reset Filter</button>
-          </div>
-
+        <div class="flex justify-between items-center glass-panel p-3 rounded-xl">
+          <h2 class="text-base font-bold text-white">Loaded NFT Gallery</h2>
           <div class="flex items-center space-x-3">
             <span id="galleryCount" class="text-xs font-mono text-indigo-400">0 Displayed</span>
             <div class="flex space-x-1">
@@ -116,18 +128,107 @@
         </div>
       </div>
 
+      <!-- BULK LAYER REPLACER -->
+      <div id="view-editor" class="view-panel hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white">Bulk Layer Add & Replace Engine</h2>
+          <p class="text-xs text-gray-400">Select a target attribute to apply a new layer to all matching NFTs at once.</p>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+          <div class="col-span-7 glass-panel p-6 rounded-xl space-y-5 border border-indigo-500/30">
+            <!-- STEP 1 -->
+            <div class="space-y-3">
+              <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">1. Select Target Attribute</h3>
+              <div class="grid grid-cols-2 gap-4 bg-black/30 p-3 rounded-lg border border-dark-border">
+                <div>
+                  <label class="block text-[11px] text-gray-400 mb-1">Trait Type</label>
+                  <select id="editorTraitSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                    <option value="">-- Select Trait Type --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] text-gray-400 mb-1">Trait Value</label>
+                  <select id="editorValueSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none" disabled>
+                    <option value="">-- Select Value --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-300 flex items-center justify-between">
+                <span>Matching NFT Count:</span>
+                <span id="editorMatchCount" class="font-bold font-mono text-sm text-white">0 tokens</span>
+              </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="space-y-3">
+              <h3 class="font-bold text-xs text-pink-400 uppercase tracking-wider">2. Select New PNG Layer</h3>
+              <select id="editorLayerSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-pink-500 focus:outline-none">
+                <option value="">-- Select PNG Layer --</option>
+              </select>
+            </div>
+
+            <button id="btnApplyBulk" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-bolt text-sm"></i>
+              <span>Apply To All</span>
+            </button>
+          </div>
+
+          <!-- LOG PANEL -->
+          <div class="col-span-5 glass-panel p-6 rounded-xl flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-sm text-white mb-3">Change History (Log)</h3>
+              <div id="changeHistoryLog" class="space-y-2 overflow-y-auto max-h-[280px] text-xs">
+                <div class="text-gray-500 italic p-4 text-center border border-dashed border-dark-border rounded-lg">No changes yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDITED NFTS PREVIEW -->
+      <div id="view-edited" class="view-panel hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white">Edited NFTs (Live Overlay)</h2>
+          <p class="text-xs text-gray-400">Live canvas preview of NFTs that have had layers replaced or added.</p>
+        </div>
+
+        <div id="editedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div class="col-span-full text-center py-12 text-gray-500 italic">No NFTs have been edited yet.</div>
+        </div>
+      </div>
+
+      <!-- LAYER LIBRARY -->
+      <div id="view-library" class="view-panel hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-white">Layer Library</h2>
+            <p class="text-xs text-gray-400">Upload transparent PNG files.</p>
+          </div>
+          <label class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs rounded-lg cursor-pointer transition flex items-center space-x-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Upload PNG Layer</span>
+            <input type="file" id="inputLayerUpload" accept="image/png" class="hidden">
+          </label>
+        </div>
+
+        <div id="layerLibraryGrid" class="grid grid-cols-4 gap-4"></div>
+      </div>
+
+      <!-- EXPORT -->
       <div id="view-export" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Export Suite</h2>
-          <p class="text-xs text-gray-400">Download remaining metadata (.json) and PNG images. Deleted NFTs will be excluded.</p>
+          <p class="text-xs text-gray-400">Download updated metadata, and the actual edited PNG images with the new layer baked in.</p>
         </div>
 
         <div class="flex flex-wrap gap-3">
           <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
-            <i class="fa-solid fa-file-zipper mr-2"></i> Export Active Metadata (JSON ZIP)
+            <i class="fa-solid fa-file-zipper mr-2"></i> Export All Metadata (ZIP)
           </button>
           <button id="btnExportImages" onclick="exportImagesZip()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
-            <i class="fa-solid fa-images mr-2"></i> Export Active Images (PNG ZIP)
+            <i class="fa-solid fa-images mr-2"></i> Export Edited Images (PNG ZIP)
           </button>
         </div>
         <div id="exportStatusMsg" class="text-[11px] text-gray-400 font-mono"></div>
@@ -137,12 +238,12 @@
   </div>
 
   <script>
+    // Updated with reliable public CORS-friendly IPFS gateways
     const GATEWAY_BASES = [
       'https://gateway.pinata.cloud/ipfs/',
       'https://ipfs.io/ipfs/',
       'https://dweb.link/ipfs/',
-      'https://nftstorage.link/ipfs/',
-      'https://w3s.link/ipfs/'
+      'https://cloudflare-ipfs.com/ipfs/'
     ];
 
     const METADATA_CID = 'bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq';
@@ -151,27 +252,32 @@
     const TOTAL_TOKENS = 7000;
     const PAGE_SIZE = 48;
 
+    const db = new Dexie("ApexNFTStudioDB");
+    db.version(1).stores({ layers: 'id, name, dataURL' });
+
     const state = {
       tokens: new Map(),
       discoveredTraits: new Map(),
+      layerLibrary: [],
       loadedCount: 0,
       isLoading: false,
-      currentPage: 1,
-      filterTrait: '',
-      filterValue: ''
+      currentPage: 1
     };
 
     const $ = id => document.getElementById(id);
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       initEvents();
+      await loadLibraryFromDB();
       setTimeout(startFetching, 300);
     });
 
     function initEvents() {
-      $('btnStartLoad').addEventListener('click', () => { state.loadedCount = 0; state.tokens.clear(); startFetching(); });
-      $('filterTraitSelect').addEventListener('change', handleFilterTraitChange);
-      $('filterValueSelect').addEventListener('change', handleFilterValueChange);
+      $('btnStartLoad').addEventListener('click', () => { state.loadedCount = 0; state.tokens.clear(); state.discoveredTraits.clear(); startFetching(); });
+      $('editorTraitSelect').addEventListener('change', handleTraitTypeChange);
+      $('editorValueSelect').addEventListener('change', updateMatchCount);
+      $('btnApplyBulk').addEventListener('click', applyBulkLayerReplacement);
+      $('inputLayerUpload').addEventListener('change', handleLayerUpload);
     }
 
     function switchTab(tabId) {
@@ -182,15 +288,18 @@
       $(`nav-${tabId}`).classList.add('bg-white/10', 'text-white');
 
       if (tabId === 'gallery') renderGallery();
+      if (tabId === 'edited') renderEditedNFTs();
+      if (tabId === 'library') renderLayerLibrary();
+      if (tabId === 'editor') populateEditorDropdowns();
     }
 
-    // 1. FETCH ALL METADATA
+    // Fixed Fetching mechanism with better fail-safe logic
     async function startFetching() {
       if (state.isLoading) return;
       state.isLoading = true;
 
       let currentId = state.loadedCount + 1;
-      const batchSize = 10;
+      const batchSize = 10; 
 
       const fetchToken = async (id) => {
         let success = false;
@@ -199,7 +308,7 @@
           const gw = GATEWAYS[(id + i) % GATEWAYS.length];
           try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 3500);
+            const timer = setTimeout(() => controller.abort(), 4000);
             
             const res = await fetch(`${gw}${id}.json`, { signal: controller.signal });
             clearTimeout(timer);
@@ -207,16 +316,20 @@
             if (!res.ok) continue;
             const meta = await res.json();
 
-            state.tokens.set(id, meta);
+            state.tokens.set(id, { original: meta, edited: null });
 
+            // Process Trait Extraction for Filters
             if (meta.attributes && Array.isArray(meta.attributes)) {
               meta.attributes.forEach(attr => {
                 if (!attr.trait_type || attr.value === undefined) return;
-                if (!state.discoveredTraits.has(attr.trait_type)) {
-                  state.discoveredTraits.set(attr.trait_type, new Map());
+                const traitKey = String(attr.trait_type).trim();
+                const traitVal = String(attr.value).trim();
+
+                if (!state.discoveredTraits.has(traitKey)) {
+                  state.discoveredTraits.set(traitKey, new Map());
                 }
-                const valMap = state.discoveredTraits.get(attr.trait_type);
-                valMap.set(String(attr.value), (valMap.get(String(attr.value)) || 0) + 1);
+                const valMap = state.discoveredTraits.get(traitKey);
+                valMap.set(traitVal, (valMap.get(traitVal) || 0) + 1);
               });
             }
 
@@ -227,7 +340,7 @@
         }
 
         if (!success) {
-          state.tokens.set(id, { name: `NFT #${id}`, attributes: [] });
+          state.tokens.set(id, { original: { name: `NFT #${id}`, attributes: [] }, edited: null });
           state.loadedCount = Math.min(state.loadedCount + 1, TOTAL_TOKENS);
         }
         updateProgress();
@@ -245,7 +358,7 @@
 
       state.isLoading = false;
       $('loadStatusMsg').textContent = "All 7,000 metadata items fully loaded!";
-      populateFilterDropdowns();
+      populateEditorDropdowns();
       renderGallery();
     }
 
@@ -260,96 +373,25 @@
       $('loadStatusMsg').textContent = `Auto-loading... (${count} items ready)`;
     }
 
-    // 2. FILTERS & POPULATE DROPDOWNS
-    function populateFilterDropdowns() {
-      const traitSel = $('filterTraitSelect');
-      traitSel.innerHTML = `<option value="">-- All Trait Types --</option>`;
-
-      state.discoveredTraits.forEach((_, traitType) => {
-        const opt = document.createElement('option');
-        opt.value = traitType;
-        opt.textContent = traitType;
-        traitSel.appendChild(opt);
-      });
-    }
-
-    function handleFilterTraitChange(e) {
-      state.filterTrait = e.target.value;
-      state.filterValue = '';
-      state.currentPage = 1;
-
-      const valSel = $('filterValueSelect');
-      valSel.innerHTML = `<option value="">-- All Values --</option>`;
-      valSel.disabled = !state.filterTrait;
-
-      if (state.filterTrait && state.discoveredTraits.has(state.filterTrait)) {
-        state.discoveredTraits.get(state.filterTrait).forEach((count, val) => {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = `${val} (${count})`;
-          valSel.appendChild(opt);
-        });
-      }
-      renderGallery();
-    }
-
-    function handleFilterValueChange(e) {
-      state.filterValue = e.target.value;
-      state.currentPage = 1;
-      renderGallery();
-    }
-
-    function resetFilters() {
-      state.filterTrait = '';
-      state.filterValue = '';
-      state.currentPage = 1;
-      $('filterTraitSelect').value = '';
-      $('filterValueSelect').value = '';
-      $('filterValueSelect').disabled = true;
-      renderGallery();
-    }
-
-    // 3. GET FILTERED TOKENS
-    function getFilteredTokens() {
-      let items = Array.from(state.tokens.entries());
-
-      if (state.filterTrait) {
-        items = items.filter(([_, meta]) => {
-          if (!meta.attributes || !Array.isArray(meta.attributes)) return false;
-          return meta.attributes.some(attr => {
-            if (attr.trait_type !== state.filterTrait) return false;
-            if (state.filterValue) {
-              return String(attr.value) === state.filterValue;
-            }
-            return true;
-          });
-        });
-      }
-      return items;
-    }
-
-    // 4. GALLERY RENDER WITH DELETE FEATURE
     function renderGallery() {
       const grid = $('nftGrid');
       grid.innerHTML = '';
 
-      const filteredItems = getFilteredTokens();
-
-      if (filteredItems.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">No NFTs match current criteria.</div>`;
-        $('galleryCount').textContent = `0 Displayed`;
+      if (state.tokens.size === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">Loading metadata, please wait...</div>`;
         return;
       }
 
-      $('galleryCount').textContent = `${filteredItems.length} NFTs Displayed`;
+      $('galleryCount').textContent = `${state.tokens.size} / ${TOTAL_TOKENS} NFTs Loaded`;
 
       const start = (state.currentPage - 1) * PAGE_SIZE;
       const end = start + PAGE_SIZE;
-      const pageItems = filteredItems.slice(start, end);
+      const items = Array.from(state.tokens.entries()).slice(start, end);
 
-      $('pageIndicator').textContent = `Page ${state.currentPage} of ${Math.ceil(filteredItems.length / PAGE_SIZE) || 1}`;
+      $('pageIndicator').textContent = `Page ${state.currentPage} of ${Math.ceil(state.tokens.size / PAGE_SIZE) || 1}`;
 
-      pageItems.forEach(([id, meta]) => {
+      items.forEach(([id, data]) => {
+        const meta = data.edited || data.original;
         const rawImg = meta.image || '';
         const imgUrl = rawImg ? fixIpfsUrl(rawImg, 0) : placeholderImage(id);
 
@@ -358,32 +400,227 @@
         card.innerHTML = `
           <div class="aspect-square bg-black/50 rounded-lg overflow-hidden relative">
             <img src="${imgUrl}" data-raw="${rawImg.replace(/"/g, '&quot;')}" data-gw="0" loading="lazy" class="w-full h-full object-cover" onerror="handleImgError(this, ${id})">
+            ${data.edited ? `<span class="absolute top-1.5 right-1.5 bg-emerald-500 text-black font-bold text-[9px] px-1.5 py-0.5 rounded">EDITED</span>` : ''}
           </div>
           <div class="font-bold text-xs text-white truncate">${meta.name || `#${id}`}</div>
-          <button onclick="deleteNFT(${id})" class="w-full py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 rounded text-[11px] font-bold transition">
-            <i class="fa-solid fa-trash mr-1"></i> Delete
-          </button>
         `;
         grid.appendChild(card);
       });
     }
 
-    function deleteNFT(id) {
-      if (state.tokens.has(id)) {
-        state.tokens.delete(id);
-        renderGallery();
-        updateProgress();
-      }
-    }
-
     function changePage(dir) {
-      const filteredCount = getFilteredTokens().length;
-      const maxPages = Math.ceil(filteredCount / PAGE_SIZE) || 1;
+      const maxPages = Math.ceil(state.tokens.size / PAGE_SIZE) || 1;
       state.currentPage = Math.min(Math.max(1, state.currentPage + dir), maxPages);
       renderGallery();
     }
 
-    // UTILS
+    function populateEditorDropdowns() {
+      const traitSel = $('editorTraitSelect');
+      traitSel.innerHTML = `<option value="">-- Select Trait Type --</option>`;
+
+      state.discoveredTraits.forEach((_, traitType) => {
+        const opt = document.createElement('option');
+        opt.value = traitType;
+        opt.textContent = traitType;
+        traitSel.appendChild(opt);
+      });
+
+      const layerSel = $('editorLayerSelect');
+      layerSel.innerHTML = `<option value="">-- Select PNG Layer --</option>`;
+      state.layerLibrary.forEach(layer => {
+        const opt = document.createElement('option');
+        opt.value = layer.id;
+        opt.textContent = layer.name;
+        layerSel.appendChild(opt);
+      });
+    }
+
+    function handleTraitTypeChange(e) {
+      const traitType = e.target.value;
+      const valSel = $('editorValueSelect');
+      valSel.innerHTML = `<option value="">-- Select Value --</option>`;
+      valSel.disabled = !traitType;
+
+      if (traitType && state.discoveredTraits.has(traitType)) {
+        state.discoveredTraits.get(traitType).forEach((count, val) => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = `${val} (${count} NFTs)`;
+          valSel.appendChild(opt);
+        });
+      }
+      updateMatchCount();
+    }
+
+    function updateMatchCount() {
+      const trait = $('editorTraitSelect').value;
+      const val = $('editorValueSelect').value;
+      if (!trait || !val) {
+        $('editorMatchCount').textContent = '0 tokens';
+        return;
+      }
+      const count = state.discoveredTraits.get(trait)?.get(val) || 0;
+      $('editorMatchCount').textContent = `${count} tokens`;
+    }
+
+    function applyBulkLayerReplacement() {
+      const traitType = $('editorTraitSelect').value;
+      const traitValue = $('editorValueSelect').value;
+      const layerId = $('editorLayerSelect').value;
+
+      if (!traitType || !traitValue || !layerId) {
+        alert('Please select all fields correctly!');
+        return;
+      }
+
+      const layerObj = state.layerLibrary.find(l => l.id === layerId);
+      let affected = 0;
+
+      state.tokens.forEach((data) => {
+        const meta = data.edited ? data.edited : JSON.parse(JSON.stringify(data.original));
+        if (meta.attributes && Array.isArray(meta.attributes)) {
+          const attr = meta.attributes.find(a => String(a.trait_type).trim() === traitType && String(a.value).trim() === traitValue);
+          if (attr) {
+            attr.value = layerObj.name;
+            meta.newOverlay = layerObj.dataURL;
+            data.edited = meta;
+            affected++;
+          }
+        }
+      });
+
+      const totalEdited = Array.from(state.tokens.values()).filter(t => t.edited).length;
+      $('badgeEdited').textContent = totalEdited;
+
+      const log = $('changeHistoryLog');
+      if (log.querySelector('.italic')) log.innerHTML = '';
+      const entry = document.createElement('div');
+      entry.className = "p-2.5 bg-black/40 border border-dark-border rounded-lg space-y-1";
+      entry.innerHTML = `
+        <div class="font-bold text-indigo-400">${traitType} = "${traitValue}"</div>
+        <div class="text-[11px] text-gray-300">New Layer: <strong>${layerObj.name}</strong></div>
+        <div class="text-[10px] text-emerald-400 font-mono">${affected} NFTs updated.</div>
+      `;
+      log.prepend(entry);
+
+      alert(`Successfully added layer "${layerObj.name}" to ${affected} NFTs!`);
+    }
+
+    function renderEditedNFTs() {
+      const grid = $('editedGrid');
+      grid.innerHTML = '';
+
+      let editedTokens = Array.from(state.tokens.entries()).filter(([_, data]) => data.edited !== null);
+
+      if (editedTokens.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">No NFTs have been edited yet.</div>`;
+        return;
+      }
+
+      editedTokens.forEach(([id, data]) => {
+        const meta = data.edited;
+        const card = document.createElement('div');
+        card.className = 'glass-panel rounded-xl p-3 border border-emerald-500/30 flex flex-col space-y-2';
+
+        const canvasId = `canvas_${id}`;
+        card.innerHTML = `
+          <div class="aspect-square rounded-lg overflow-hidden canvas-preview relative flex items-center justify-center">
+            <canvas id="${canvasId}" class="w-full h-full object-contain"></canvas>
+          </div>
+          <div class="font-bold text-xs text-white truncate">${meta.name || `#${id}`}</div>
+          <div class="text-[10px] text-emerald-400 font-mono">Layer Active</div>
+        `;
+        grid.appendChild(card);
+
+        setTimeout(() => {
+          const canvas = document.getElementById(canvasId);
+          if (!canvas) return;
+          const ctx = canvas.getContext('2d');
+
+          const drawBase = (gatewayIndex) => {
+            const baseImg = new Image();
+            baseImg.crossOrigin = 'anonymous';
+            baseImg.src = meta.image ? fixIpfsUrl(meta.image, gatewayIndex) : placeholderImage(id);
+
+            baseImg.onload = () => {
+              canvas.width = baseImg.width || 500;
+              canvas.height = baseImg.height || 500;
+              ctx.drawImage(baseImg, 0, 0);
+
+              if (meta.newOverlay) {
+                const layerImg = new Image();
+                layerImg.src = meta.newOverlay;
+                layerImg.onload = () => {
+                  ctx.drawImage(layerImg, 0, 0, canvas.width, canvas.height);
+                };
+              }
+            };
+
+            baseImg.onerror = () => {
+              if (meta.image && meta.image.startsWith('ipfs://') && gatewayIndex + 1 < GATEWAY_BASES.length) {
+                drawBase(gatewayIndex + 1);
+              } else {
+                canvas.width = 300;
+                canvas.height = 300;
+                const fallback = new Image();
+                fallback.src = placeholderImage(id);
+                fallback.onload = () => ctx.drawImage(fallback, 0, 0);
+              }
+            };
+          };
+
+          drawBase(0);
+        }, 80);
+      });
+    }
+
+    async function handleLayerUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const item = { id: 'layer_' + Date.now(), name: file.name.replace('.png', ''), dataURL: ev.target.result };
+        await db.layers.add(item);
+        await loadLibraryFromDB();
+        renderLayerLibrary();
+        populateEditorDropdowns();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function loadLibraryFromDB() {
+      state.layerLibrary = await db.layers.toArray();
+    }
+
+    function renderLayerLibrary() {
+      const grid = $('layerLibraryGrid');
+      grid.innerHTML = '';
+      if (state.layerLibrary.length === 0) {
+        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">No layers found.</div>`;
+        return;
+      }
+      state.layerLibrary.forEach(layer => {
+        const card = document.createElement('div');
+        card.className = 'glass-panel p-3 rounded-xl space-y-2 flex flex-col justify-between';
+        card.innerHTML = `
+          <div class="aspect-square bg-black/60 rounded-lg p-2 flex items-center justify-center border border-dark-border">
+            <img src="${layer.dataURL}" class="max-w-full max-h-full object-contain">
+          </div>
+          <div class="font-bold text-xs text-white truncate">${layer.name}</div>
+          <button onclick="deleteLayer('${layer.id}')" class="w-full py-1 bg-rose-500/10 text-rose-400 rounded text-[10px]">Delete</button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function deleteLayer(id) {
+      await db.layers.delete(id);
+      await loadLibraryFromDB();
+      renderLayerLibrary();
+      populateEditorDropdowns();
+    }
+
     function fixIpfsUrl(url, gatewayIndex = 0) {
       if (!url) return '';
       if (url.startsWith('ipfs://')) {
@@ -416,17 +653,23 @@
       }
     }
 
-    // EXPORT
     async function exportMetadataZip() {
       if (state.tokens.size === 0) {
         alert('Please let the metadata load first.');
         return;
       }
       const zip = new JSZip();
-      const folder = zip.folder("json");
+      const folder = zip.folder("updated_metadata");
 
-      state.tokens.forEach((meta, id) => {
-        folder.file(`${id}.json`, JSON.stringify(meta, null, 2));
+      state.tokens.forEach((data, id) => {
+        if (data.edited) {
+          const meta = JSON.parse(JSON.stringify(data.edited));
+          meta.image = `images/${id}.png`;
+          delete meta.newOverlay;
+          folder.file(`${id}.json`, JSON.stringify(meta, null, 2));
+        } else {
+          folder.file(`${id}.json`, JSON.stringify(data.original, null, 2));
+        }
       });
 
       const content = await zip.generateAsync({ type: "blob" });
@@ -436,40 +679,56 @@
       link.click();
     }
 
-    function fetchImageBlob(id, meta) {
+    function renderEditedImageBlob(id, meta) {
       return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
 
-        const drawAndGetBlob = (src) => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          img.onload = () => {
-            canvas.width = img.width || 500;
-            canvas.height = img.height || 500;
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Blob conversion failed')), 'image/png');
+        const finish = () => {
+          canvas.toBlob(blob => {
+            if (blob) resolve(blob); else reject(new Error('toBlob failed'));
+          }, 'image/png');
+        };
+
+        const drawBase = (gatewayIndex) => {
+          const baseImg = new Image();
+          baseImg.crossOrigin = 'anonymous';
+          baseImg.src = meta.image ? fixIpfsUrl(meta.image, gatewayIndex) : placeholderImage(id);
+
+          baseImg.onload = () => {
+            canvas.width = baseImg.width || 500;
+            canvas.height = baseImg.height || 500;
+            ctx.drawImage(baseImg, 0, 0);
+
+            if (meta.newOverlay) {
+              const layerImg = new Image();
+              layerImg.crossOrigin = 'anonymous';
+              layerImg.src = meta.newOverlay;
+              layerImg.onload = () => { ctx.drawImage(layerImg, 0, 0, canvas.width, canvas.height); finish(); };
+              layerImg.onerror = () => reject(new Error(`Overlay layer failed to load for #${id}`));
+            } else {
+              finish();
+            }
           };
-          img.onerror = () => reject(new Error(`Failed image load for #${id}`));
-          img.src = src;
+
+          baseImg.onerror = () => {
+            if (meta.image && meta.image.startsWith('ipfs://') && gatewayIndex + 1 < GATEWAY_BASES.length) {
+              drawBase(gatewayIndex + 1);
+            } else {
+              reject(new Error(`Base image failed to load on all gateways for #${id}`));
+            }
+          };
         };
 
-        let gwIdx = 0;
-        const tryNext = () => {
-          if (meta.image && meta.image.startsWith('ipfs://') && gwIdx < GATEWAY_BASES.length) {
-            drawAndGetBlob(fixIpfsUrl(meta.image, gwIdx++));
-          } else {
-            drawAndGetBlob(placeholderImage(id));
-          }
-        };
-        tryNext();
+        drawBase(0);
       });
     }
 
     async function exportImagesZip() {
-      if (state.tokens.size === 0) {
-        alert('No NFTs available to export.');
+      const editedTokens = Array.from(state.tokens.entries()).filter(([_, data]) => data.edited !== null);
+
+      if (editedTokens.length === 0) {
+        alert('No NFTs have been edited yet - use the Bulk Layer Replacer first.');
         return;
       }
 
@@ -479,19 +738,19 @@
       btn.classList.add('opacity-50', 'cursor-not-allowed');
 
       const zip = new JSZip();
-      const folder = zip.folder("png");
+      const folder = zip.folder("images");
 
       let done = 0;
       let failed = 0;
-      const activeTokens = Array.from(state.tokens.entries());
-      const total = activeTokens.length;
+      const total = editedTokens.length;
 
-      for (const [id, meta] of activeTokens) {
-        statusEl.textContent = `Downloading images... ${done}/${total} (${failed} failed)`;
+      for (const [id, data] of editedTokens) {
+        statusEl.textContent = `Rendering edited images... ${done}/${total} (${failed} failed)`;
         try {
-          const blob = await fetchImageBlob(id, meta);
+          const blob = await renderEditedImageBlob(id, data.edited);
           folder.file(`${id}.png`, blob);
         } catch (err) {
+          console.error(err);
           failed++;
         }
         done++;
@@ -501,10 +760,10 @@
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(content);
-      link.download = `Images_Export_${Date.now()}.zip`;
+      link.download = `Edited_Images_${Date.now()}.zip`;
       link.click();
 
-      statusEl.textContent = `Done! ${done - failed}/${total} PNG images exported.`;
+      statusEl.textContent = `Done. ${done - failed}/${total} edited images exported${failed ? `, ${failed} failed` : ''}.`;
       btn.disabled = false;
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
