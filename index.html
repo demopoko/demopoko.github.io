@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex NFT Studio - Fast Engine</title>
+  <title>Apex NFT Studio - High-Performance Engine</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -43,7 +43,7 @@
     <div class="flex items-center space-x-4">
       <div class="px-3 py-1 rounded-full text-xs font-mono bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center space-x-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="statActiveCount">0 Loaded</span>
+        <span id="statActiveCount">0 / 7000 Loaded</span>
       </div>
     </div>
   </header>
@@ -90,11 +90,10 @@
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Collection Dashboard</h2>
-            <p class="text-xs text-gray-400">মেটাডাটা ফেচিং শুরু করতে বাটনে ক্লিক করুন।</p>
+            <p class="text-xs text-gray-400">অটোমেটিক ৭,০০০টি মেটাডাটা লোড হচ্ছে।</p>
           </div>
           <button id="btnStartLoad" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs shadow-lg transition">
-            <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>
-            Fetch Metadata (7,000)
+            <i class="fa-solid fa-rotate mr-1.5"></i> Restart Auto-Fetch
           </button>
         </div>
 
@@ -104,9 +103,9 @@
             <span id="loadPercentage" class="font-bold text-emerald-400">0.0%</span>
           </div>
           <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden p-0.5">
-            <div id="loadProgressBar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full w-0 rounded-full transition-all duration-200"></div>
+            <div id="loadProgressBar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full w-0 rounded-full transition-all duration-150"></div>
           </div>
-          <div id="loadStatusMsg" class="text-[11px] text-gray-400 font-mono text-center">আইডেল অবস্থায় আছে।</div>
+          <div id="loadStatusMsg" class="text-[11px] text-gray-400 font-mono text-center">মাল্টি-গেটওয়ে ফেচিং চালু হচ্ছে...</div>
         </div>
       </div>
 
@@ -114,10 +113,18 @@
       <div id="view-gallery" class="view-panel hidden space-y-4">
         <div class="flex justify-between items-center glass-panel p-3 rounded-xl">
           <h2 class="text-base font-bold text-white">Loaded NFT Gallery</h2>
-          <span id="galleryCount" class="text-xs font-mono text-indigo-400">0 NFTs Displayed</span>
+          <div class="flex items-center space-x-3">
+            <span id="galleryCount" class="text-xs font-mono text-indigo-400">0 Displayed</span>
+            <div class="flex space-x-1">
+              <button onclick="changePage(-1)" class="px-2.5 py-1 bg-white/5 hover:bg-white/10 rounded text-xs border border-dark-border"><i class="fa-solid fa-chevron-left"></i></button>
+              <span id="pageIndicator" class="px-3 py-1 bg-black/40 rounded text-xs font-mono text-gray-300">Page 1</span>
+              <button onclick="changePage(1)" class="px-2.5 py-1 bg-white/5 hover:bg-white/10 rounded text-xs border border-dark-border"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </div>
         </div>
+
         <div id="nftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হলে এখানে NFT কার্ড দেখাবে।</div>
+          <div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হচ্ছে...</div>
         </div>
       </div>
 
@@ -125,7 +132,7 @@
       <div id="view-editor" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Bulk Layer Add & Replace Engine</h2>
-          <p class="text-xs text-gray-400">এট্রিবিউট সিলেক্ট করে একসাথে সকল NFT-তে নতুন PNG লেয়ার যুক্ত করুন।</p>
+          <p class="text-xs text-gray-400">টার্গেট এট্রিবিউট সিলেক্ট করে একসাথে সব NFT-তে নতুন লেয়ার লাগান।</p>
         </div>
 
         <div class="grid grid-cols-12 gap-6">
@@ -183,8 +190,8 @@
       <!-- EDITED NFTS PREVIEW -->
       <div id="view-edited" class="view-panel hidden space-y-6">
         <div>
-          <h2 class="text-xl font-bold text-white">Edited NFTs (Live Composited)</h2>
-          <p class="text-xs text-gray-400">যে সকল NFT-তে নতুন লেয়ার যুক্ত হয়েছে সেগুলো ক্যানভাস পিক্সেল ব্লেন্ডিং সহ নিচে দেখানো হচ্ছে।</p>
+          <h2 class="text-xl font-bold text-white">Edited NFTs (Live Overlay)</h2>
+          <p class="text-xs text-gray-400">যে সকল NFT-তে লেয়ার রিপ্লেস বা এড করা হয়েছে সেগুলোর লাইব ক্যানভাস প্রিভিউ।</p>
         </div>
 
         <div id="editedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -197,7 +204,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Layer Library</h2>
-            <p class="text-xs text-gray-400">ট্রান্সপারেন্ট PNG লেয়ার আপলোড করুন।</p>
+            <p class="text-xs text-gray-400">ট্রান্সপারেন্ট PNG ফাইল আপলোড করুন।</p>
           </div>
           <label class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs rounded-lg cursor-pointer transition flex items-center space-x-2">
             <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -213,7 +220,7 @@
       <div id="view-export" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Export Suite</h2>
-          <p class="text-xs text-gray-400">আপডেট হওয়া মেটাডাটা ZIP ফাইল হিসেবে ডাউনলোড করুন।</p>
+          <p class="text-xs text-gray-400">আপডেট হওয়া সকল ৭০০০টি মেটাডাটা ZIP ফাইলে ডাউনলোড করুন।</p>
         </div>
 
         <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
@@ -225,13 +232,16 @@
   </div>
 
   <script>
-    // IPFS Gateways (Fallback system to prevent freezing)
+    // 5 Fast IPFS Gateways with Fallback
     const GATEWAYS = [
       'https://gateway.pinata.cloud/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
       'https://ipfs.io/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
-      'https://cloudflare-ipfs.com/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/'
+      'https://cloudflare-ipfs.com/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
+      'https://dweb.link/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
+      'https://gateway.ipfs.io/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/'
     ];
     const TOTAL_TOKENS = 7000;
+    const PAGE_SIZE = 48;
 
     const db = new Dexie("ApexNFTStudioDB");
     db.version(1).stores({ layers: 'id, name, dataURL' });
@@ -241,7 +251,8 @@
       discoveredTraits: new Map(),
       layerLibrary: [],
       loadedCount: 0,
-      isLoading: false
+      isLoading: false,
+      currentPage: 1
     };
 
     const $ = id => document.getElementById(id);
@@ -249,12 +260,11 @@
     window.addEventListener('DOMContentLoaded', async () => {
       initEvents();
       await loadLibraryFromDB();
-      // Auto fetch start with a tiny delay
-      setTimeout(startFetching, 500);
+      setTimeout(startFetching, 300);
     });
 
     function initEvents() {
-      $('btnStartLoad').addEventListener('click', startFetching);
+      $('btnStartLoad').addEventListener('click', () => { state.loadedCount = 0; startFetching(); });
       $('editorTraitSelect').addEventListener('change', handleTraitTypeChange);
       $('editorValueSelect').addEventListener('change', updateMatchCount);
       $('btnApplyBulk').addEventListener('click', applyBulkLayerReplacement);
@@ -274,22 +284,23 @@
       if (tabId === 'editor') populateEditorDropdowns();
     }
 
-    // 1. FAST METADATA FETCHING WITH COUNTER BUG FIX
+    // 1. FAST ANTI-BLOCKING AUTO LOADER
     async function startFetching() {
-      if (state.isLoading || state.loadedCount >= TOTAL_TOKENS) return;
+      if (state.isLoading) return;
       state.isLoading = true;
-      $('btnStartLoad').disabled = true;
-      $('btnStartLoad').classList.add('opacity-50');
 
       let currentId = state.loadedCount + 1;
-      const batchSize = 15; // Controlled concurrency to avoid blocking
+      const batchSize = 10; // Optimal speed without hitting rate limits
 
       const fetchToken = async (id) => {
         let success = false;
-        for (let gw of GATEWAYS) {
+        
+        // Try gateways round-robin style
+        for (let i = 0; i < GATEWAYS.length; i++) {
+          const gw = GATEWAYS[(id + i) % GATEWAYS.length];
           try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4000);
+            const timer = setTimeout(() => controller.abort(), 3500);
             
             const res = await fetch(`${gw}${id}.json`, { signal: controller.signal });
             clearTimeout(timer);
@@ -315,8 +326,9 @@
             break;
           } catch (e) {}
         }
+
         if (!success) {
-          // Fallback empty object to prevent lock
+          // Fallback placeholder token to keep queue smooth
           state.tokens.set(id, { original: { name: `NFT #${id}`, attributes: [] }, edited: null });
           state.loadedCount = Math.min(state.loadedCount + 1, TOTAL_TOKENS);
         }
@@ -330,6 +342,8 @@
           currentId++;
         }
         await Promise.all(chunk);
+        // Small delay to keep browser UI alive
+        await new Promise(r => setTimeout(r, 20));
       }
 
       state.isLoading = false;
@@ -345,23 +359,28 @@
       $('loadCounter').textContent = `${count} / ${TOTAL_TOKENS}`;
       $('loadPercentage').textContent = `${pct}%`;
       $('loadProgressBar').style.width = `${pct}%`;
-      $('statActiveCount').textContent = `${count} Loaded`;
-      $('loadStatusMsg').textContent = `লোডিং চলছে... (${count} টি তথ্য সংগ্রহ করা হয়েছে)`;
+      $('statActiveCount').textContent = `${count} / ${TOTAL_TOKENS} Loaded`;
+      $('loadStatusMsg').textContent = `অটোমেটিক লোড হচ্ছে... (${count} টি ডাটা রেডি)`;
     }
 
-    // 2. GALLERY RENDER
+    // 2. PAGINATED NFT GALLERY FOR FULL 7,000 LOAD
     function renderGallery() {
       const grid = $('nftGrid');
       grid.innerHTML = '';
 
       if (state.tokens.size === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হচ্ছে, কিছুক্ষন অপেক্ষা করুন...</div>`;
         return;
       }
 
-      $('galleryCount').textContent = `${state.tokens.size} NFTs Displayed`;
+      $('galleryCount').textContent = `${state.tokens.size} / ${TOTAL_TOKENS} NFTs Loaded`;
 
-      let items = Array.from(state.tokens.entries()).slice(0, 40); // Initial 40 for speed
+      const start = (state.currentPage - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const items = Array.from(state.tokens.entries()).slice(start, end);
+
+      $('pageIndicator').textContent = `Page ${state.currentPage} of ${Math.ceil(state.tokens.size / PAGE_SIZE) || 1}`;
+
       items.forEach(([id, data]) => {
         const meta = data.edited || data.original;
         const imgUrl = fixIpfsUrl(meta.image);
@@ -377,6 +396,12 @@
         `;
         grid.appendChild(card);
       });
+    }
+
+    function changePage(dir) {
+      const maxPages = Math.ceil(state.tokens.size / PAGE_SIZE) || 1;
+      state.currentPage = Math.min(Math.max(1, state.currentPage + dir), maxPages);
+      renderGallery();
     }
 
     // 3. EDIT ENGINE & DROPDOWNS
@@ -435,7 +460,7 @@
       const layerId = $('editorLayerSelect').value;
 
       if (!traitType || !traitValue || !layerId) {
-        alert('সকল ফিল্ড সিলেক্ট করুন!');
+        alert('সকল ফিল্ড সঠিক ভাবে সিলেক্ট করুন!');
         return;
       }
 
@@ -448,18 +473,18 @@
           const attr = meta.attributes.find(a => a.trait_type === traitType && String(a.value) === traitValue);
           if (attr) {
             attr.value = layerObj.name;
-            meta.newOverlay = layerObj.dataURL; // Save canvas overlay
+            meta.newOverlay = layerObj.dataURL;
             data.edited = meta;
             affected++;
           }
         }
       });
 
-      // Update badge
+      // Update badge count
       const totalEdited = Array.from(state.tokens.values()).filter(t => t.edited).length;
       $('badgeEdited').textContent = totalEdited;
 
-      // Log
+      // History Log
       const log = $('changeHistoryLog');
       if (log.querySelector('.italic')) log.innerHTML = '';
       const entry = document.createElement('div');
@@ -471,10 +496,10 @@
       `;
       log.prepend(entry);
 
-      alert(`সফলভাবে ${affected} টি NFT-তে নতুন লেয়ার যুক্ত করা হয়েছে!`);
+      alert(`সফলভাবে ${affected} টি NFT-তে "${layerObj.name}" লেয়ার যুক্ত করা হয়েছে!`);
     }
 
-    // 4. RENDER EDITED NFTS WITH CANVAS COMPOSITING PREVIEW
+    // 4. EDITED NFTS PREVIEW
     function renderEditedNFTs() {
       const grid = $('editedGrid');
       grid.innerHTML = '';
@@ -497,11 +522,10 @@
             <canvas id="${canvasId}" class="w-full h-full object-contain"></canvas>
           </div>
           <div class="font-bold text-xs text-white truncate">${meta.name || `#${id}`}</div>
-          <div class="text-[10px] text-emerald-400 font-mono">Layer Overlay Active</div>
+          <div class="text-[10px] text-emerald-400 font-mono">Layer Active</div>
         `;
         grid.appendChild(card);
 
-        // Compositing Canvas
         setTimeout(() => {
           const canvas = document.getElementById(canvasId);
           if (!canvas) return;
@@ -524,7 +548,7 @@
               };
             }
           };
-        }, 100);
+        }, 80);
       });
     }
 
@@ -588,7 +612,7 @@
     // EXPORT
     async function exportMetadataZip() {
       if (state.tokens.size === 0) {
-        alert('আগে মেটাডাটা লোড করে নিন।');
+        alert('আগে মেটাডাটা লোড হতে দিন।');
         return;
       }
       const zip = new JSZip();
