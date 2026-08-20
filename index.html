@@ -1,368 +1,1303 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>NFT Layer & Metadata Editor</title>
+    <title>NFT Collection Manager & Layer Editor</title>
+    <!-- JSZip & FileSaver Libraries preserved -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #0f172a; color: #ffffff; padding: 20px; }
-        header { text-align: center; margin-bottom: 25px; }
-        h1 { color: #38bdf8; margin-bottom: 10px; }
-        .controls-container { display: flex; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto 20px auto; background-color: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
-        .row-controls { display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; }
-        button { padding: 9px 16px; background-color: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
-        button:hover { background-color: #0369a1; }
-        button:disabled { background-color: #334155; cursor: not-allowed; }
-        .btn-download { background-color: #10b981; }
-        .btn-download:hover { background-color: #059669; }
-        .btn-edit { background-color: #f59e0b; }
-        .btn-edit:hover { background-color: #d97706; }
-        select, input { padding: 9px; border-radius: 6px; border: 1px solid #334155; background-color: #0f172a; color: white; outline: none; }
-        input[type="number"] { width: 100px; text-align: center; }
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; max-width: 1400px; margin: 20px auto; }
-        .card { background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; padding: 10px; text-align: center; display: flex; flex-direction: column; gap: 10px; position: relative; }
-        .delete-btn { position: absolute; top: 5px; right: 5px; background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 11px; cursor: pointer; z-index: 10; }
-        .img-wrapper { width: 100%; aspect-ratio: 1 / 1; background-color: #0f172a; border-radius: 6px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
-        img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Modal Style */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #1e293b; padding: 20px; border-radius: 8px; width: 400px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #38bdf8; }
-        #download-status { font-size: 13px; color: #38bdf8; text-align: center; }
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --border-color: #334155;
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            background: #090d16;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-value {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Filters */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin-top: 8px;
+            outline: none;
+        }
+
+        .filter-groups {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .group-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin: 15px 0 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .trait-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            user-select: none;
+        }
+
+        .trait-option:hover {
+            background-color: var(--bg-card-hover);
+        }
+
+        .trait-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .trait-count {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            padding: 12px 20px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-download { background-color: var(--success); }
+        .btn-download:hover { background-color: var(--success-hover); }
+        .btn-warning { background-color: var(--warning); color: #000; }
+        .btn-danger { background-color: var(--danger); }
+
+        .gallery-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .img-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: var(--bg-main);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .error-box {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-card);
+            color: #f87171;
+            font-size: 11px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-traits {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+            max-height: 50px;
+            overflow: hidden;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .card-actions button {
+            flex: 1;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            justify-content: center;
+        }
+
+        /* Editor Section */
+        .editor-drawer {
+            height: 250px;
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .editor-pane {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            background: var(--bg-main);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .editor-pane h3 {
+            font-size: 0.95rem;
+            color: var(--accent);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .form-row select, .form-row input[type="text"] {
+            flex: 1;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.85rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-body {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            width: 450px;
+            max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .preview-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .preview-img-container {
+            width: 120px;
+            height: 120px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-main);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            transition: width 0.1s;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>NFT Layer & Metadata Manager</h1>
-        <p>মোট আইটেম: ৭,০০০টি (প্রতি পেজে ১০০টি)</p>
+        <h1>NFT Collection Manager & Editor</h1>
+        <div class="status-bar">
+            <div class="status-item">Total: <span class="status-value" id="st-total">7000</span></div>
+            <div class="status-item">Metadata: <span class="status-value" id="st-meta">0</span></div>
+            <div class="status-item">Failed: <span class="status-value" id="st-failed">0</span></div>
+            <div class="status-item">Visible: <span class="status-value" id="st-visible">0</span></div>
+        </div>
     </header>
 
-    <div class="controls-container">
-        <!-- Pagination -->
-        <div class="row-controls">
-            <button id="prev-btn" onclick="changePage(-1)">← আগের ১০০টি</button>
-            <span>পেজ: <strong id="page-num">১</strong> / ৭০</span>
-            <button id="next-btn" onclick="changePage(1)">পরের ১০০টি →</button>
-            <span style="margin-left: 15px;">সরাসরি যান:</span>
-            <input type="number" id="jump-id" min="1" max="7000" placeholder="ID (1-7000)">
-            <button onclick="jumpToID()">Go</button>
+    <div class="main-container">
+        <!-- Sidebar Filters -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="group-title">Search Collection</div>
+                <input type="text" id="global-search" class="search-box" placeholder="Search ID, name, trait..." oninput="handleSearch()">
+                <div class="group-title" style="margin-top: 15px;">
+                    <span>Metadata Trait Filters</span>
+                    <button onclick="clearFilters()" style="padding:2px 6px; font-size:10px;">Clear</button>
+                </div>
+            </div>
+            <div class="filter-groups" id="filter-groups-container">
+                <!-- Dynamic Filters Generated Here -->
+            </div>
         </div>
 
-        <!-- Dynamic Layer Filter & Layer Edit -->
-        <div class="row-controls">
-            <select id="layer-type-select" onchange="updateTraitValueDropdown()">
-                <option value="">-- লেয়ার টাইপ নির্বাচন করুন --</option>
-            </select>
+        <!-- Main Workspace -->
+        <div class="content-area">
+            <div class="toolbar">
+                <div class="action-btns">
+                    <button id="retry-btn" onclick="retryFailedRequests()" disabled>Retry Failed (<span id="failed-count">0</span>)</button>
+                    <button id="undo-btn" onclick="undoLastBatch()" class="btn-warning" disabled>Undo Layer Action</button>
+                </div>
 
-            <select id="trait-value-select" onchange="filterNFTsByLayer()">
-                <option value="">-- ফিল্টার ভ্যালু নির্বাচন করুন --</option>
-            </select>
+                <div class="action-btns">
+                    <select id="export-scope" style="padding: 8px; border-radius: 6px; background: var(--bg-main); color: white; border: 1px solid var(--border-color);">
+                        <option value="filtered">Export Filtered NFTs</option>
+                        <option value="layer">Export Selected Layer NFTs</option>
+                        <option value="all">Export All NFTs</option>
+                    </select>
+                    <button class="btn-download" id="download-btn" onclick="exportZIP()">Export ZIP</button>
+                </div>
+            </div>
 
-            <button class="btn-edit" onclick="openEditModal()">সিলেক্ট করা লেয়ার এডিট করুন</button>
-            <button class="btn-download" id="download-btn" onclick="downloadVisibleZIP()">ZIP ডাউনলোড করুন</button>
+            <!-- Scrollable Gallery Container with Lazy Rendering -->
+            <div class="gallery-container" id="gallery-container" onscroll="handleScroll()">
+                <div class="gallery-grid" id="gallery-grid"></div>
+            </div>
+
+            <!-- Layer & Metadata Editor Drawer -->
+            <div class="editor-drawer">
+                <!-- Layer Editor Pane -->
+                <div class="editor-pane">
+                    <h3>Bulk Layer Replacement Tool</h3>
+                    <div class="form-row">
+                        <select id="layer-type-select" onchange="populateTraitValueDropdown()">
+                            <option value="">-- Select Trait Type --</option>
+                        </select>
+                        <select id="trait-value-select" onchange="updateLayerSelectionInfo()">
+                            <option value="">-- Select Trait Value --</option>
+                        </select>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        Matching NFTs: <strong id="layer-match-count" style="color: var(--accent);">0</strong>
+                    </div>
+                    <div class="form-row">
+                        <input type="file" id="layer-file-input" accept="image/*">
+                        <button onclick="openLayerConfirmModal()">Apply Layer Replacement</button>
+                    </div>
+                </div>
+
+                <!-- Session / Storage Controls Pane -->
+                <div class="editor-pane">
+                    <h3>Local Session Storage</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Edits are kept locally in IndexedDB as unsaved working copies until exported.</p>
+                    <div class="form-row" style="margin-top: auto;">
+                        <button onclick="saveSessionToIndexedDB()" style="background: var(--success);">Save Local Session</button>
+                        <button onclick="clearLocalSession()" class="btn-danger">Reset Local Edits</button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div id="download-status"></div>
     </div>
 
-    <div class="gallery-grid" id="gallery"></div>
+    <!-- Modal: Confirmation for Layer Replacement -->
+    <div class="modal" id="layer-confirm-modal">
+        <div class="modal-body">
+            <h3>Confirm Bulk Layer Replacement</h3>
+            <p style="font-size: 0.85rem;" id="modal-desc">This action will replace the selected layer across all matching NFTs.</p>
+            <div class="preview-box">
+                <div class="preview-img-container">
+                    <div>Original</div>
+                    <img id="prev-orig-img" src="" alt="Original">
+                </div>
+                <div class="preview-img-container">
+                    <div>New Layer Composite</div>
+                    <canvas id="prev-canvas" width="200" height="200" style="width:100%; height:100%;"></canvas>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn-danger" onclick="closeModal('layer-confirm-modal')">Cancel</button>
+                <button onclick="executeBulkLayerReplacement()">Apply Changes</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Modal for Editing Layer -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <h3>লেয়ার এডিট করুন</h3>
-            <label>নতুন ট্রেইট/মেটাডেটা নাম:</label>
-            <input type="text" id="new-trait-name" placeholder="যেমন: Dark Red">
-            
-            <label>নতুন ছবি আপলোড (সকল নির্দিষ্ট NFT-তে যুক্ত হবে):</label>
-            <input type="file" id="new-layer-image" accept="image/*">
+    <!-- Modal: Single Metadata Editor -->
+    <div class="modal" id="metadata-modal">
+        <div class="modal-body" style="width: 500px;">
+            <h3>Edit Metadata - NFT #<span id="meta-edit-id"></span></h3>
+            <div class="form-row">
+                <label style="width: 80px; font-size: 0.8rem;">Name:</label>
+                <input type="text" id="meta-edit-name">
+            </div>
+            <div class="form-row">
+                <label style="width: 80px; font-size: 0.8rem;">Description:</label>
+                <input type="text" id="meta-edit-desc">
+            </div>
+            <div style="font-size: 0.85rem; font-weight: bold; margin-top: 5px;">Attributes</div>
+            <div id="meta-attributes-container" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+            <button onclick="addMetaDataAttributeRow()" style="font-size: 0.75rem; width: max-content;">+ Add Attribute</button>
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
-                <button style="background-color: #64748b;" onclick="closeEditModal()">বাতিল</button>
-                <button onclick="applyLayerEdit()">সেভ ও আপডেট করুন</button>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button class="btn-danger" onclick="closeModal('metadata-modal')">Cancel</button>
+                <button onclick="saveSingleMetadata()">Save Metadata</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Global Processing Indicator -->
+    <div class="modal" id="process-modal">
+        <div class="modal-body" style="text-align: center;">
+            <h3 id="process-title">Processing Request...</h3>
+            <div id="process-status" style="font-size: 0.85rem; margin: 10px 0;">Please wait while operations execute.</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="process-bar"></div>
             </div>
         </div>
     </div>
 
     <script>
-        const baseUrl = "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/";
-        const itemsPerPage = 100;
-        let currentPage = 1;
-        let nftDataStore = {}; // মেটাডেটা ও ইমেজ ক্যাশ রাখার জন্য Storage
+        /**
+         * Configuration Object
+         */
+        const CONFIG = {
+            TOTAL_NFTS: 7000,
+            CONCURRENCY_LIMIT: 20,
+            IMAGE_BASE_URL: "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/",
+            METADATA_BASE_URL: "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/",
+            RENDER_BATCH_SIZE: 60
+        };
 
-        async function loadPage(page) {
-            currentPage = page;
-            const gallery = document.getElementById('gallery');
-            gallery.innerHTML = 'লোড হচ্ছে...';
-            document.getElementById('page-num').innerText = page;
+        /**
+         * Application Central State & Stores
+         */
+        let nftStore = {};            // Main Data Store: { [id]: { id, name, description, image, originalImage, customBlob, metadata: { attributes: [] }, failed: bool } }
+        let traitIndex = {};          // Index Structure: { TraitType: { TraitValue: Set(IDs) } }
+        let selectedFilters = {};     // Selected Filters: { TraitType: Set(Values) }
+        let visibleIDs = [];          // Filtered Matching IDs
+        let renderedCount = 0;        // Lazy rendering pointer
+        let lastBatchUndoState = null;// Undo State Snapshot
+        let activeEditID = null;      // Currently targeted NFT for single metadata edit
 
-            const startID = (page - 1) * itemsPerPage + 1;
-            const endID = Math.min(page * itemsPerPage, 7000);
+        /**
+         * IndexedDB Setup for Persistent Storage
+         */
+        let db = null;
+        function initDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open("NFTManagerDB", 1);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    db.createObjectStore("nftData", { keyPath: "id" });
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+                request.onerror = () => resolve();
+            });
+        }
 
-            // Fetch metadata and images for current page
-            const fetchPromises = [];
-            for (let id = startID; id <= endID; id++) {
-                if (!nftDataStore[id]) {
-                    fetchPromises.push(fetchNFTData(id));
+        async function saveSessionToIndexedDB() {
+            if (!db) return;
+            const tx = db.transaction("nftData", "readwrite");
+            const store = tx.objectStore("nftData");
+            for (let id in nftStore) {
+                if (nftStore[id]) {
+                    // Clone object for DB
+                    const item = { ...nftStore[id] };
+                    store.put(item);
                 }
             }
-            await Promise.all(fetchPromises);
+            alert("Session saved locally to IndexedDB.");
+        }
 
-            renderGallery(startID, endID);
+        async function loadSessionFromIndexedDB() {
+            if (!db) return false;
+            return new Promise((resolve) => {
+                const tx = db.transaction("nftData", "readonly");
+                const store = tx.objectStore("nftData");
+                const request = store.getAll();
+                request.onsuccess = (e) => {
+                    const records = e.target.result;
+                    if (records && records.length > 0) {
+                        records.forEach(rec => { nftStore[rec.id] = rec; });
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                };
+                request.onerror = () => resolve(false);
+            });
+        }
+
+        async function clearLocalSession() {
+            if (confirm("Reset local changes and re-fetch clean dataset?")) {
+                if (db) {
+                    const tx = db.transaction("nftData", "readwrite");
+                    tx.objectStore("nftData").clear();
+                }
+                location.reload();
+            }
+        }
+
+        /**
+         * Initialization & Metadata Loader Engine
+         */
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            const hasRestored = await loadSessionFromIndexedDB();
+
+            if (!hasRestored) {
+                // Initialize default store skeleton
+                for (let i = 1; i <= CONFIG.TOTAL_NFTS; i++) {
+                    nftStore[i] = {
+                        id: i,
+                        name: `Item #${i}`,
+                        description: "",
+                        image: `${CONFIG.IMAGE_BASE_URL}${i}.jpeg`,
+                        originalImage: `${CONFIG.IMAGE_BASE_URL}${i}.jpeg`,
+                        customBlob: null,
+                        metadata: { attributes: [] },
+                        failed: false
+                    };
+                }
+                await loadAllMetadataInBatches();
+            } else {
+                rebuildTraitIndex();
+                populateFilterSidebar();
+                applyFilters();
+                updateStatusBar();
+            }
+        });
+
+        async function loadAllMetadataInBatches() {
+            showProcessModal("Loading Metadata", "Batch requesting NFT metadata with concurrency...", 0);
+            const ids = Array.from({ length: CONFIG.TOTAL_NFTS }, (_, i) => i + 1);
+            let processed = 0;
+            let failedCount = 0;
+
+            const queue = [...ids];
+            const workers = Array(CONFIG.CONCURRENCY_LIMIT).fill(null).map(async () => {
+                while (queue.length > 0) {
+                    const id = queue.shift();
+                    const success = await fetchSingleMetadata(id);
+                    if (!success) failedCount++;
+                    processed++;
+                    
+                    if (processed % 50 === 0 || processed === CONFIG.TOTAL_NFTS) {
+                        const pct = Math.floor((processed / CONFIG.TOTAL_NFTS) * 100);
+                        updateProcessModal(`Loaded ${processed} / ${CONFIG.TOTAL_NFTS}`, pct);
+                        updateStatusBar();
+                    }
+                }
+            });
+
+            await Promise.all(workers);
+            hideProcessModal();
+
+            rebuildTraitIndex();
+            populateFilterSidebar();
+            applyFilters();
+            updateStatusBar();
+        }
+
+        async function fetchSingleMetadata(id) {
+            const jsonUrl = `${CONFIG.METADATA_BASE_URL}${id}.json`;
+            try {
+                const res = await fetch(jsonUrl);
+                if (!res.ok) throw new Error("Metadata fetch failed");
+                const data = await res.json();
+                
+                nftStore[id].name = data.name || nftStore[id].name;
+                nftStore[id].description = data.description || "";
+                if (data.image) nftStore[id].image = resolveImageUrl(data.image, id);
+                nftStore[id].metadata = data.attributes ? data : { attributes: [] };
+                nftStore[id].failed = false;
+                return true;
+            } catch (err) {
+                nftStore[id].failed = true;
+                return false;
+            }
+        }
+
+        function resolveImageUrl(imgStr, id) {
+            if (!imgStr) return `${CONFIG.IMAGE_BASE_URL}${id}.jpeg`;
+            if (imgStr.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${imgStr.slice(7)}`;
+            return imgStr;
+        }
+
+        /**
+         * Dynamic Trait Indexing & Sidebar Engine
+         */
+        function rebuildTraitIndex() {
+            traitIndex = {};
+            for (let id in nftStore) {
+                const item = nftStore[id];
+                if (!item || !item.metadata || !item.metadata.attributes) continue;
+
+                item.metadata.attributes.forEach(attr => {
+                    const tType = attr.trait_type || "Uncategorized";
+                    const tVal = String(attr.value);
+
+                    if (!traitIndex[tType]) traitIndex[tType] = {};
+                    if (!traitIndex[tType][tVal]) traitIndex[tType][tVal] = new Set();
+
+                    traitIndex[tType][tVal].add(Number(id));
+                });
+            }
             populateLayerDropdowns();
         }
 
-        async function fetchNFTData(id) {
-            const imgUrl = `${baseUrl}${id}.jpeg`;
-            const jsonUrl = `${baseUrl}${id}.json`;
+        function populateFilterSidebar() {
+            const container = document.getElementById('filter-groups-container');
+            container.innerHTML = '';
 
-            let metadata = { attributes: [] };
-            try {
-                const res = await fetch(jsonUrl);
-                if (res.ok) metadata = await res.json();
-            } catch (e) {
-                console.warn(`Metadata error ID #${id}`);
+            for (let tType in traitIndex) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'filter-group';
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'group-title';
+                titleDiv.innerText = tType;
+                groupDiv.appendChild(titleDiv);
+
+                for (let tVal in traitIndex[tType]) {
+                    const count = traitIndex[tType][tVal].size;
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'trait-option';
+
+                    const isChecked = selectedFilters[tType] && selectedFilters[tType].has(tVal);
+
+                    optDiv.innerHTML = `
+                        <label>
+                            <input type="checkbox" onchange="toggleFilter('${tType}', '${tVal}')" ${isChecked ? 'checked' : ''}>
+                            <span>${tVal}</span>
+                        </label>
+                        <span class="trait-count">(${count})</span>
+                    `;
+                    groupDiv.appendChild(optDiv);
+                }
+                container.appendChild(groupDiv);
             }
-
-            nftDataStore[id] = {
-                id: id,
-                imgUrl: imgUrl,
-                customImg: null, // এডিট করা ইমেজের জন্য DataURL
-                metadata: metadata
-            };
         }
 
-        function renderGallery(startID, endID) {
-            const gallery = document.getElementById('gallery');
-            gallery.innerHTML = '';
+        function toggleFilter(tType, tVal) {
+            if (!selectedFilters[tType]) selectedFilters[tType] = new Set();
+            if (selectedFilters[tType].has(tVal)) {
+                selectedFilters[tType].delete(tVal);
+                if (selectedFilters[tType].size === 0) delete selectedFilters[tType];
+            } else {
+                selectedFilters[tType].add(tVal);
+            }
+            applyFilters();
+        }
 
-            for (let id = startID; id <= endID; id++) {
-                const item = nftDataStore[id];
+        function clearFilters() {
+            selectedFilters = {};
+            document.getElementById('global-search').value = '';
+            populateFilterSidebar();
+            applyFilters();
+        }
+
+        function handleSearch() {
+            applyFilters();
+        }
+
+        /**
+         * Filter Application & Lazy Rendering
+         */
+        function applyFilters() {
+            const query = document.getElementById('global-search').value.trim().toLowerCase();
+
+            visibleIDs = [];
+            for (let id = 1; id <= CONFIG.TOTAL_NFTS; id++) {
+                const item = nftStore[id];
                 if (!item) continue;
 
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.id = `card-${id}`;
-                card.setAttribute('data-id', id);
-
-                const displayImg = item.customImg ? item.customImg : item.imgUrl;
-
-                card.innerHTML = `
-                    <button class="delete-btn" onclick="deleteCard(${id})">✕ Delete</button>
-                    <div class="img-wrapper">
-                        <img src="${displayImg}" id="img-${id}" alt="NFT #${id}">
-                    </div>
-                    <div><strong>Item #${id}</strong></div>
-                `;
-                gallery.appendChild(card);
-            }
-        }
-
-        // ডায়নামিক লেয়ার ফিল্টার তৈরি
-        function populateLayerDropdowns() {
-            const layerTypeSelect = document.getElementById('layer-type-select');
-            const selectedType = layerTypeSelect.value;
-            layerTypeSelect.innerHTML = '<option value="">-- লেয়ার টাইপ নির্বাচন করুন --</option>';
-
-            const traitsMap = {};
-
-            Object.values(nftDataStore).forEach(nft => {
-                if (nft.metadata && nft.metadata.attributes) {
-                    nft.metadata.attributes.forEach(attr => {
-                        if (!traitsMap[attr.trait_type]) {
-                            traitsMap[attr.trait_type] = new Set();
-                        }
-                        traitsMap[attr.trait_type].add(attr.value);
-                    });
-                }
-            });
-
-            for (let traitType in traitsMap) {
-                const opt = document.createElement('option');
-                opt.value = traitType;
-                opt.innerText = traitType;
-                if (traitType === selectedType) opt.selected = true;
-                layerTypeSelect.appendChild(opt);
-            }
-
-            updateTraitValueDropdown();
-        }
-
-        function updateTraitValueDropdown() {
-            const selectedType = document.getElementById('layer-type-select').value;
-            const valueSelect = document.getElementById('trait-value-select');
-            valueSelect.innerHTML = '<option value="">-- ফিল্টার ভ্যালু নির্বাচন করুন --</option>';
-
-            if (!selectedType) return;
-
-            const values = new Set();
-            Object.values(nftDataStore).forEach(nft => {
-                if (nft.metadata && nft.metadata.attributes) {
-                    nft.metadata.attributes.forEach(attr => {
-                        if (attr.trait_type === selectedType) {
-                            values.add(attr.value);
-                        }
-                    });
-                }
-            });
-
-            values.forEach(val => {
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.innerText = val;
-                valueSelect.appendChild(opt);
-            });
-        }
-
-        // নির্দিষ্ট লেয়ার সিলেক্ট করে ফিল্টার
-        function filterNFTsByLayer() {
-            const layerType = document.getElementById('layer-type-select').value;
-            const traitVal = document.getElementById('trait-value-select').value;
-
-            const cards = document.querySelectorAll('.card');
-
-            cards.forEach(card => {
-                const id = card.getAttribute('data-id');
-                const nft = nftDataStore[id];
-
-                if (!layerType || !traitVal) {
-                    card.style.display = 'flex';
-                    return;
-                }
-
-                let match = false;
-                if (nft && nft.metadata && nft.metadata.attributes) {
-                    match = nft.metadata.attributes.some(attr => 
-                        attr.trait_type === layerType && String(attr.value) === String(traitVal)
+                // 1. Search Query Check
+                let matchesSearch = true;
+                if (query) {
+                    const idMatch = String(item.id).includes(query) || `#${item.id}`.includes(query);
+                    const nameMatch = item.name.toLowerCase().includes(query);
+                    const traitMatch = item.metadata.attributes && item.metadata.attributes.some(a => 
+                        String(a.trait_type).toLowerCase().includes(query) || String(a.value).toLowerCase().includes(query)
                     );
+                    matchesSearch = idMatch || nameMatch || traitMatch;
                 }
 
-                card.style.display = match ? 'flex' : 'none';
-            });
-        }
+                if (!matchesSearch) continue;
 
-        // লেয়ার এডিটর মডাল
-        function openEditModal() {
-            const layerType = document.getElementById('layer-type-select').value;
-            const traitVal = document.getElementById('trait-value-select').value;
-
-            if (!layerType || !traitVal) {
-                alert('অনুগ্রহ করে আগে একটি লেয়ার টাইপ এবং ভ্যালু সিলেক্ট করুন!');
-                return;
-            }
-
-            document.getElementById('new-trait-name').value = traitVal;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        // লেয়ার পিকচার ও মেটাডেটা আপডেট যুক্ত করা
-        function applyLayerEdit() {
-            const layerType = document.getElementById('layer-type-select').value;
-            const oldTraitVal = document.getElementById('trait-value-select').value;
-            const newTraitName = document.getElementById('new-trait-name').value;
-            const fileInput = document.getElementById('new-layer-image');
-
-            if (!newTraitName) {
-                alert('নতুন ট্রেইটের নাম দিন!');
-                return;
-            }
-
-            const applyChanges = (imageDataUrl = null) => {
-                Object.values(nftDataStore).forEach(nft => {
-                    if (nft.metadata && nft.metadata.attributes) {
-                        nft.metadata.attributes.forEach(attr => {
-                            if (attr.trait_type === layerType && String(attr.value) === String(oldTraitVal)) {
-                                // ১. মেটাডেটা নাম পরিবর্তন
-                                attr.value = newTraitName;
-                                
-                                // ২. নতুন পিকচার যুক্ত করা
-                                if (imageDataUrl) {
-                                    nft.customImg = imageDataUrl;
-                                    const imgElem = document.getElementById(`img-${nft.id}`);
-                                    if (imgElem) imgElem.src = imageDataUrl;
-                                }
-                            }
-                        });
+                // 2. Trait Filters Check (AND logic across types, OR logic within type)
+                let matchesTraits = true;
+                for (let tType in selectedFilters) {
+                    const allowedValues = selectedFilters[tType];
+                    const hasTrait = item.metadata.attributes && item.metadata.attributes.some(a => 
+                        a.trait_type === tType && allowedValues.has(String(a.value))
+                    );
+                    if (!hasTrait) {
+                        matchesTraits = false;
+                        break;
                     }
-                });
+                }
 
-                alert('সফলভাবে সিলেক্ট করা সকল NFT-এর লেয়ার এবং মেটাডেটা আপডেট হয়েছে!');
-                closeEditModal();
-                populateLayerDropdowns();
-                filterNFTsByLayer();
-            };
+                if (matchesTraits) {
+                    visibleIDs.push(id);
+                }
+            }
 
-            if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    applyChanges(e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                applyChanges();
+            resetAndRenderGallery();
+            updateStatusBar();
+        }
+
+        function resetAndRenderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+            renderedCount = 0;
+            renderNextBatch();
+        }
+
+        function renderNextBatch() {
+            const grid = document.getElementById('gallery-grid');
+            const limit = Math.min(renderedCount + CONFIG.RENDER_BATCH_SIZE, visibleIDs.length);
+
+            for (let i = renderedCount; i < limit; i++) {
+                const id = visibleIDs[i];
+                const card = createNFTCardElement(nftStore[id]);
+                grid.appendChild(card);
+            }
+            renderedCount = limit;
+        }
+
+        function handleScroll() {
+            const container = document.getElementById('gallery-container');
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 200) {
+                if (renderedCount < visibleIDs.length) {
+                    renderNextBatch();
+                }
             }
         }
 
-        function deleteCard(id) {
+        function createNFTCardElement(item) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = `card-${item.id}`;
+
+            const displayImg = item.customBlob || item.image;
+
+            let traitsSummary = "No traits available";
+            if (item.metadata && item.metadata.attributes && item.metadata.attributes.length > 0) {
+                traitsSummary = item.metadata.attributes.map(a => `${a.trait_type}: ${a.value}`).join(' | ');
+            }
+
+            card.innerHTML = `
+                <button class="delete-btn" onclick="removeCardFromView(${item.id})">✕ Delete</button>
+                <div class="img-wrapper">
+                    <img src="${displayImg}" alt="${item.name}" onerror="handleCardImgError(${item.id})" id="img-${item.id}">
+                    <div class="error-box" id="err-${item.id}">
+                        <span>Image Load Failed</span>
+                        <button style="padding:2px 6px; font-size:10px;" onclick="reloadSingleCard(${item.id})">Retry</button>
+                        <a href="${item.image}" target="_blank" class="direct-link" style="color:var(--accent); font-size:9px;">Direct Link</a>
+                    </div>
+                </div>
+                <div class="card-title">
+                    <span>${item.name}</span>
+                </div>
+                <div class="card-traits" title="${traitsSummary}">${traitsSummary}</div>
+                <div class="card-actions">
+                    <button onclick="openMetadataModal(${item.id})">Edit Metadata</button>
+                </div>
+            `;
+            return card;
+        }
+
+        function removeCardFromView(id) {
             const card = document.getElementById(`card-${id}`);
             if (card) card.remove();
+            visibleIDs = visibleIDs.filter(vId => vId !== id);
+            updateStatusBar();
         }
 
-        function changePage(step) {
-            const newPage = currentPage + step;
-            if (newPage >= 1 && newPage <= 70) loadPage(newPage);
+        function handleCardImgError(id) {
+            const img = document.getElementById(`img-${id}`);
+            const err = document.getElementById(`err-${id}`);
+            if (img) img.style.display = 'none';
+            if (err) err.style.display = 'flex';
         }
 
-        function jumpToID() {
-            const id = parseInt(document.getElementById('jump-id').value);
-            if (id >= 1 && id <= 7000) {
-                loadPage(Math.ceil(id / itemsPerPage));
+        function reloadSingleCard(id) {
+            const img = document.getElementById(`img-${id}`);
+            const err = document.getElementById(`err-${id}`);
+            if (err) err.style.display = 'none';
+            if (img) {
+                img.style.display = 'block';
+                img.src = `${nftStore[id].image}?t=${Date.now()}`;
+            }
+        }
+
+        /**
+         * Bulk Layer Replacement & Compositing Engine
+         */
+        function populateLayerDropdowns() {
+            const select = document.getElementById('layer-type-select');
+            select.innerHTML = '<option value="">-- Select Trait Type --</option>';
+            for (let tType in traitIndex) {
+                const opt = document.createElement('option');
+                opt.value = tType;
+                opt.innerText = tType;
+                select.appendChild(opt);
+            }
+            populateTraitValueDropdown();
+        }
+
+        function populateTraitValueDropdown() {
+            const tType = document.getElementById('layer-type-select').value;
+            const select = document.getElementById('trait-value-select');
+            select.innerHTML = '<option value="">-- Select Trait Value --</option>';
+
+            if (!tType || !traitIndex[tType]) {
+                updateLayerSelectionInfo();
+                return;
+            }
+
+            for (let tVal in traitIndex[tType]) {
+                const opt = document.createElement('option');
+                opt.value = tVal;
+                opt.innerText = tVal;
+                select.appendChild(opt);
+            }
+            updateLayerSelectionInfo();
+        }
+
+        function updateLayerSelectionInfo() {
+            const tType = document.getElementById('layer-type-select').value;
+            const tVal = document.getElementById('trait-value-select').value;
+            const countElem = document.getElementById('layer-match-count');
+
+            if (tType && tVal && traitIndex[tType] && traitIndex[tType][tVal]) {
+                countElem.innerText = traitIndex[tType][tVal].size;
             } else {
-                alert('১ থেকে ৭০০০ এর মধ্যে আইডি লিখুন।');
+                countElem.innerText = "0";
             }
         }
 
-        async function downloadVisibleZIP() {
-            const zip = new JSZip();
-            const visibleCards = Array.from(document.querySelectorAll('.card')).filter(card => card.style.display !== 'none');
+        function openLayerConfirmModal() {
+            const tType = document.getElementById('layer-type-select').value;
+            const tVal = document.getElementById('trait-value-select').value;
+            const fileInput = document.getElementById('layer-file-input');
 
-            if (visibleCards.length === 0) return alert('ডাউনলোড করার মতো ছবি নেই!');
-
-            for (let card of visibleCards) {
-                const id = card.getAttribute('data-id');
-                const nft = nftDataStore[id];
-
-                if (nft.customImg) {
-                    const base64Data = nft.customImg.split(',')[1];
-                    zip.file(`${id}.png`, base64Data, { base64: true });
-                } else {
-                    try {
-                        const res = await fetch(nft.imgUrl);
-                        const blob = await res.blob();
-                        zip.file(`${id}.png`, blob);
-                    } catch (e) {
-                        console.error(`ID #${id} Image load error`);
-                    }
-                }
-                // Updated Metadata
-                zip.file(`${id}.json`, JSON.stringify(nft.metadata, null, 2));
+            if (!tType || !tVal) {
+                alert("Please select both a Trait Type and a Trait Value first.");
+                return;
+            }
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert("Please upload a replacement layer image file.");
+                return;
             }
 
-            zip.generateAsync({ type: "blob" }).then(content => {
-                saveAs(content, `NFT_Updated_Batch_Page_${currentPage}.zip`);
+            const matchingIDs = Array.from(traitIndex[tType][tVal] || []);
+            if (matchingIDs.length === 0) {
+                alert("No NFTs match the selected layer.");
+                return;
+            }
+
+            const sampleID = matchingIDs[0];
+            document.getElementById('modal-desc').innerText = `Target Layer: ${tType} -> ${tVal}. This action will apply to ${matchingIDs.length} matching NFTs.`;
+
+            // Setup preview images
+            document.getElementById('prev-orig-img').src = nftStore[sampleID].customBlob || nftStore[sampleID].image;
+            
+            // Draw Composite Preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const newImg = new Image();
+                newImg.onload = () => {
+                    const canvas = document.getElementById('prev-canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    const baseImg = new Image();
+                    baseImg.crossOrigin = "anonymous";
+                    baseImg.onload = () => {
+                        ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(newImg, 0, 0, canvas.width, canvas.height);
+                    };
+                    baseImg.src = nftStore[sampleID].customBlob || nftStore[sampleID].image;
+                };
+                newImg.src = e.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+
+            openModal('layer-confirm-modal');
+        }
+
+        async function executeBulkLayerReplacement() {
+            closeModal('layer-confirm-modal');
+
+            const tType = document.getElementById('layer-type-select').value;
+            const tVal = document.getElementById('trait-value-select').value;
+            const fileInput = document.getElementById('layer-file-input');
+            const file = fileInput.files[0];
+
+            const matchingIDs = Array.from(traitIndex[tType][tVal] || []);
+
+            // Save Snapshot for Undo
+            lastBatchUndoState = {};
+            matchingIDs.forEach(id => {
+                lastBatchUndoState[id] = { customBlob: nftStore[id].customBlob };
+            });
+            document.getElementById('undo-btn').disabled = false;
+
+            showProcessModal("Applying Layer Replacement", `Updating ${matchingIDs.length} NFTs...`, 0);
+
+            // Read replacement layer image
+            const layerImgDataUrl = await new Promise(r => {
+                const rd = new FileReader();
+                rd.onload = e => r(e.target.result);
+                rd.readAsDataURL(file);
+            });
+
+            const replacementImg = new Image();
+            await new Promise(r => { replacementImg.onload = r; replacementImg.src = layerImgDataUrl; });
+
+            // Process Compositing asynchronously in chunks
+            for (let i = 0; i < matchingIDs.length; i++) {
+                const id = matchingIDs[i];
+                const compositeBlob = await compositeSingleNFT(id, replacementImg);
+                nftStore[id].customBlob = compositeBlob;
+
+                if (i % 10 === 0 || i === matchingIDs.length - 1) {
+                    const pct = Math.floor(((i + 1) / matchingIDs.length) * 100);
+                    updateProcessModal(`Composited ${i + 1} / ${matchingIDs.length}`, pct);
+                }
+            }
+
+            hideProcessModal();
+            resetAndRenderGallery();
+            alert("Bulk layer replacement applied successfully.");
+        }
+
+        function compositeSingleNFT(id, replacementImg) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1000; // Standard High-Res Compositing Dimension
+                canvas.height = 1000;
+                const ctx = canvas.getContext('2d');
+
+                const baseImg = new Image();
+                baseImg.crossOrigin = "anonymous";
+                baseImg.onload = () => {
+                    ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(replacementImg, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                baseImg.onerror = () => {
+                    // Fallback to replacement layer alone if original image fails CORS
+                    ctx.drawImage(replacementImg, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                baseImg.src = nftStore[id].customBlob || nftStore[id].image;
             });
         }
 
-        loadPage(1);
+        function undoLastBatch() {
+            if (!lastBatchUndoState) return;
+            for (let id in lastBatchUndoState) {
+                if (nftStore[id]) {
+                    nftStore[id].customBlob = lastBatchUndoState[id].customBlob;
+                }
+            }
+            lastBatchUndoState = null;
+            document.getElementById('undo-btn').disabled = true;
+            resetAndRenderGallery();
+            alert("Last batch layer modification undone.");
+        }
+
+        /**
+         * Metadata Editor (Single NFT)
+         */
+        function openMetadataModal(id) {
+            activeEditID = id;
+            const item = nftStore[id];
+            document.getElementById('meta-edit-id').innerText = id;
+            document.getElementById('meta-edit-name').value = item.name;
+            document.getElementById('meta-edit-desc').value = item.description || "";
+
+            const container = document.getElementById('meta-attributes-container');
+            container.innerHTML = '';
+
+            if (item.metadata && item.metadata.attributes) {
+                item.metadata.attributes.forEach(attr => {
+                    addMetaDataAttributeRow(attr.trait_type, attr.value);
+                });
+            }
+            openModal('metadata-modal');
+        }
+
+        function addMetaDataAttributeRow(type = "", val = "") {
+            const container = document.getElementById('meta-attributes-container');
+            const row = document.createElement('div');
+            row.className = 'form-row';
+            row.innerHTML = `
+                <input type="text" class="attr-type" placeholder="Trait Type" value="${type}">
+                <input type="text" class="attr-val" placeholder="Trait Value" value="${val}">
+                <button class="btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveSingleMetadata() {
+            if (!activeEditID || !nftStore[activeEditID]) return;
+            const item = nftStore[activeEditID];
+
+            item.name = document.getElementById('meta-edit-name').value.trim();
+            item.description = document.getElementById('meta-edit-desc').value.trim();
+
+            const rows = document.querySelectorAll('#meta-attributes-container .form-row');
+            const newAttributes = [];
+
+            rows.forEach(row => {
+                const t = row.querySelector('.attr-type').value.trim();
+                const v = row.querySelector('.attr-val').value.trim();
+                if (t && v) {
+                    newAttributes.push({ trait_type: t, value: v });
+                }
+            });
+
+            item.metadata.attributes = newAttributes;
+            closeModal('metadata-modal');
+
+            rebuildTraitIndex();
+            populateFilterSidebar();
+            applyFilters();
+            alert(`Metadata updated for NFT #${activeEditID}`);
+        }
+
+        /**
+         * ZIP Export Engine
+         */
+        async function exportZIP() {
+            const scope = document.getElementById('export-scope').value;
+            let targetIDs = [];
+
+            if (scope === 'filtered') {
+                targetIDs = [...visibleIDs];
+            } else if (scope === 'layer') {
+                const tType = document.getElementById('layer-type-select').value;
+                const tVal = document.getElementById('trait-value-select').value;
+                if (!tType || !tVal) return alert("Select a layer first for Layer Export.");
+                targetIDs = Array.from(traitIndex[tType][tVal] || []);
+            } else {
+                targetIDs = Array.from({ length: CONFIG.TOTAL_NFTS }, (_, i) => i + 1);
+            }
+
+            if (targetIDs.length === 0) return alert("No NFTs match the export criteria.");
+
+            const zip = new JSZip();
+            const imgFolder = zip.folder("images");
+            const metaFolder = zip.folder("metadata");
+
+            showProcessModal("Preparing ZIP Export", `Exporting ${targetIDs.length} NFTs...`, 0);
+
+            for (let i = 0; i < targetIDs.length; i++) {
+                const id = targetIDs[i];
+                const item = nftStore[id];
+
+                // Export Metadata JSON
+                metaFolder.file(`${id}.json`, JSON.stringify(item.metadata, null, 2));
+
+                // Export Image
+                if (item.customBlob) {
+                    const base64Data = item.customBlob.split(',')[1];
+                    imgFolder.file(`${id}.png`, base64Data, { base64: true });
+                } else {
+                    try {
+                        const res = await fetch(item.image);
+                        if (res.ok) {
+                            const blob = await res.blob();
+                            imgFolder.file(`${id}.png`, blob);
+                        }
+                    } catch (e) {
+                        console.error(`Failed to fetch image for #${id} during export`);
+                    }
+                }
+
+                if (i % 20 === 0 || i === targetIDs.length - 1) {
+                    const pct = Math.floor(((i + 1) / targetIDs.length) * 100);
+                    updateProcessModal(`Bundled ${i + 1} / ${targetIDs.length}`, pct);
+                }
+            }
+
+            updateProcessModal("Compressing ZIP file...", 100);
+            const content = await zip.generateAsync({ type: "blob" });
+            saveAs(content, `NFT_Collection_Export_${Date.now()}.zip`);
+            hideProcessModal();
+        }
+
+        /**
+         * Failed Items & Retry Handler
+         */
+        async function retryFailedRequests() {
+            const failedIDs = [];
+            for (let id in nftStore) {
+                if (nftStore[id].failed) failedIDs.push(Number(id));
+            }
+            if (failedIDs.length === 0) return;
+
+            showProcessModal("Retrying Failed Requests", `Retrying ${failedIDs.length} items...`, 0);
+            let done = 0;
+
+            for (let id of failedIDs) {
+                await fetchSingleMetadata(id);
+                done++;
+                updateProcessModal(`Retried ${done} / ${failedIDs.length}`, Math.floor((done / failedIDs.length) * 100));
+            }
+
+            hideProcessModal();
+            rebuildTraitIndex();
+            populateFilterSidebar();
+            applyFilters();
+            updateStatusBar();
+        }
+
+        /**
+         * UI Helper Functions & Status Updates
+         */
+        function updateStatusBar() {
+            let loadedMeta = 0;
+            let failedCount = 0;
+
+            for (let id in nftStore) {
+                if (nftStore[id].failed) failedCount++;
+                else if (nftStore[id].metadata && nftStore[id].metadata.attributes.length > 0) loadedMeta++;
+            }
+
+            document.getElementById('st-total').innerText = CONFIG.TOTAL_NFTS;
+            document.getElementById('st-meta').innerText = loadedMeta;
+            document.getElementById('st-failed').innerText = failedCount;
+            document.getElementById('st-visible').innerText = visibleIDs.length;
+
+            const retryBtn = document.getElementById('retry-btn');
+            document.getElementById('failed-count').innerText = failedCount;
+            retryBtn.disabled = (failedCount === 0);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function showProcessModal(title, text, pct) {
+            document.getElementById('process-title').innerText = title;
+            document.getElementById('process-status').innerText = text;
+            document.getElementById('process-bar').style.width = `${pct}%`;
+            openModal('process-modal');
+        }
+
+        function updateProcessModal(text, pct) {
+            document.getElementById('process-status').innerText = text;
+            document.getElementById('process-bar').style.width = `${pct}%`;
+        }
+
+        function hideProcessModal() { closeModal('process-modal'); }
     </script>
 </body>
 </html>
