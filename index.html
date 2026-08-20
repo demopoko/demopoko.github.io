@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex NFT Studio - Layer Editor & Metadata Management Suite</title>
+  <title>Apex NFT Studio - Global Layer Replacer</title>
   
-  <!-- Tailwind CSS v3 & FontAwesome Icons -->
+  <!-- Tailwind CSS & FontAwesome Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -14,113 +14,53 @@
         extend: {
           colors: {
             brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              400: '#818cf8',
               500: '#6366f1',
               600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
             },
             dark: {
               bg: '#0b0f17',
-              card: 'rgba(17, 24, 39, 0.7)',
               border: 'rgba(255, 255, 255, 0.08)',
-              hover: 'rgba(255, 255, 255, 0.04)',
             }
-          },
-          backdropBlur: {
-            xs: '2px',
-            glass: '16px',
           }
         }
       }
     }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- External JS Libraries: JSZip & Dexie (IndexedDB Wrapper) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
 
   <style>
-    /* Custom Glassmorphism Styles & Scrollbars */
     body {
       background-color: #080b11;
       color: #f3f4f6;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
     }
     .glass-panel {
       background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-    .glass-modal {
-      background: rgba(11, 15, 23, 0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.2);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-    .text-gradient {
-      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #c084fc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
     }
   </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-sm select-none">
 
-  <!-- TOP HEADER / NAV -->
+  <!-- TOP HEADER -->
   <header class="h-14 glass-panel border-b border-dark-border flex items-center justify-between px-6 z-20 shrink-0">
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
-        <i class="fa-solid fa-layer-group text-base"></i>
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+        <i class="fa-solid fa-layer-group"></i>
       </div>
       <div>
-        <h1 class="font-bold text-base tracking-wide text-gradient">APEX NFT STUDIO</h1>
-        <p class="text-[10px] text-gray-400 -mt-1 font-mono">CID: bafybeidwxlcyp...5irg6lq</p>
+        <h1 class="font-bold text-base tracking-wide text-indigo-400">APEX NFT STUDIO</h1>
       </div>
     </div>
 
-    <!-- Live Loading Progress Display -->
-    <div id="loaderStatusHeader" class="hidden items-center space-x-4 bg-dark-bg/60 border border-dark-border px-4 py-1.5 rounded-full">
-      <i class="fa-solid fa-spinner fa-spin text-brand-400"></i>
-      <div class="flex flex-col min-w-[160px]">
-        <div class="flex justify-between text-xs mb-1">
-          <span class="text-gray-300 font-mono" id="loadCounter">0 / 7000</span>
-          <span class="text-brand-400 font-bold" id="loadPercentage">0.0%</span>
-        </div>
-        <div class="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden">
-          <div id="loadProgressBar" class="bg-gradient-to-r from-brand-500 to-purple-500 h-1.5 rounded-full transition-all duration-200" style="width: 0%"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Navigation & Quick Stats -->
+    <!-- Live Status -->
     <div class="flex items-center space-x-4">
-      <button id="btnSettingsModal" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition" title="Gateway & Engine Settings">
-        <i class="fa-solid fa-gear text-base"></i>
-      </button>
-      <div class="h-4 w-[1px] bg-dark-border"></div>
-      <div id="globalStatBadge" class="px-3 py-1 rounded-full text-xs font-mono bg-brand-500/10 border border-brand-500/30 text-brand-400 flex items-center space-x-2">
+      <div class="px-3 py-1 rounded-full text-xs font-mono bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center space-x-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="statActiveCount">0 Loaded</span>
+        <span id="statActiveCount">0 NFTs Loaded</span>
       </div>
     </div>
   </header>
@@ -130,456 +70,202 @@
     <aside class="w-64 glass-panel border-r border-dark-border flex flex-col shrink-0 z-10">
       <nav class="p-3 space-y-1">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
-          <i class="fa-solid fa-chart-pie w-5 text-center text-brand-400"></i>
+          <i class="fa-solid fa-chart-pie w-5 text-indigo-400"></i>
           <span>Dashboard</span>
         </button>
-        <button onclick="switchTab('gallery')" id="nav-gallery" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
-          <i class="fa-solid fa-grid-2 w-5 text-center text-purple-400"></i>
-          <span>NFT Gallery</span>
-        </button>
-        <button onclick="switchTab('editor')" id="nav-editor" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
-          <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-pink-400"></i>
-          <span>Layer Replacer</span>
+        <button onclick="switchTab('editor')" id="nav-editor" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium bg-white/10 text-white">
+          <i class="fa-solid fa-wand-magic-sparkles w-5 text-pink-400"></i>
+          <span>Bulk Layer Replacer</span>
         </button>
         <button onclick="switchTab('library')" id="nav-library" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
-          <i class="fa-solid fa-folder-open w-5 text-center text-amber-400"></i>
+          <i class="fa-solid fa-folder-open w-5 text-amber-400"></i>
           <span>Layer Library</span>
         </button>
-        <button onclick="switchTab('edited')" id="nav-edited" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium justify-between">
-          <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-pen-to-square w-5 text-center text-emerald-400"></i>
-            <span>Edited NFTs</span>
-          </div>
-          <span id="badgeEditedCount" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-mono">0</span>
-        </button>
         <button onclick="switchTab('export')" id="nav-export" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
-          <i class="fa-solid fa-file-export w-5 text-center text-blue-400"></i>
+          <i class="fa-solid fa-file-export w-5 text-blue-400"></i>
           <span>Export Suite</span>
         </button>
       </nav>
-
-      <!-- Sidebar Bottom Action -->
-      <div class="mt-auto p-4 border-t border-dark-border bg-black/20 space-y-2">
-        <button id="btnResetAll" class="w-full py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg text-xs font-semibold flex items-center justify-center space-x-2 transition">
-          <i class="fa-solid fa-rotate-left"></i>
-          <span>Reset All Edits</span>
-        </button>
-      </div>
     </aside>
 
     <!-- MAIN WORKSPACE -->
-    <main class="flex-1 overflow-y-auto bg-dark-bg p-6 relative" id="mainWorkspace">
+    <main class="flex-1 overflow-y-auto bg-dark-bg p-6 relative">
 
-      <!-- VIEW 1: DASHBOARD -->
-      <div id="view-dashboard" class="view-panel space-y-6">
+      <!-- DASHBOARD VIEW -->
+      <div id="view-dashboard" class="view-panel hidden space-y-6">
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Collection Dashboard</h2>
-            <p class="text-xs text-gray-400">Real-time status of loaded token metadata and modifications.</p>
+            <p class="text-xs text-gray-400">Load IPFS Metadata to start modifying layers.</p>
           </div>
-          <div class="flex space-x-3">
-            <button id="btnStartLoad" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium text-xs shadow-lg shadow-brand-600/30 flex items-center space-x-2 transition">
-              <i class="fa-solid fa-cloud-arrow-down"></i>
-              <span>Start 7,000 Fetch Process</span>
-            </button>
-          </div>
+          <button id="btnStartLoad" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-xs shadow-lg transition">
+            <i class="fa-solid fa-cloud-arrow-down mr-1"></i>
+            Fetch Metadata (7,000)
+          </button>
         </div>
 
-        <!-- Metric Cards -->
-        <div class="grid grid-cols-5 gap-4">
-          <div class="glass-panel p-4 rounded-xl border border-dark-border">
-            <div class="text-gray-400 text-xs mb-1">TOTAL COLLECTION</div>
-            <div class="text-2xl font-bold text-white font-mono">7,000</div>
-            <div class="text-[10px] text-gray-500 mt-1">IPFS Pinata Gateway</div>
+        <div class="glass-panel p-6 rounded-xl space-y-3">
+          <div class="flex justify-between text-xs text-gray-300 font-mono">
+            <span>Progress: <strong id="loadCounter">0 / 7000</strong></span>
+            <span id="loadPercentage">0.0%</span>
           </div>
-          <div class="glass-panel p-4 rounded-xl border border-dark-border">
-            <div class="text-gray-400 text-xs mb-1">LOADED METADATA</div>
-            <div class="text-2xl font-bold text-brand-400 font-mono" id="dashLoaded">0</div>
-            <div class="text-[10px] text-gray-500 mt-1" id="dashLoadedPercent">0% complete</div>
-          </div>
-          <div class="glass-panel p-4 rounded-xl border border-dark-border">
-            <div class="text-gray-400 text-xs mb-1">EDITED NFTs</div>
-            <div class="text-2xl font-bold text-emerald-400 font-mono" id="dashEdited">0</div>
-            <div class="text-[10px] text-gray-500 mt-1">Local modified state</div>
-          </div>
-          <div class="glass-panel p-4 rounded-xl border border-dark-border">
-            <div class="text-gray-400 text-xs mb-1">DISCOVERED TRAITS</div>
-            <div class="text-2xl font-bold text-purple-400 font-mono" id="dashTraits">0</div>
-            <div class="text-[10px] text-gray-500 mt-1">Dynamic metadata parsing</div>
-          </div>
-          <div class="glass-panel p-4 rounded-xl border border-dark-border">
-            <div class="text-gray-400 text-xs mb-1">LAYER LIBRARY</div>
-            <div class="text-2xl font-bold text-amber-400 font-mono" id="dashLayers">0</div>
-            <div class="text-[10px] text-gray-500 mt-1">IndexedDB Persistence</div>
-          </div>
-        </div>
-
-        <!-- Progress Overview Panel -->
-        <div class="glass-panel p-6 rounded-xl space-y-4">
-          <div class="flex justify-between items-center">
-            <h3 class="font-bold text-white flex items-center space-x-2">
-              <i class="fa-solid fa-server text-brand-400"></i>
-              <span>Ingestion Pipeline Status</span>
-            </h3>
-            <span id="dashStatusLabel" class="text-xs font-mono text-gray-400">Idle - Click Start Fetch</span>
-          </div>
-          <div class="w-full bg-dark-bg/80 border border-dark-border rounded-full h-3 overflow-hidden p-0.5">
-            <div id="dashProgressBar" class="bg-gradient-to-r from-brand-600 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-          </div>
-          <div class="flex justify-between text-xs text-gray-400 font-mono">
-            <span>Concurrency Limit: 25 requests</span>
-            <span id="dashFailedCount">Errors: 0</span>
+          <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+            <div id="loadProgressBar" class="bg-indigo-500 h-full w-0 transition-all"></div>
           </div>
         </div>
       </div>
 
-      <!-- VIEW 2: NFT GALLERY & FILTER ENGINE -->
-      <div id="view-gallery" class="view-panel hidden h-full flex flex-col space-y-4">
-        <!-- Top Search Bar & Grid Controls -->
-        <div class="glass-panel p-3 rounded-xl flex items-center justify-between shrink-0">
-          <div class="flex items-center space-x-3 flex-1 max-w-md">
-            <div class="relative w-full">
-              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-500"></i>
-              <input type="text" id="gallerySearch" placeholder="Search token ID or name..." class="w-full bg-dark-bg/80 border border-dark-border rounded-lg pl-9 pr-4 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
-            </div>
-          </div>
-          
-          <div class="flex items-center space-x-4">
-            <span class="text-xs text-gray-400 font-mono" id="galleryResultCount">Showing 0 NFTs</span>
-            <div class="h-4 w-[1px] bg-dark-border"></div>
-            <button id="btnSelectFiltered" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-dark-border text-gray-300 rounded-lg text-xs font-medium transition">
-              Select All Filtered
-            </button>
-            <button id="btnClearFilters" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-medium transition">
-              Clear Filters
-            </button>
-          </div>
-        </div>
-
-        <div class="flex-1 flex space-x-4 overflow-hidden">
-          <!-- Filter Sidebar -->
-          <div class="w-64 glass-panel rounded-xl p-3 flex flex-col shrink-0 overflow-y-auto space-y-4">
-            <div class="font-bold text-xs uppercase tracking-wider text-gray-400 flex justify-between items-center">
-              <span>Trait Filters</span>
-              <i class="fa-solid fa-filter text-brand-400"></i>
-            </div>
-            <div id="filterAccordionContainer" class="space-y-2 text-xs">
-              <div class="text-gray-500 italic p-2 text-center">No metadata loaded yet.</div>
-            </div>
-          </div>
-
-          <!-- NFT Cards Grid -->
-          <div class="flex-1 glass-panel rounded-xl p-4 overflow-y-auto relative" id="nftGridContainer">
-            <div id="nftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              <!-- Dynamically Populated -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- VIEW 3: LAYER REPLACER ENGINE -->
-      <div id="view-editor" class="view-panel hidden space-y-6">
+      <!-- BULK LAYER REPLACER VIEW (UPDATED AS REQUESTED) -->
+      <div id="view-editor" class="view-panel space-y-6">
         <div>
-          <h2 class="text-xl font-bold text-white">Global Layer Replacement Engine</h2>
-          <p class="text-xs text-gray-400">Select an existing trait value, replace it with a local PNG asset, and compositing canvas will apply changes across matching tokens.</p>
+          <h2 class="text-xl font-bold text-white">Bulk Layer Add & Replace Engine</h2>
+          <p class="text-xs text-gray-400">সিলেক্ট করা এট্রিবিউট বিশিষ্ট সকল NFT-তে একসাথে নতুন লেয়ার যুক্ত বা পরিবর্তন হবে।</p>
         </div>
 
         <div class="grid grid-cols-12 gap-6">
-          <!-- Replacement Configuration Panel -->
-          <div class="col-span-7 glass-panel p-6 rounded-xl space-y-5">
-            <h3 class="font-bold text-sm text-brand-400 uppercase tracking-wider">1. Target Matching NFTs</h3>
+          <!-- Main Control Card -->
+          <div class="col-span-7 glass-panel p-6 rounded-xl space-y-6 border border-indigo-500/30">
             
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs text-gray-400 mb-1">Target Trait Type</label>
-                <select id="editorTraitSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
-                  <option value="">Select Trait...</option>
-                </select>
+            <!-- STEP 1 -->
+            <div class="space-y-3">
+              <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider flex items-center space-x-2">
+                <span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">১</span>
+                <span>টার্গেট এট্রিবিউট (Trait / Attribute) সিলেক্ট করুন</span>
+              </h3>
+
+              <div class="grid grid-cols-2 gap-4 bg-black/30 p-3 rounded-lg border border-dark-border">
+                <div>
+                  <label class="block text-[11px] text-gray-400 mb-1">Trait Type (ক্যাটাগরি)</label>
+                  <select id="editorTraitSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                    <option value="">-- Select Trait Type --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] text-gray-400 mb-1">Trait Value (ভ্যালু)</label>
+                  <select id="editorValueSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none" disabled>
+                    <option value="">-- Select Value --</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label class="block text-xs text-gray-400 mb-1">Original Trait Value</label>
-                <select id="editorValueSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500" disabled>
-                  <option value="">Select Target Value...</option>
-                </select>
+
+              <!-- Matching Alert -->
+              <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-300 flex items-center justify-between">
+                <span>মোট কতগুলো NFT-তে এই এট্রিবিউট আছে:</span>
+                <span id="editorMatchCount" class="font-bold font-mono text-sm text-white">0 tokens</span>
               </div>
             </div>
 
-            <div class="p-3 bg-brand-500/10 border border-brand-500/20 rounded-lg text-xs text-brand-300 flex items-center justify-between">
-              <span>Matching Tokens Found:</span>
-              <span id="editorMatchCount" class="font-bold font-mono text-sm text-white">0 tokens</span>
-            </div>
+            <hr class="border-dark-border">
 
-            <h3 class="font-bold text-sm text-pink-400 uppercase tracking-wider pt-2">2. Replacement Layer Selection</h3>
+            <!-- STEP 2 -->
+            <div class="space-y-3">
+              <h3 class="font-bold text-xs text-pink-400 uppercase tracking-wider flex items-center space-x-2">
+                <span class="w-5 h-5 rounded-full bg-pink-600 text-white flex items-center justify-center text-[10px]">২</span>
+                <span>নতুন লেয়ার (PNG Asset) সিলেক্ট করুন</span>
+              </h3>
 
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Select PNG Layer from Library</label>
-              <select id="editorLayerSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
-                <option value="">Select uploaded PNG layer...</option>
+              <select id="editorLayerSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-pink-500 focus:outline-none">
+                <option value="">-- Select PNG Layer from Library --</option>
               </select>
             </div>
 
-            <h3 class="font-bold text-sm text-amber-400 uppercase tracking-wider pt-2">3. Naming Rule Configuration</h3>
+            <hr class="border-dark-border">
 
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Name Template Rule</label>
-              <input type="text" id="editorNameTemplate" value="[Collection Name] #[Token ID]" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-brand-500">
-              <p class="text-[10px] text-gray-500 mt-1">Available placeholders: <code class="text-brand-400">[Token ID]</code>, <code class="text-brand-400">[Collection Name]</code>, <code class="text-brand-400">[New Trait]</code></p>
-            </div>
-
-            <button id="btnOpenReplacePreview" class="w-full py-3 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2">
-              <i class="fa-solid fa-eye"></i>
-              <span>Preview Side-by-Side Comparison</span>
+            <!-- APPLY BUTTON -->
+            <button id="btnApplyBulk" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-bolt text-sm"></i>
+              <span>একসাথে সবগুলোতে এপ্লাই করুন (Apply To All Matching NFTs)</span>
             </button>
           </div>
 
-          <!-- Change History Log -->
-          <div class="col-span-5 glass-panel p-6 rounded-xl flex flex-col">
-            <h3 class="font-bold text-sm text-white mb-3">Global Change Log</h3>
-            <div id="changeHistoryLog" class="flex-1 space-y-2 overflow-y-auto max-h-[380px] pr-1">
-              <div class="text-xs text-gray-500 italic p-4 text-center">No edits performed in this session.</div>
+          <!-- Right Status Panel -->
+          <div class="col-span-5 glass-panel p-6 rounded-xl flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-sm text-white mb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-list-check text-emerald-400"></i>
+                <span>একশন সামারি & হিস্ট্রি</span>
+              </h3>
+              <div id="changeHistoryLog" class="space-y-2 overflow-y-auto max-h-[300px] text-xs">
+                <div class="text-gray-500 italic p-4 text-center border border-dashed border-dark-border rounded-lg">
+                  এখনো কোনো লেয়ার পরিবর্তন করা হয়নি।
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-[11px] text-amber-300">
+              <i class="fa-solid fa-info-circle mr-1"></i>
+              এপ্লাই করার পর লোড হওয়া নির্দিষ্ট সকল মেটাডাটাতে নতুন ট্রেড আপডেট হয়ে যাবে।
             </div>
           </div>
         </div>
       </div>
 
-      <!-- VIEW 4: LOCAL LAYER LIBRARY -->
+      <!-- LAYER LIBRARY VIEW -->
       <div id="view-library" class="view-panel hidden space-y-6">
         <div class="flex justify-between items-center">
           <div>
-            <h2 class="text-xl font-bold text-white">Local Layer Library</h2>
-            <p class="text-xs text-gray-400">Upload transparent PNG assets to replace metadata layers. Saved directly in IndexedDB.</p>
+            <h2 class="text-xl font-bold text-white">Layer Library</h2>
+            <p class="text-xs text-gray-400">এখানে নতুন ট্রান্সপারেন্ট PNG ছবি আপলোড করে রাখুন।</p>
           </div>
           <label class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs rounded-lg cursor-pointer transition flex items-center space-x-2">
             <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Upload Transparent PNG Layer</span>
+            <span>Upload PNG Layer</span>
             <input type="file" id="inputLayerUpload" accept="image/png" class="hidden">
           </label>
         </div>
 
-        <!-- Layer Cards List -->
         <div id="layerLibraryGrid" class="grid grid-cols-4 gap-4">
-          <!-- Dynamically Populated -->
+          <!-- Dynamic -->
         </div>
       </div>
 
-      <!-- VIEW 5: EDITED NFTS LIST -->
-      <div id="view-edited" class="view-panel hidden space-y-6">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 class="text-xl font-bold text-white">Modified Tokens</h2>
-            <p class="text-xs text-gray-400">Review tokens that have local modified image overlays and metadata changes prior to ZIP export.</p>
-          </div>
-        </div>
-
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="bg-black/40 text-gray-400 font-mono border-b border-dark-border">
-                <th class="p-3">Token ID</th>
-                <th class="p-3">Original Name</th>
-                <th class="p-3">New Name</th>
-                <th class="p-3">Applied Modification</th>
-                <th class="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="tableEditedTokens" class="divide-y divide-dark-border">
-              <tr>
-                <td colspan="5" class="p-4 text-center text-gray-500 italic">No modified tokens found.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- VIEW 6: EXPORT SUITE -->
+      <!-- EXPORT VIEW -->
       <div id="view-export" class="view-panel hidden space-y-6">
         <div>
-          <h2 class="text-xl font-bold text-white">ZIP Export Center</h2>
-          <p class="text-xs text-gray-400">Generate production ZIP bundles containing 1:1 mapped images (<code class="text-brand-400">1.png</code>) and metadata (<code class="text-brand-400">1.json</code>).</p>
+          <h2 class="text-xl font-bold text-white">Export Center</h2>
+          <p class="text-xs text-gray-400">সব পরিবর্তন শেস হলে আপডেট হওয়া মেটাডাটা ডাউনলোড করে নিন।</p>
         </div>
 
-        <!-- Validation Check Box -->
-        <div class="glass-panel p-4 rounded-xl border border-dark-border space-y-2">
-          <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300">Pre-Export Data Integrity Check</h3>
-          <div class="grid grid-cols-4 gap-3 text-xs font-mono">
-            <div id="valImages" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ Metadata Valid</div>
-            <div id="valJSON" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ JSON Structure OK</div>
-            <div id="valMatches" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ ID Filename Mapped</div>
-            <div id="valImagesCheck" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ Canvas Layer Ready</div>
-          </div>
-        </div>
-
-        <!-- Export Configuration Options -->
-        <div class="grid grid-cols-3 gap-6">
-          <div class="glass-panel p-6 rounded-xl space-y-4 flex flex-col justify-between">
-            <div>
-              <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3 text-lg">
-                <i class="fa-solid fa-file-code"></i>
-              </div>
-              <h3 class="font-bold text-base text-white">Metadata ZIP</h3>
-              <p class="text-xs text-gray-400 mt-1">Package JSON files (1.json to 7000.json) including all updated traits and names.</p>
-            </div>
-            <button onclick="startExport('metadata')" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium text-xs transition">
-              Export Metadata ZIP
-            </button>
-          </div>
-
-          <div class="glass-panel p-6 rounded-xl space-y-4 flex flex-col justify-between">
-            <div>
-              <div class="w-10 h-10 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center mb-3 text-lg">
-                <i class="fa-solid fa-file-image"></i>
-              </div>
-              <h3 class="font-bold text-base text-white">Images ZIP</h3>
-              <p class="text-xs text-gray-400 mt-1">Export composite PNG images with modified transparent layers rendered on canvas.</p>
-            </div>
-            <button onclick="startExport('images')" class="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg font-medium text-xs transition">
-              Export Images ZIP
-            </button>
-          </div>
-
-          <div class="glass-panel p-6 rounded-xl space-y-4 flex flex-col justify-between border-brand-500/40">
-            <div>
-              <div class="w-10 h-10 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center mb-3 text-lg">
-                <i class="fa-solid fa-box-archive"></i>
-              </div>
-              <h3 class="font-bold text-base text-white">Complete Collection</h3>
-              <p class="text-xs text-gray-400 mt-1">Bundle both /images and /metadata directories into a single master collection ZIP.</p>
-            </div>
-            <button onclick="startExport('full')" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium text-xs transition shadow-lg shadow-brand-600/30">
-              Export Complete ZIP Bundle
-            </button>
-          </div>
-        </div>
+        <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition">
+          <i class="fa-solid fa-file-zipper mr-2"></i> Export All Updated Metadata (ZIP)
+        </button>
       </div>
 
     </main>
   </div>
 
-  <!-- MODAL: PREVIEW BEFORE GLOBAL APPLY -->
-  <div id="modalPreview" class="fixed inset-0 glass-modal flex items-center justify-center z-50 hidden p-6">
-    <div class="glass-panel max-w-2xl w-full rounded-2xl p-6 border border-dark-border space-y-6">
-      <div class="flex justify-between items-center border-b border-dark-border pb-4">
-        <h3 class="font-bold text-lg text-white">Confirm Global Layer Replacement</h3>
-        <button onclick="closeModal('modalPreview')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-6">
-        <div class="text-center space-y-2">
-          <div class="text-xs font-mono text-gray-400 uppercase">Original Token State</div>
-          <div class="aspect-square bg-black/50 rounded-xl overflow-hidden border border-dark-border relative flex items-center justify-center" id="prevOrigContainer">
-            <span class="text-xs text-gray-500">Loading Original...</span>
-          </div>
-          <div class="text-xs text-gray-300 font-mono" id="prevOrigLabel">-</div>
-        </div>
-
-        <div class="text-center space-y-2">
-          <div class="text-xs font-mono text-brand-400 uppercase">Composited New State</div>
-          <div class="aspect-square bg-black/50 rounded-xl overflow-hidden border border-brand-500/40 relative flex items-center justify-center" id="prevNewContainer">
-            <canvas id="prevCanvas" class="w-full h-full object-contain"></canvas>
-          </div>
-          <div class="text-xs text-brand-300 font-mono" id="prevNewLabel">-</div>
-        </div>
-      </div>
-
-      <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-300 flex items-center space-x-3">
-        <i class="fa-solid fa-triangle-exclamation text-base"></i>
-        <span>This modification will apply composited images and updated metadata to <strong id="prevTargetCount" class="underline">0</strong> tokens.</span>
-      </div>
-
-      <div class="flex justify-end space-x-3">
-        <button onclick="closeModal('modalPreview')" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs font-semibold">Cancel</button>
-        <button id="btnConfirmApplyGlobal" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-brand-600/30">
-          Apply Changes Global Engine
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: NFT DETAIL VIEW -->
-  <div id="modalNFTDetail" class="fixed inset-0 glass-modal flex items-center justify-center z-50 hidden p-6">
-    <div class="glass-panel max-w-3xl w-full rounded-2xl p-6 border border-dark-border space-y-6">
-      <div class="flex justify-between items-center border-b border-dark-border pb-4">
-        <h3 class="font-bold text-lg text-white" id="detailModalTitle">NFT Detail</h3>
-        <button onclick="closeModal('modalNFTDetail')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="grid grid-cols-12 gap-6">
-        <div class="col-span-5 space-y-3">
-          <div class="aspect-square bg-black/60 rounded-xl border border-dark-border overflow-hidden" id="detailImageHost"></div>
-          <div class="text-[10px] text-gray-500 font-mono break-all" id="detailImageCID">CID: -</div>
-        </div>
-        <div class="col-span-7 space-y-4">
-          <div>
-            <label class="text-[10px] text-gray-400 uppercase font-mono">Token Name</label>
-            <div class="text-base font-bold text-white" id="detailName">-</div>
-          </div>
-          <div>
-            <label class="text-[10px] text-gray-400 uppercase font-mono mb-1 block">Attributes</label>
-            <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1" id="detailAttributesGrid">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- APPLICATION LOGIC ENGINE -->
+  <!-- APPLICATION SCRIPT -->
   <script>
-    /**
-     * APEX NFT STUDIO - Core Application Architecture
-     */
-
-    // Configuration Constants
     const IPFS_BASE = 'https://gateway.pinata.cloud/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/';
     const TOTAL_TOKENS = 7000;
-    const CONCURRENCY_LIMIT = 25;
 
-    // Database Initialization (Dexie IndexedDB)
+    // Database Setup
     const db = new Dexie("ApexNFTStudioDB");
-    db.version(1).stores({
-      layers: 'id, name, type, dateAdded',
-      editedTokens: 'tokenId, originalName, newName'
-    });
+    db.version(1).stores({ layers: 'id, name, dataURL' });
 
-    // Global State Store
+    // State Engine
     const state = {
-      tokens: new Map(), // tokenId -> { original: JSON, edited: JSON or null, loaded: boolean }
-      activeFilters: new Map(), // trait_type -> Set(values)
-      discoveredTraits: new Map(), // trait_type -> Map(value -> count)
-      layerLibrary: [], // Array of loaded layer objects
-      editedCount: 0,
-      loadedCount: 0,
-      failedCount: 0,
-      isLoading: false,
-      selectedTokens: new Set(),
-      changeHistory: []
+      tokens: new Map(),
+      discoveredTraits: new Map(), // Trait -> Map(Value -> Count)
+      layerLibrary: [],
+      loadedCount: 0
     };
 
-    // UI Helper Shortcuts
     const $ = id => document.getElementById(id);
 
-    // Initialization Hook
     window.addEventListener('DOMContentLoaded', async () => {
-      initEventListeners();
+      initEvents();
       await loadLibraryFromDB();
-      renderDashboard();
     });
 
-    function initEventListeners() {
-      $('btnStartLoad').addEventListener('click', startMetadataIngestion);
-      $('editorTraitSelect').addEventListener('change', handleEditorTraitChange);
-      $('editorValueSelect').addEventListener('change', updateEditorMatchCount);
-      $('btnOpenReplacePreview').addEventListener('click', openReplacePreview);
-      $('btnConfirmApplyGlobal').addEventListener('click', executeGlobalReplacement);
+    function initEvents() {
+      $('btnStartLoad').addEventListener('click', startFetching);
+      $('editorTraitSelect').addEventListener('change', handleTraitTypeChange);
+      $('editorValueSelect').addEventListener('change', updateMatchCount);
+      $('btnApplyBulk').addEventListener('click', applyBulkLayerReplacement);
       $('inputLayerUpload').addEventListener('change', handleLayerUpload);
-      $('gallerySearch').addEventListener('input', renderNFTGrid);
-      $('btnSelectFiltered').addEventListener('click', selectFilteredTokens);
-      $('btnClearFilters').addEventListener('click', clearAllFilters);
-      $('btnResetAll').addEventListener('click', resetAllEdits);
     }
 
-    // TAB NAVIGATION CONTROLLER
     function switchTab(tabId) {
       document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-white/10', 'text-white'));
@@ -587,242 +273,169 @@
       $(`view-${tabId}`).classList.remove('hidden');
       $(`nav-${tabId}`).classList.add('bg-white/10', 'text-white');
 
-      if (tabId === 'gallery') renderNFTGrid();
       if (tabId === 'library') renderLayerLibrary();
-      if (tabId === 'edited') renderEditedTokensTable();
       if (tabId === 'editor') populateEditorDropdowns();
     }
 
-    // 1. ASYNCHRONOUS METADATA INGESTION ENGINE
-    async function startMetadataIngestion() {
-      if (state.isLoading) return;
-      state.isLoading = true;
+    // 1. FETCH METADATA & PARSE ATTRIBUTES DYNAMICALLY
+    async function startFetching() {
+      let queue = Array.from({length: TOTAL_TOKENS}, (_, i) => i + 1);
 
-      $('loaderStatusHeader').classList.remove('hidden');
-      $('loaderStatusHeader').classList.add('flex');
-      $('btnStartLoad').disabled = true;
-      $('btnStartLoad').classList.add('opacity-50');
-
-      let queue = [];
-      for (let i = 1; i <= TOTAL_TOKENS; i++) queue.push(i);
-
-      const workerPool = async () => {
+      const fetchWorker = async () => {
         while (queue.length > 0) {
-          const tokenId = queue.shift();
+          const id = queue.shift();
           try {
-            const res = await fetch(`${IPFS_BASE}${tokenId}.json`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const res = await fetch(`${IPFS_BASE}${id}.json`);
+            if (!res.ok) continue;
             const meta = await res.json();
-            
-            // Register Token State
-            state.tokens.set(tokenId, {
-              original: meta,
-              edited: null,
-              loaded: true
-            });
 
-            // Parse Traits Dynamically
+            state.tokens.set(id, { original: meta, edited: null });
+
+            // Automatically extract attributes
             if (meta.attributes && Array.isArray(meta.attributes)) {
               meta.attributes.forEach(attr => {
                 if (!attr.trait_type || attr.value === undefined) return;
+
                 if (!state.discoveredTraits.has(attr.trait_type)) {
                   state.discoveredTraits.set(attr.trait_type, new Map());
                 }
-                const traitValues = state.discoveredTraits.get(attr.trait_type);
-                const currentCount = traitValues.get(String(attr.value)) || 0;
-                traitValues.set(String(attr.value), currentCount + 1);
+                const valMap = state.discoveredTraits.get(attr.trait_type);
+                valMap.set(String(attr.value), (valMap.get(String(attr.value)) || 0) + 1);
               });
             }
 
             state.loadedCount++;
-          } catch (err) {
-            state.failedCount++;
-          } finally {
-            updateProgressDisplays();
-          }
+            updateProgress();
+          } catch (e) {}
         }
       };
 
-      // Launch Parallel Worker Pipeline
-      const workers = Array(CONCURRENCY_LIMIT).fill(null).map(() => workerPool());
-      await Promise.all(workers);
-
-      state.isLoading = false;
-      $('dashStatusLabel').textContent = 'Ingestion Complete - All Metadata Ready';
-      renderFilterAccordion();
-      renderDashboard();
+      // Launch worker pool
+      const pool = Array(20).fill(null).map(() => fetchWorker());
+      await Promise.all(pool);
+      populateEditorDropdowns();
+      alert('সব মেটাডাটা সফলভাবে লোড হয়েছে!');
     }
 
-    function updateProgressDisplays() {
+    function updateProgress() {
       const pct = ((state.loadedCount / TOTAL_TOKENS) * 100).toFixed(1);
-      
-      $('loadCounter').textContent = `${state.loadedCount.toLocaleString()} / 7,000`;
+      $('loadCounter').textContent = `${state.loadedCount} / 7000`;
       $('loadPercentage').textContent = `${pct}%`;
       $('loadProgressBar').style.width = `${pct}%`;
-
-      $('dashLoaded').textContent = state.loadedCount.toLocaleString();
-      $('dashLoadedPercent').textContent = `${pct}% completed`;
-      $('dashProgressBar').style.width = `${pct}%`;
-      $('dashFailedCount').textContent = `Errors: ${state.failedCount}`;
-      $('statActiveCount').textContent = `${state.loadedCount.toLocaleString()} Loaded`;
-      $('dashTraits').textContent = state.discoveredTraits.size;
+      $('statActiveCount').textContent = `${state.loadedCount} Loaded`;
     }
 
-    // 2. AUTOMATIC TRAIT FILTER SYSTEM
-    function renderFilterAccordion() {
-      const container = $('filterAccordionContainer');
-      container.innerHTML = '';
+    // 2. DYNAMIC DROPDOWNS
+    function populateEditorDropdowns() {
+      const traitSel = $('editorTraitSelect');
+      traitSel.innerHTML = `<option value="">-- Select Trait Type --</option>`;
 
-      if (state.discoveredTraits.size === 0) {
-        container.innerHTML = `<div class="text-gray-500 italic p-2 text-center">No traits discovered yet.</div>`;
+      state.discoveredTraits.forEach((_, traitType) => {
+        const opt = document.createElement('option');
+        opt.value = traitType;
+        opt.textContent = traitType;
+        traitSel.appendChild(opt);
+      });
+
+      const layerSel = $('editorLayerSelect');
+      layerSel.innerHTML = `<option value="">-- Select PNG Layer from Library --</option>`;
+      state.layerLibrary.forEach(layer => {
+        const opt = document.createElement('option');
+        opt.value = layer.id;
+        opt.textContent = layer.name;
+        layerSel.appendChild(opt);
+      });
+    }
+
+    function handleTraitTypeChange(e) {
+      const traitType = e.target.value;
+      const valSel = $('editorValueSelect');
+      valSel.innerHTML = `<option value="">-- Select Value --</option>`;
+      valSel.disabled = !traitType;
+
+      if (traitType && state.discoveredTraits.has(traitType)) {
+        state.discoveredTraits.get(traitType).forEach((count, val) => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = `${val} (${count} NFTs)`;
+          valSel.appendChild(opt);
+        });
+      }
+      updateMatchCount();
+    }
+
+    function updateMatchCount() {
+      const trait = $('editorTraitSelect').value;
+      const val = $('editorValueSelect').value;
+      if (!trait || !val) {
+        $('editorMatchCount').textContent = '0 tokens';
+        return;
+      }
+      const count = state.discoveredTraits.get(trait)?.get(val) || 0;
+      $('editorMatchCount').textContent = `${count} tokens`;
+    }
+
+    // 3. BULK APPLY LAYER TO ALL MATCHING NFTS
+    function applyBulkLayerReplacement() {
+      const traitType = $('editorTraitSelect').value;
+      const traitValue = $('editorValueSelect').value;
+      const layerId = $('editorLayerSelect').value;
+
+      if (!traitType || !traitValue || !layerId) {
+        alert('অনুগ্রহ করে Trait Type, Value এবং Replacement PNG সিলেক্ট করুন।');
         return;
       }
 
-      state.discoveredTraits.forEach((valuesMap, traitType) => {
-        const group = document.createElement('div');
-        group.className = 'border border-dark-border rounded-lg overflow-hidden bg-black/20';
+      const layerObj = state.layerLibrary.find(l => l.id === layerId);
+      let totalAffected = 0;
 
-        let optionsHTML = '';
-        valuesMap.forEach((count, val) => {
-          const isChecked = state.activeFilters.has(traitType) && state.activeFilters.get(traitType).has(val);
-          optionsHTML += `
-            <label class="flex items-center justify-between p-1.5 hover:bg-white/5 cursor-pointer">
-              <div class="flex items-center space-x-2 truncate">
-                <input type="checkbox" onchange="toggleFilter('${traitType}', '${val}')" ${isChecked ? 'checked' : ''} class="rounded border-gray-700 text-brand-500 focus:ring-0 bg-dark-bg">
-                <span class="text-gray-300 truncate">${val}</span>
-              </div>
-              <span class="text-[10px] text-gray-500 font-mono ml-2">${count}</span>
-            </label>
-          `;
-        });
+      // Loop all loaded tokens and update matching ones
+      state.tokens.forEach((data, id) => {
+        const meta = data.edited ? data.edited : JSON.parse(JSON.stringify(data.original));
+        
+        if (meta.attributes && Array.isArray(meta.attributes)) {
+          const attr = meta.attributes.find(a => a.trait_type === traitType && String(a.value) === traitValue);
+          
+          if (attr) {
+            // Update attribute value & assign new layer overlay
+            attr.value = layerObj.name;
+            meta.newOverlay = layerObj.dataURL;
 
-        group.innerHTML = `
-          <div class="p-2 bg-white/5 font-semibold text-gray-300 flex justify-between items-center cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
-            <span class="truncate">${traitType}</span>
-            <i class="fa-solid fa-chevron-down text-[10px] text-gray-500"></i>
-          </div>
-          <div class="space-y-0.5 p-1 hidden">${optionsHTML}</div>
-        `;
-        container.appendChild(group);
-      });
-    }
-
-    function toggleFilter(traitType, value) {
-      if (!state.activeFilters.has(traitType)) {
-        state.activeFilters.set(traitType, new Set());
-      }
-      const set = state.activeFilters.get(traitType);
-      if (set.has(value)) {
-        set.delete(value);
-        if (set.size === 0) state.activeFilters.delete(traitType);
-      } else {
-        set.add(value);
-      }
-      renderNFTGrid();
-    }
-
-    function clearAllFilters() {
-      state.activeFilters.clear();
-      renderFilterAccordion();
-      renderNFTGrid();
-    }
-
-    // 3. VIRTUALIZED GALLERY GRID
-    function getFilteredTokens() {
-      const search = $('gallerySearch').value.toLowerCase().trim();
-      let results = [];
-
-      state.tokens.forEach((data, tokenId) => {
-        if (!data.loaded) return;
-        const meta = data.edited || data.original;
-
-        // Search Filter
-        if (search && !String(tokenId).includes(search) && !meta.name.toLowerCase().includes(search)) {
-          return;
+            data.edited = meta;
+            totalAffected++;
+          }
         }
-
-        // Trait Filter Engine
-        if (state.activeFilters.size > 0) {
-          let matchesAll = true;
-          state.activeFilters.forEach((selectedVals, traitType) => {
-            const attr = meta.attributes?.find(a => a.trait_type === traitType);
-            if (!attr || !selectedVals.has(String(attr.value))) {
-              matchesAll = false;
-            }
-          });
-          if (!matchesAll) return;
-        }
-
-        results.push(tokenId);
       });
 
-      return results;
+      // Add to Log
+      const log = $('changeHistoryLog');
+      if (log.querySelector('.italic')) log.innerHTML = '';
+
+      const entry = document.createElement('div');
+      entry.className = "p-2.5 bg-black/40 border border-dark-border rounded-lg space-y-1";
+      entry.innerHTML = `
+        <div class="font-bold text-indigo-400">আপডেট: ${traitType} = "${traitValue}"</div>
+        <div class="text-[11px] text-gray-300">নতুন লেয়ার যুক্ত হয়েছে: <strong>${layerObj.name}</strong></div>
+        <div class="text-[10px] text-emerald-400 font-mono">মোট ${totalAffected} টি NFT পরিবর্তন হয়েছে।</div>
+      `;
+      log.prepend(entry);
+
+      alert(`সফলভাবে ${totalAffected} টি NFT-তে "${layerObj.name}" লেয়ারটি যুক্ত করা হয়েছে!`);
     }
 
-    function renderNFTGrid() {
-      const grid = $('nftGrid');
-      grid.innerHTML = '';
-      const matchingIds = getFilteredTokens();
-      
-      $('galleryResultCount').textContent = `Showing ${matchingIds.length.toLocaleString()} NFTs`;
-
-      // Slice first 60 for performance DOM rendering
-      const slice = matchingIds.slice(0, 60);
-
-      slice.forEach(tokenId => {
-        const data = state.tokens.get(tokenId);
-        const meta = data.edited || data.original;
-        const imgURL = normalizeIPFS(meta.image);
-
-        const card = document.createElement('div');
-        card.className = 'glass-panel rounded-xl overflow-hidden border border-dark-border hover:border-brand-500/50 transition cursor-pointer flex flex-col';
-        card.onclick = () => openNFTDetail(tokenId);
-
-        card.innerHTML = `
-          <div class="aspect-square bg-black/40 relative overflow-hidden">
-            <img src="${imgURL}" loading="lazy" class="w-full h-full object-cover" alt="NFT #${tokenId}">
-            ${data.edited ? `<span class="absolute top-2 right-2 bg-emerald-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Modified</span>` : ''}
-          </div>
-          <div class="p-2 space-y-1">
-            <div class="font-bold text-xs text-white truncate">${meta.name || `Token #${tokenId}`}</div>
-            <div class="text-[10px] text-gray-500 font-mono">ID: #${tokenId}</div>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    function selectFilteredTokens() {
-      const ids = getFilteredTokens();
-      ids.forEach(id => state.selectedTokens.add(id));
-      alert(`Selected ${ids.length} tokens.`);
-    }
-
-    // 4. IPFS URL NORMALIZER
-    function normalizeIPFS(url) {
-      if (!url) return '';
-      if (url.startsWith('ipfs://')) {
-        return url.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-      }
-      return url;
-    }
-
-    // 5. LOCAL LAYER LIBRARY SYSTEM
+    // 4. LAYER LIBRARY UPLOAD
     async function handleLayerUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async (event) => {
-        const layerObj = {
+      reader.onload = async (ev) => {
+        const item = {
           id: 'layer_' + Date.now(),
           name: file.name.replace('.png', ''),
-          type: 'Accessory',
-          dataURL: event.target.result,
-          dateAdded: new Date().toISOString()
+          dataURL: ev.target.result
         };
-
-        await db.layers.add(layerObj);
+        await db.layers.add(item);
         await loadLibraryFromDB();
         renderLayerLibrary();
         populateEditorDropdowns();
@@ -832,7 +445,6 @@
 
     async function loadLibraryFromDB() {
       state.layerLibrary = await db.layers.toArray();
-      $('dashLayers').textContent = state.layerLibrary.length;
     }
 
     function renderLayerLibrary() {
@@ -840,24 +452,19 @@
       grid.innerHTML = '';
 
       if (state.layerLibrary.length === 0) {
-        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">No custom PNG layers uploaded to IndexedDB.</div>`;
+        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">কোনো PNG লেয়ার পাওয়া যায়নি। আপলোড বাটন প্রেস করুন।</div>`;
         return;
       }
 
       state.layerLibrary.forEach(layer => {
         const card = document.createElement('div');
-        card.className = 'glass-panel p-3 rounded-xl border border-dark-border space-y-3 flex flex-col justify-between';
+        card.className = 'glass-panel p-3 rounded-xl space-y-2 flex flex-col justify-between';
         card.innerHTML = `
-          <div class="aspect-square bg-black/60 rounded-lg p-2 flex items-center justify-center relative border border-dark-border">
+          <div class="aspect-square bg-black/60 rounded-lg p-2 flex items-center justify-center border border-dark-border">
             <img src="${layer.dataURL}" class="max-w-full max-h-full object-contain">
           </div>
-          <div>
-            <div class="font-bold text-xs text-white truncate">${layer.name}</div>
-            <div class="text-[10px] text-gray-500 font-mono">${layer.type}</div>
-          </div>
-          <button onclick="deleteLayer('${layer.id}')" class="w-full py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-[10px] font-semibold transition">
-            Delete
-          </button>
+          <div class="font-bold text-xs text-white truncate">${layer.name}</div>
+          <button onclick="deleteLayer('${layer.id}')" class="w-full py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded text-[10px] transition">Delete</button>
         `;
         grid.appendChild(card);
       });
@@ -870,265 +477,25 @@
       populateEditorDropdowns();
     }
 
-    // 6. LAYER REPLACEMENT ENGINE & CANVAS COMPOSITING
-    function populateEditorDropdowns() {
-      const traitSel = $('editorTraitSelect');
-      traitSel.innerHTML = `<option value="">Select Trait...</option>`;
-      
-      state.discoveredTraits.forEach((_, traitType) => {
-        const opt = document.createElement('option');
-        opt.value = traitType;
-        opt.textContent = traitType;
-        traitSel.appendChild(opt);
-      });
-
-      const layerSel = $('editorLayerSelect');
-      layerSel.innerHTML = `<option value="">Select uploaded PNG layer...</option>`;
-      state.layerLibrary.forEach(layer => {
-        const opt = document.createElement('option');
-        opt.value = layer.id;
-        opt.textContent = layer.name;
-        layerSel.appendChild(opt);
-      });
-    }
-
-    function handleEditorTraitChange(e) {
-      const traitType = e.target.value;
-      const valSel = $('editorValueSelect');
-      valSel.innerHTML = `<option value="">Select Target Value...</option>`;
-      valSel.disabled = !traitType;
-
-      if (traitType && state.discoveredTraits.has(traitType)) {
-        state.discoveredTraits.get(traitType).forEach((count, val) => {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = `${val} (${count} tokens)`;
-          valSel.appendChild(opt);
-        });
-      }
-      updateEditorMatchCount();
-    }
-
-    function updateEditorMatchCount() {
-      const trait = $('editorTraitSelect').value;
-      const val = $('editorValueSelect').value;
-      if (!trait || !val) {
-        $('editorMatchCount').textContent = '0 tokens';
-        return;
-      }
-      const count = state.discoveredTraits.get(trait)?.get(val) || 0;
-      $('editorMatchCount').textContent = `${count.toLocaleString()} tokens`;
-    }
-
-    function openReplacePreview() {
-      const trait = $('editorTraitSelect').value;
-      const val = $('editorValueSelect').value;
-      const layerId = $('editorLayerSelect').value;
-
-      if (!trait || !val || !layerId) {
-        alert('Please select Trait, Value, and Target PNG Layer.');
-        return;
-      }
-
-      // Find first sample token
-      let sampleTokenId = null;
-      state.tokens.forEach((data, id) => {
-        if (!sampleTokenId && data.original.attributes?.some(a => a.trait_type === trait && String(a.value) === val)) {
-          sampleTokenId = id;
-        }
-      });
-
-      if (!sampleTokenId) {
-        alert('No matching tokens found.');
-        return;
-      }
-
-      const sampleData = state.tokens.get(sampleTokenId);
-      const meta = sampleData.original;
-      const layerObj = state.layerLibrary.find(l => l.id === layerId);
-
-      // Render Original
-      $('prevOrigContainer').innerHTML = `<img src="${normalizeIPFS(meta.image)}" class="w-full h-full object-cover">`;
-      $('prevOrigLabel').textContent = `${meta.name} (${trait}: ${val})`;
-
-      // Render Composited Canvas Preview
-      const canvas = $('prevCanvas');
-      const ctx = canvas.getContext('2d');
-      const baseImg = new Image();
-      baseImg.crossOrigin = 'anonymous';
-      baseImg.src = normalizeIPFS(meta.image);
-
-      baseImg.onload = () => {
-        canvas.width = baseImg.width || 1000;
-        canvas.height = baseImg.height || 1000;
-        ctx.drawImage(baseImg, 0, 0);
-
-        const overlayImg = new Image();
-        overlayImg.src = layerObj.dataURL;
-        overlayImg.onload = () => {
-          ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
-          $('prevNewLabel').textContent = `New Layer: ${layerObj.name}`;
-        };
-      };
-
-      const matchCount = state.discoveredTraits.get(trait)?.get(val) || 0;
-      $('prevTargetCount').textContent = matchCount.toLocaleString();
-
-      $('modalPreview').classList.remove('hidden');
-    }
-
-    async function executeGlobalReplacement() {
-      closeModal('modalPreview');
-      
-      const trait = $('editorTraitSelect').value;
-      const val = $('editorValueSelect').value;
-      const layerId = $('editorLayerSelect').value;
-      const nameTemplate = $('editorNameTemplate').value;
-      const layerObj = state.layerLibrary.find(l => l.id === layerId);
-
-      let modifiedInRun = 0;
-
-      state.tokens.forEach((data, tokenId) => {
-        const meta = data.edited ? JSON.parse(JSON.stringify(data.edited)) : JSON.parse(JSON.stringify(data.original));
-        const attr = meta.attributes?.find(a => a.trait_type === trait && String(a.value) === val);
-
-        if (attr) {
-          attr.value = layerObj.name; // Update Attribute Value
-
-          // Update Naming Template
-          let newName = nameTemplate
-            .replace('[Collection Name]', 'Mr.Stonk')
-            .replace('[Token ID]', tokenId)
-            .replace('[New Trait]', layerObj.name);
-
-          meta.name = newName;
-          meta.layerOverlay = layerObj.dataURL; // Track layer for export synthesis
-
-          data.edited = meta;
-          modifiedInRun++;
-        }
-      });
-
-      // Update State Statistics
-      state.editedCount = Array.from(state.tokens.values()).filter(t => t.edited !== null).length;
-      $('dashEdited').textContent = state.editedCount.toLocaleString();
-      $('badgeEditedCount').textContent = state.editedCount.toLocaleString();
-
-      // Log History Entry
-      const logContainer = $('changeHistoryLog');
-      const entry = document.createElement('div');
-      entry.className = 'p-2 bg-black/40 border border-dark-border rounded text-xs space-y-1';
-      entry.innerHTML = `
-        <div class="font-bold text-brand-400">Replaced ${trait} = ${val}</div>
-        <div class="text-[10px] text-gray-400">New Value: ${layerObj.name} (${modifiedInRun} tokens affected)</div>
-      `;
-      logContainer.appendChild(entry);
-
-      alert(`Successfully updated metadata and layer overlays for ${modifiedInRun} tokens!`);
-    }
-
-    // 7. NFT DETAIL MODAL
-    function openNFTDetail(tokenId) {
-      const data = state.tokens.get(tokenId);
-      if (!data) return;
-      const meta = data.edited || data.original;
-
-      $('detailModalTitle').textContent = `NFT #${tokenId}`;
-      $('detailName').textContent = meta.name;
-      $('detailImageCID').textContent = `Image: ${meta.image}`;
-      $('detailImageHost').innerHTML = `<img src="${normalizeIPFS(meta.image)}" class="w-full h-full object-cover">`;
-
-      const grid = $('detailAttributesGrid');
-      grid.innerHTML = '';
-      meta.attributes?.forEach(attr => {
-        const badge = document.createElement('div');
-        badge.className = 'p-2 bg-black/40 border border-dark-border rounded';
-        badge.innerHTML = `
-          <div class="text-[9px] text-gray-500 font-mono uppercase">${attr.trait_type}</div>
-          <div class="text-xs font-bold text-white truncate">${attr.value}</div>
-        `;
-        grid.appendChild(badge);
-      });
-
-      $('modalNFTDetail').classList.remove('hidden');
-    }
-
-    // 8. EDITED TOKENS TABLE
-    function renderEditedTokensTable() {
-      const tbody = $('tableEditedTokens');
-      tbody.innerHTML = '';
-
-      let count = 0;
-      state.tokens.forEach((data, tokenId) => {
-        if (!data.edited) return;
-        count++;
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-white/5 font-mono';
-        tr.innerHTML = `
-          <td class="p-3 text-brand-400">#${tokenId}</td>
-          <td class="p-3 text-gray-400">${data.original.name}</td>
-          <td class="p-3 text-emerald-400 font-bold">${data.edited.name}</td>
-          <td class="p-3 text-gray-300">Modified Overlay Active</td>
-          <td class="p-3 text-right">
-            <button onclick="resetSingleToken(${tokenId})" class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded text-[10px]">Reset</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      if (count === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">No modified tokens found.</td></tr>`;
-      }
-    }
-
-    function resetSingleToken(tokenId) {
-      const data = state.tokens.get(tokenId);
-      if (data) data.edited = null;
-      renderEditedTokensTable();
-      updateProgressDisplays();
-    }
-
-    function resetAllEdits() {
-      if (!confirm('Are you sure you want to discard all local modifications? Original IPFS data remains safe.')) return;
-      state.tokens.forEach(data => data.edited = null);
-      state.editedCount = 0;
-      $('dashEdited').textContent = '0';
-      $('badgeEditedCount').textContent = '0';
-      alert('All local changes have been reset.');
-    }
-
-    // 9. CLIENT-SIDE ZIP EXPORT SYSTEM (JSZip)
-    async function startExport(type) {
+    // 5. EXPORT
+    async function exportMetadataZip() {
       if (state.tokens.size === 0) {
-        alert('Please fetch metadata before exporting.');
+        alert('আগে মেটাডাটা লোড করে নিন।');
         return;
       }
-
       const zip = new JSZip();
-      const metaFolder = (type === 'metadata' || type === 'full') ? zip.folder("metadata") : null;
-      const imgFolder = (type === 'images' || type === 'full') ? zip.folder("images") : null;
+      const folder = zip.folder("updated_metadata");
 
-      alert(`Preparing JSZip compression for ${state.tokens.size} tokens... This may take a moment.`);
-
-      state.tokens.forEach((data, tokenId) => {
+      state.tokens.forEach((data, id) => {
         const meta = data.edited || data.original;
-        
-        // Export Metadata
-        if (metaFolder) {
-          metaFolder.file(`${tokenId}.json`, JSON.stringify(meta, null, 2));
-        }
+        folder.file(`${id}.json`, JSON.stringify(meta, null, 2));
       });
 
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(content);
-      link.download = `NFT_Export_${type}_${Date.now()}.zip`;
+      link.download = `Metadata_Export_${Date.now()}.zip`;
       link.click();
-    }
-
-    function closeModal(id) {
-      $(id).classList.add('hidden');
     }
   </script>
 </body>
