@@ -1,1303 +1,1135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer">
-    <title>NFT Collection Manager & Layer Editor</title>
-    <!-- JSZip & FileSaver Libraries preserved -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <style>
-        :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --bg-card-hover: #334155;
-            --border-color: #334155;
-            --primary: #0284c7;
-            --primary-hover: #0369a1;
-            --accent: #38bdf8;
-            --success: #10b981;
-            --success-hover: #059669;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex NFT Studio - Layer Editor & Metadata Management Suite</title>
+  
+  <!-- Tailwind CSS v3 & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            },
+            dark: {
+              bg: '#0b0f17',
+              card: 'rgba(17, 24, 39, 0.7)',
+              border: 'rgba(255, 255, 255, 0.08)',
+              hover: 'rgba(255, 255, 255, 0.04)',
+            }
+          },
+          backdropBlur: {
+            xs: '2px',
+            glass: '16px',
+          }
         }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- External JS Libraries: JSZip & Dexie (IndexedDB Wrapper) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        header {
-            background-color: var(--bg-card);
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        header h1 {
-            color: var(--accent);
-            font-size: 1.25rem;
-        }
-
-        .status-bar {
-            display: flex;
-            gap: 15px;
-            font-size: 0.85rem;
-            background: #090d16;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-value {
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* Sidebar Filters */
-        .sidebar {
-            width: 320px;
-            background-color: var(--bg-card);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .sidebar-header {
-            padding: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin-top: 8px;
-            outline: none;
-        }
-
-        .filter-groups {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-        }
-
-        .group-title {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            margin: 15px 0 8px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .trait-option {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            user-select: none;
-        }
-
-        .trait-option:hover {
-            background-color: var(--bg-card-hover);
-        }
-
-        .trait-option label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .trait-count {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-        }
-
-        /* Content Area */
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .toolbar {
-            padding: 12px 20px;
-            background-color: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            padding: 8px 14px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button:disabled {
-            background-color: var(--border-color);
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .btn-download { background-color: var(--success); }
-        .btn-download:hover { background-color: var(--success-hover); }
-        .btn-warning { background-color: var(--warning); color: #000; }
-        .btn-danger { background-color: var(--danger); }
-
-        .gallery-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            position: relative;
-            transition: transform 0.1s;
-        }
-
-        .card:hover {
-            border-color: var(--accent);
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 10px;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .img-wrapper {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background-color: var(--bg-main);
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .error-box {
-            display: none;
-            flex-direction: column;
-            gap: 6px;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-card);
-            color: #f87171;
-            font-size: 11px;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .card-title {
-            font-size: 0.9rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-traits {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            line-height: 1.3;
-            max-height: 50px;
-            overflow: hidden;
-        }
-
-        .card-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 4px;
-        }
-
-        .card-actions button {
-            flex: 1;
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            justify-content: center;
-        }
-
-        /* Editor Section */
-        .editor-drawer {
-            height: 250px;
-            background-color: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            padding: 15px 20px;
-            display: flex;
-            gap: 20px;
-        }
-
-        .editor-pane {
-            flex: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 12px;
-            background: var(--bg-main);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .editor-pane h3 {
-            font-size: 0.95rem;
-            color: var(--accent);
-        }
-
-        .form-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .form-row select, .form-row input[type="text"] {
-            flex: 1;
-            padding: 6px 10px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-card);
-            color: var(--text-main);
-            font-size: 0.85rem;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active { display: flex; }
-
-        .modal-body {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            width: 450px;
-            max-width: 90%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .preview-box {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 10px 0;
-        }
-
-        .preview-img-container {
-            width: 120px;
-            height: 120px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            overflow: hidden;
-            text-align: center;
-            font-size: 10px;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 8px;
-            background: var(--bg-main);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent);
-            transition: width 0.1s;
-        }
-    </style>
+  <style>
+    /* Custom Glassmorphism Styles & Scrollbars */
+    body {
+      background-color: #080b11;
+      color: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    .glass-modal {
+      background: rgba(11, 15, 23, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden text-sm select-none">
 
-    <header>
-        <h1>NFT Collection Manager & Editor</h1>
-        <div class="status-bar">
-            <div class="status-item">Total: <span class="status-value" id="st-total">7000</span></div>
-            <div class="status-item">Metadata: <span class="status-value" id="st-meta">0</span></div>
-            <div class="status-item">Failed: <span class="status-value" id="st-failed">0</span></div>
-            <div class="status-item">Visible: <span class="status-value" id="st-visible">0</span></div>
-        </div>
-    </header>
-
-    <div class="main-container">
-        <!-- Sidebar Filters -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="group-title">Search Collection</div>
-                <input type="text" id="global-search" class="search-box" placeholder="Search ID, name, trait..." oninput="handleSearch()">
-                <div class="group-title" style="margin-top: 15px;">
-                    <span>Metadata Trait Filters</span>
-                    <button onclick="clearFilters()" style="padding:2px 6px; font-size:10px;">Clear</button>
-                </div>
-            </div>
-            <div class="filter-groups" id="filter-groups-container">
-                <!-- Dynamic Filters Generated Here -->
-            </div>
-        </div>
-
-        <!-- Main Workspace -->
-        <div class="content-area">
-            <div class="toolbar">
-                <div class="action-btns">
-                    <button id="retry-btn" onclick="retryFailedRequests()" disabled>Retry Failed (<span id="failed-count">0</span>)</button>
-                    <button id="undo-btn" onclick="undoLastBatch()" class="btn-warning" disabled>Undo Layer Action</button>
-                </div>
-
-                <div class="action-btns">
-                    <select id="export-scope" style="padding: 8px; border-radius: 6px; background: var(--bg-main); color: white; border: 1px solid var(--border-color);">
-                        <option value="filtered">Export Filtered NFTs</option>
-                        <option value="layer">Export Selected Layer NFTs</option>
-                        <option value="all">Export All NFTs</option>
-                    </select>
-                    <button class="btn-download" id="download-btn" onclick="exportZIP()">Export ZIP</button>
-                </div>
-            </div>
-
-            <!-- Scrollable Gallery Container with Lazy Rendering -->
-            <div class="gallery-container" id="gallery-container" onscroll="handleScroll()">
-                <div class="gallery-grid" id="gallery-grid"></div>
-            </div>
-
-            <!-- Layer & Metadata Editor Drawer -->
-            <div class="editor-drawer">
-                <!-- Layer Editor Pane -->
-                <div class="editor-pane">
-                    <h3>Bulk Layer Replacement Tool</h3>
-                    <div class="form-row">
-                        <select id="layer-type-select" onchange="populateTraitValueDropdown()">
-                            <option value="">-- Select Trait Type --</option>
-                        </select>
-                        <select id="trait-value-select" onchange="updateLayerSelectionInfo()">
-                            <option value="">-- Select Trait Value --</option>
-                        </select>
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">
-                        Matching NFTs: <strong id="layer-match-count" style="color: var(--accent);">0</strong>
-                    </div>
-                    <div class="form-row">
-                        <input type="file" id="layer-file-input" accept="image/*">
-                        <button onclick="openLayerConfirmModal()">Apply Layer Replacement</button>
-                    </div>
-                </div>
-
-                <!-- Session / Storage Controls Pane -->
-                <div class="editor-pane">
-                    <h3>Local Session Storage</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-muted);">Edits are kept locally in IndexedDB as unsaved working copies until exported.</p>
-                    <div class="form-row" style="margin-top: auto;">
-                        <button onclick="saveSessionToIndexedDB()" style="background: var(--success);">Save Local Session</button>
-                        <button onclick="clearLocalSession()" class="btn-danger">Reset Local Edits</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- TOP HEADER / NAV -->
+  <header class="h-14 glass-panel border-b border-dark-border flex items-center justify-between px-6 z-20 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+        <i class="fa-solid fa-layer-group text-base"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base tracking-wide text-gradient">APEX NFT STUDIO</h1>
+        <p class="text-[10px] text-gray-400 -mt-1 font-mono">CID: bafybeidwxlcyp...5irg6lq</p>
+      </div>
     </div>
 
-    <!-- Modal: Confirmation for Layer Replacement -->
-    <div class="modal" id="layer-confirm-modal">
-        <div class="modal-body">
-            <h3>Confirm Bulk Layer Replacement</h3>
-            <p style="font-size: 0.85rem;" id="modal-desc">This action will replace the selected layer across all matching NFTs.</p>
-            <div class="preview-box">
-                <div class="preview-img-container">
-                    <div>Original</div>
-                    <img id="prev-orig-img" src="" alt="Original">
-                </div>
-                <div class="preview-img-container">
-                    <div>New Layer Composite</div>
-                    <canvas id="prev-canvas" width="200" height="200" style="width:100%; height:100%;"></canvas>
-                </div>
-            </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn-danger" onclick="closeModal('layer-confirm-modal')">Cancel</button>
-                <button onclick="executeBulkLayerReplacement()">Apply Changes</button>
-            </div>
+    <!-- Live Loading Progress Display -->
+    <div id="loaderStatusHeader" class="hidden items-center space-x-4 bg-dark-bg/60 border border-dark-border px-4 py-1.5 rounded-full">
+      <i class="fa-solid fa-spinner fa-spin text-brand-400"></i>
+      <div class="flex flex-col min-w-[160px]">
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-gray-300 font-mono" id="loadCounter">0 / 7000</span>
+          <span class="text-brand-400 font-bold" id="loadPercentage">0.0%</span>
         </div>
+        <div class="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden">
+          <div id="loadProgressBar" class="bg-gradient-to-r from-brand-500 to-purple-500 h-1.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Modal: Single Metadata Editor -->
-    <div class="modal" id="metadata-modal">
-        <div class="modal-body" style="width: 500px;">
-            <h3>Edit Metadata - NFT #<span id="meta-edit-id"></span></h3>
-            <div class="form-row">
-                <label style="width: 80px; font-size: 0.8rem;">Name:</label>
-                <input type="text" id="meta-edit-name">
-            </div>
-            <div class="form-row">
-                <label style="width: 80px; font-size: 0.8rem;">Description:</label>
-                <input type="text" id="meta-edit-desc">
-            </div>
-            <div style="font-size: 0.85rem; font-weight: bold; margin-top: 5px;">Attributes</div>
-            <div id="meta-attributes-container" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
-            <button onclick="addMetaDataAttributeRow()" style="font-size: 0.75rem; width: max-content;">+ Add Attribute</button>
-
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                <button class="btn-danger" onclick="closeModal('metadata-modal')">Cancel</button>
-                <button onclick="saveSingleMetadata()">Save Metadata</button>
-            </div>
-        </div>
+    <!-- Navigation & Quick Stats -->
+    <div class="flex items-center space-x-4">
+      <button id="btnSettingsModal" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition" title="Gateway & Engine Settings">
+        <i class="fa-solid fa-gear text-base"></i>
+      </button>
+      <div class="h-4 w-[1px] bg-dark-border"></div>
+      <div id="globalStatBadge" class="px-3 py-1 rounded-full text-xs font-mono bg-brand-500/10 border border-brand-500/30 text-brand-400 flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="statActiveCount">0 Loaded</span>
+      </div>
     </div>
+  </header>
 
-    <!-- Modal: Global Processing Indicator -->
-    <div class="modal" id="process-modal">
-        <div class="modal-body" style="text-align: center;">
-            <h3 id="process-title">Processing Request...</h3>
-            <div id="process-status" style="font-size: 0.85rem; margin: 10px 0;">Please wait while operations execute.</div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="process-bar"></div>
-            </div>
+  <div class="flex flex-1 overflow-hidden relative">
+    <!-- LEFT SIDEBAR -->
+    <aside class="w-64 glass-panel border-r border-dark-border flex flex-col shrink-0 z-10">
+      <nav class="p-3 space-y-1">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-chart-pie w-5 text-center text-brand-400"></i>
+          <span>Dashboard</span>
+        </button>
+        <button onclick="switchTab('gallery')" id="nav-gallery" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-grid-2 w-5 text-center text-purple-400"></i>
+          <span>NFT Gallery</span>
+        </button>
+        <button onclick="switchTab('editor')" id="nav-editor" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-pink-400"></i>
+          <span>Layer Replacer</span>
+        </button>
+        <button onclick="switchTab('library')" id="nav-library" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-folder-open w-5 text-center text-amber-400"></i>
+          <span>Layer Library</span>
+        </button>
+        <button onclick="switchTab('edited')" id="nav-edited" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium justify-between">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-pen-to-square w-5 text-center text-emerald-400"></i>
+            <span>Edited NFTs</span>
+          </div>
+          <span id="badgeEditedCount" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-mono">0</span>
+        </button>
+        <button onclick="switchTab('export')" id="nav-export" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-file-export w-5 text-center text-blue-400"></i>
+          <span>Export Suite</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Bottom Action -->
+      <div class="mt-auto p-4 border-t border-dark-border bg-black/20 space-y-2">
+        <button id="btnResetAll" class="w-full py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg text-xs font-semibold flex items-center justify-center space-x-2 transition">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>Reset All Edits</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="flex-1 overflow-y-auto bg-dark-bg p-6 relative" id="mainWorkspace">
+
+      <!-- VIEW 1: DASHBOARD -->
+      <div id="view-dashboard" class="view-panel space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-white">Collection Dashboard</h2>
+            <p class="text-xs text-gray-400">Real-time status of loaded token metadata and modifications.</p>
+          </div>
+          <div class="flex space-x-3">
+            <button id="btnStartLoad" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium text-xs shadow-lg shadow-brand-600/30 flex items-center space-x-2 transition">
+              <i class="fa-solid fa-cloud-arrow-down"></i>
+              <span>Start 7,000 Fetch Process</span>
+            </button>
+          </div>
         </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-5 gap-4">
+          <div class="glass-panel p-4 rounded-xl border border-dark-border">
+            <div class="text-gray-400 text-xs mb-1">TOTAL COLLECTION</div>
+            <div class="text-2xl font-bold text-white font-mono">7,000</div>
+            <div class="text-[10px] text-gray-500 mt-1">IPFS Pinata Gateway</div>
+          </div>
+          <div class="glass-panel p-4 rounded-xl border border-dark-border">
+            <div class="text-gray-400 text-xs mb-1">LOADED METADATA</div>
+            <div class="text-2xl font-bold text-brand-400 font-mono" id="dashLoaded">0</div>
+            <div class="text-[10px] text-gray-500 mt-1" id="dashLoadedPercent">0% complete</div>
+          </div>
+          <div class="glass-panel p-4 rounded-xl border border-dark-border">
+            <div class="text-gray-400 text-xs mb-1">EDITED NFTs</div>
+            <div class="text-2xl font-bold text-emerald-400 font-mono" id="dashEdited">0</div>
+            <div class="text-[10px] text-gray-500 mt-1">Local modified state</div>
+          </div>
+          <div class="glass-panel p-4 rounded-xl border border-dark-border">
+            <div class="text-gray-400 text-xs mb-1">DISCOVERED TRAITS</div>
+            <div class="text-2xl font-bold text-purple-400 font-mono" id="dashTraits">0</div>
+            <div class="text-[10px] text-gray-500 mt-1">Dynamic metadata parsing</div>
+          </div>
+          <div class="glass-panel p-4 rounded-xl border border-dark-border">
+            <div class="text-gray-400 text-xs mb-1">LAYER LIBRARY</div>
+            <div class="text-2xl font-bold text-amber-400 font-mono" id="dashLayers">0</div>
+            <div class="text-[10px] text-gray-500 mt-1">IndexedDB Persistence</div>
+          </div>
+        </div>
+
+        <!-- Progress Overview Panel -->
+        <div class="glass-panel p-6 rounded-xl space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-server text-brand-400"></i>
+              <span>Ingestion Pipeline Status</span>
+            </h3>
+            <span id="dashStatusLabel" class="text-xs font-mono text-gray-400">Idle - Click Start Fetch</span>
+          </div>
+          <div class="w-full bg-dark-bg/80 border border-dark-border rounded-full h-3 overflow-hidden p-0.5">
+            <div id="dashProgressBar" class="bg-gradient-to-r from-brand-600 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-gray-400 font-mono">
+            <span>Concurrency Limit: 25 requests</span>
+            <span id="dashFailedCount">Errors: 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: NFT GALLERY & FILTER ENGINE -->
+      <div id="view-gallery" class="view-panel hidden h-full flex flex-col space-y-4">
+        <!-- Top Search Bar & Grid Controls -->
+        <div class="glass-panel p-3 rounded-xl flex items-center justify-between shrink-0">
+          <div class="flex items-center space-x-3 flex-1 max-w-md">
+            <div class="relative w-full">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-500"></i>
+              <input type="text" id="gallerySearch" placeholder="Search token ID or name..." class="w-full bg-dark-bg/80 border border-dark-border rounded-lg pl-9 pr-4 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <span class="text-xs text-gray-400 font-mono" id="galleryResultCount">Showing 0 NFTs</span>
+            <div class="h-4 w-[1px] bg-dark-border"></div>
+            <button id="btnSelectFiltered" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-dark-border text-gray-300 rounded-lg text-xs font-medium transition">
+              Select All Filtered
+            </button>
+            <button id="btnClearFilters" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-medium transition">
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-1 flex space-x-4 overflow-hidden">
+          <!-- Filter Sidebar -->
+          <div class="w-64 glass-panel rounded-xl p-3 flex flex-col shrink-0 overflow-y-auto space-y-4">
+            <div class="font-bold text-xs uppercase tracking-wider text-gray-400 flex justify-between items-center">
+              <span>Trait Filters</span>
+              <i class="fa-solid fa-filter text-brand-400"></i>
+            </div>
+            <div id="filterAccordionContainer" class="space-y-2 text-xs">
+              <div class="text-gray-500 italic p-2 text-center">No metadata loaded yet.</div>
+            </div>
+          </div>
+
+          <!-- NFT Cards Grid -->
+          <div class="flex-1 glass-panel rounded-xl p-4 overflow-y-auto relative" id="nftGridContainer">
+            <div id="nftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <!-- Dynamically Populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: LAYER REPLACER ENGINE -->
+      <div id="view-editor" class="view-panel hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white">Global Layer Replacement Engine</h2>
+          <p class="text-xs text-gray-400">Select an existing trait value, replace it with a local PNG asset, and compositing canvas will apply changes across matching tokens.</p>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+          <!-- Replacement Configuration Panel -->
+          <div class="col-span-7 glass-panel p-6 rounded-xl space-y-5">
+            <h3 class="font-bold text-sm text-brand-400 uppercase tracking-wider">1. Target Matching NFTs</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Target Trait Type</label>
+                <select id="editorTraitSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                  <option value="">Select Trait...</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Original Trait Value</label>
+                <select id="editorValueSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500" disabled>
+                  <option value="">Select Target Value...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="p-3 bg-brand-500/10 border border-brand-500/20 rounded-lg text-xs text-brand-300 flex items-center justify-between">
+              <span>Matching Tokens Found:</span>
+              <span id="editorMatchCount" class="font-bold font-mono text-sm text-white">0 tokens</span>
+            </div>
+
+            <h3 class="font-bold text-sm text-pink-400 uppercase tracking-wider pt-2">2. Replacement Layer Selection</h3>
+
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Select PNG Layer from Library</label>
+              <select id="editorLayerSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                <option value="">Select uploaded PNG layer...</option>
+              </select>
+            </div>
+
+            <h3 class="font-bold text-sm text-amber-400 uppercase tracking-wider pt-2">3. Naming Rule Configuration</h3>
+
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Name Template Rule</label>
+              <input type="text" id="editorNameTemplate" value="[Collection Name] #[Token ID]" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-brand-500">
+              <p class="text-[10px] text-gray-500 mt-1">Available placeholders: <code class="text-brand-400">[Token ID]</code>, <code class="text-brand-400">[Collection Name]</code>, <code class="text-brand-400">[New Trait]</code></p>
+            </div>
+
+            <button id="btnOpenReplacePreview" class="w-full py-3 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-eye"></i>
+              <span>Preview Side-by-Side Comparison</span>
+            </button>
+          </div>
+
+          <!-- Change History Log -->
+          <div class="col-span-5 glass-panel p-6 rounded-xl flex flex-col">
+            <h3 class="font-bold text-sm text-white mb-3">Global Change Log</h3>
+            <div id="changeHistoryLog" class="flex-1 space-y-2 overflow-y-auto max-h-[380px] pr-1">
+              <div class="text-xs text-gray-500 italic p-4 text-center">No edits performed in this session.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: LOCAL LAYER LIBRARY -->
+      <div id="view-library" class="view-panel hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-white">Local Layer Library</h2>
+            <p class="text-xs text-gray-400">Upload transparent PNG assets to replace metadata layers. Saved directly in IndexedDB.</p>
+          </div>
+          <label class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs rounded-lg cursor-pointer transition flex items-center space-x-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Upload Transparent PNG Layer</span>
+            <input type="file" id="inputLayerUpload" accept="image/png" class="hidden">
+          </label>
+        </div>
+
+        <!-- Layer Cards List -->
+        <div id="layerLibraryGrid" class="grid grid-cols-4 gap-4">
+          <!-- Dynamically Populated -->
+        </div>
+      </div>
+
+      <!-- VIEW 5: EDITED NFTS LIST -->
+      <div id="view-edited" class="view-panel hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-white">Modified Tokens</h2>
+            <p class="text-xs text-gray-400">Review tokens that have local modified image overlays and metadata changes prior to ZIP export.</p>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-black/40 text-gray-400 font-mono border-b border-dark-border">
+                <th class="p-3">Token ID</th>
+                <th class="p-3">Original Name</th>
+                <th class="p-3">New Name</th>
+                <th class="p-3">Applied Modification</th>
+                <th class="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tableEditedTokens" class="divide-y divide-dark-border">
+              <tr>
+                <td colspan="5" class="p-4 text-center text-gray-500 italic">No modified tokens found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VIEW 6: EXPORT SUITE -->
+      <div id="view-export" class="view-panel hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white">ZIP Export Center</h2>
+          <p class="text-xs text-gray-400">Generate production ZIP bundles containing 1:1 mapped images (<code class="text-brand-400">1.png</code>) and metadata (<code class="text-brand-400">1.json</code>).</p>
+        </div>
+
+        <!-- Validation Check Box -->
+        <div class="glass-panel p-4 rounded-xl border border-dark-border space-y-2">
+          <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300">Pre-Export Data Integrity Check</h3>
+          <div class="grid grid-cols-4 gap-3 text-xs font-mono">
+            <div id="valImages" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ Metadata Valid</div>
+            <div id="valJSON" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ JSON Structure OK</div>
+            <div id="valMatches" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ ID Filename Mapped</div>
+            <div id="valImagesCheck" class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">✓ Canvas Layer Ready</div>
+          </div>
+        </div>
+
+        <!-- Export Configuration Options -->
+        <div class="grid grid-cols-3 gap-6">
+          <div class="glass-panel p-6 rounded-xl space-y-4 flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3 text-lg">
+                <i class="fa-solid fa-file-code"></i>
+              </div>
+              <h3 class="font-bold text-base text-white">Metadata ZIP</h3>
+              <p class="text-xs text-gray-400 mt-1">Package JSON files (1.json to 7000.json) including all updated traits and names.</p>
+            </div>
+            <button onclick="startExport('metadata')" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium text-xs transition">
+              Export Metadata ZIP
+            </button>
+          </div>
+
+          <div class="glass-panel p-6 rounded-xl space-y-4 flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center mb-3 text-lg">
+                <i class="fa-solid fa-file-image"></i>
+              </div>
+              <h3 class="font-bold text-base text-white">Images ZIP</h3>
+              <p class="text-xs text-gray-400 mt-1">Export composite PNG images with modified transparent layers rendered on canvas.</p>
+            </div>
+            <button onclick="startExport('images')" class="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg font-medium text-xs transition">
+              Export Images ZIP
+            </button>
+          </div>
+
+          <div class="glass-panel p-6 rounded-xl space-y-4 flex flex-col justify-between border-brand-500/40">
+            <div>
+              <div class="w-10 h-10 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center mb-3 text-lg">
+                <i class="fa-solid fa-box-archive"></i>
+              </div>
+              <h3 class="font-bold text-base text-white">Complete Collection</h3>
+              <p class="text-xs text-gray-400 mt-1">Bundle both /images and /metadata directories into a single master collection ZIP.</p>
+            </div>
+            <button onclick="startExport('full')" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium text-xs transition shadow-lg shadow-brand-600/30">
+              Export Complete ZIP Bundle
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL: PREVIEW BEFORE GLOBAL APPLY -->
+  <div id="modalPreview" class="fixed inset-0 glass-modal flex items-center justify-center z-50 hidden p-6">
+    <div class="glass-panel max-w-2xl w-full rounded-2xl p-6 border border-dark-border space-y-6">
+      <div class="flex justify-between items-center border-b border-dark-border pb-4">
+        <h3 class="font-bold text-lg text-white">Confirm Global Layer Replacement</h3>
+        <button onclick="closeModal('modalPreview')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div class="text-center space-y-2">
+          <div class="text-xs font-mono text-gray-400 uppercase">Original Token State</div>
+          <div class="aspect-square bg-black/50 rounded-xl overflow-hidden border border-dark-border relative flex items-center justify-center" id="prevOrigContainer">
+            <span class="text-xs text-gray-500">Loading Original...</span>
+          </div>
+          <div class="text-xs text-gray-300 font-mono" id="prevOrigLabel">-</div>
+        </div>
+
+        <div class="text-center space-y-2">
+          <div class="text-xs font-mono text-brand-400 uppercase">Composited New State</div>
+          <div class="aspect-square bg-black/50 rounded-xl overflow-hidden border border-brand-500/40 relative flex items-center justify-center" id="prevNewContainer">
+            <canvas id="prevCanvas" class="w-full h-full object-contain"></canvas>
+          </div>
+          <div class="text-xs text-brand-300 font-mono" id="prevNewLabel">-</div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-300 flex items-center space-x-3">
+        <i class="fa-solid fa-triangle-exclamation text-base"></i>
+        <span>This modification will apply composited images and updated metadata to <strong id="prevTargetCount" class="underline">0</strong> tokens.</span>
+      </div>
+
+      <div class="flex justify-end space-x-3">
+        <button onclick="closeModal('modalPreview')" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs font-semibold">Cancel</button>
+        <button id="btnConfirmApplyGlobal" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-brand-600/30">
+          Apply Changes Global Engine
+        </button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        /**
-         * Configuration Object
-         */
-        const CONFIG = {
-            TOTAL_NFTS: 7000,
-            CONCURRENCY_LIMIT: 20,
-            IMAGE_BASE_URL: "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/",
-            METADATA_BASE_URL: "https://2w4vanuecnlrmjhaorxhfn2c4bqarywouhmovqtqvpaqymp6lfaa.mainnet-1.datasprite-cdn.com/FPHjSMETs7eqAtoftL5b3zg4s9X8XDPSC1fe19dGARgs/",
-            RENDER_BATCH_SIZE: 60
-        };
+  <!-- MODAL: NFT DETAIL VIEW -->
+  <div id="modalNFTDetail" class="fixed inset-0 glass-modal flex items-center justify-center z-50 hidden p-6">
+    <div class="glass-panel max-w-3xl w-full rounded-2xl p-6 border border-dark-border space-y-6">
+      <div class="flex justify-between items-center border-b border-dark-border pb-4">
+        <h3 class="font-bold text-lg text-white" id="detailModalTitle">NFT Detail</h3>
+        <button onclick="closeModal('modalNFTDetail')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
 
-        /**
-         * Application Central State & Stores
-         */
-        let nftStore = {};            // Main Data Store: { [id]: { id, name, description, image, originalImage, customBlob, metadata: { attributes: [] }, failed: bool } }
-        let traitIndex = {};          // Index Structure: { TraitType: { TraitValue: Set(IDs) } }
-        let selectedFilters = {};     // Selected Filters: { TraitType: Set(Values) }
-        let visibleIDs = [];          // Filtered Matching IDs
-        let renderedCount = 0;        // Lazy rendering pointer
-        let lastBatchUndoState = null;// Undo State Snapshot
-        let activeEditID = null;      // Currently targeted NFT for single metadata edit
+      <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-5 space-y-3">
+          <div class="aspect-square bg-black/60 rounded-xl border border-dark-border overflow-hidden" id="detailImageHost"></div>
+          <div class="text-[10px] text-gray-500 font-mono break-all" id="detailImageCID">CID: -</div>
+        </div>
+        <div class="col-span-7 space-y-4">
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-mono">Token Name</label>
+            <div class="text-base font-bold text-white" id="detailName">-</div>
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-mono mb-1 block">Attributes</label>
+            <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1" id="detailAttributesGrid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        /**
-         * IndexedDB Setup for Persistent Storage
-         */
-        let db = null;
-        function initDB() {
-            return new Promise((resolve) => {
-                const request = indexedDB.open("NFTManagerDB", 1);
-                request.onupgradeneeded = (e) => {
-                    db = e.target.result;
-                    db.createObjectStore("nftData", { keyPath: "id" });
-                };
-                request.onsuccess = (e) => {
-                    db = e.target.result;
-                    resolve();
-                };
-                request.onerror = () => resolve();
+  <!-- APPLICATION LOGIC ENGINE -->
+  <script>
+    /**
+     * APEX NFT STUDIO - Core Application Architecture
+     */
+
+    // Configuration Constants
+    const IPFS_BASE = 'https://gateway.pinata.cloud/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/';
+    const TOTAL_TOKENS = 7000;
+    const CONCURRENCY_LIMIT = 25;
+
+    // Database Initialization (Dexie IndexedDB)
+    const db = new Dexie("ApexNFTStudioDB");
+    db.version(1).stores({
+      layers: 'id, name, type, dateAdded',
+      editedTokens: 'tokenId, originalName, newName'
+    });
+
+    // Global State Store
+    const state = {
+      tokens: new Map(), // tokenId -> { original: JSON, edited: JSON or null, loaded: boolean }
+      activeFilters: new Map(), // trait_type -> Set(values)
+      discoveredTraits: new Map(), // trait_type -> Map(value -> count)
+      layerLibrary: [], // Array of loaded layer objects
+      editedCount: 0,
+      loadedCount: 0,
+      failedCount: 0,
+      isLoading: false,
+      selectedTokens: new Set(),
+      changeHistory: []
+    };
+
+    // UI Helper Shortcuts
+    const $ = id => document.getElementById(id);
+
+    // Initialization Hook
+    window.addEventListener('DOMContentLoaded', async () => {
+      initEventListeners();
+      await loadLibraryFromDB();
+      renderDashboard();
+    });
+
+    function initEventListeners() {
+      $('btnStartLoad').addEventListener('click', startMetadataIngestion);
+      $('editorTraitSelect').addEventListener('change', handleEditorTraitChange);
+      $('editorValueSelect').addEventListener('change', updateEditorMatchCount);
+      $('btnOpenReplacePreview').addEventListener('click', openReplacePreview);
+      $('btnConfirmApplyGlobal').addEventListener('click', executeGlobalReplacement);
+      $('inputLayerUpload').addEventListener('change', handleLayerUpload);
+      $('gallerySearch').addEventListener('input', renderNFTGrid);
+      $('btnSelectFiltered').addEventListener('click', selectFilteredTokens);
+      $('btnClearFilters').addEventListener('click', clearAllFilters);
+      $('btnResetAll').addEventListener('click', resetAllEdits);
+    }
+
+    // TAB NAVIGATION CONTROLLER
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-white/10', 'text-white'));
+      
+      $(`view-${tabId}`).classList.remove('hidden');
+      $(`nav-${tabId}`).classList.add('bg-white/10', 'text-white');
+
+      if (tabId === 'gallery') renderNFTGrid();
+      if (tabId === 'library') renderLayerLibrary();
+      if (tabId === 'edited') renderEditedTokensTable();
+      if (tabId === 'editor') populateEditorDropdowns();
+    }
+
+    // 1. ASYNCHRONOUS METADATA INGESTION ENGINE
+    async function startMetadataIngestion() {
+      if (state.isLoading) return;
+      state.isLoading = true;
+
+      $('loaderStatusHeader').classList.remove('hidden');
+      $('loaderStatusHeader').classList.add('flex');
+      $('btnStartLoad').disabled = true;
+      $('btnStartLoad').classList.add('opacity-50');
+
+      let queue = [];
+      for (let i = 1; i <= TOTAL_TOKENS; i++) queue.push(i);
+
+      const workerPool = async () => {
+        while (queue.length > 0) {
+          const tokenId = queue.shift();
+          try {
+            const res = await fetch(`${IPFS_BASE}${tokenId}.json`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const meta = await res.json();
+            
+            // Register Token State
+            state.tokens.set(tokenId, {
+              original: meta,
+              edited: null,
+              loaded: true
             });
-        }
 
-        async function saveSessionToIndexedDB() {
-            if (!db) return;
-            const tx = db.transaction("nftData", "readwrite");
-            const store = tx.objectStore("nftData");
-            for (let id in nftStore) {
-                if (nftStore[id]) {
-                    // Clone object for DB
-                    const item = { ...nftStore[id] };
-                    store.put(item);
+            // Parse Traits Dynamically
+            if (meta.attributes && Array.isArray(meta.attributes)) {
+              meta.attributes.forEach(attr => {
+                if (!attr.trait_type || attr.value === undefined) return;
+                if (!state.discoveredTraits.has(attr.trait_type)) {
+                  state.discoveredTraits.set(attr.trait_type, new Map());
                 }
+                const traitValues = state.discoveredTraits.get(attr.trait_type);
+                const currentCount = traitValues.get(String(attr.value)) || 0;
+                traitValues.set(String(attr.value), currentCount + 1);
+              });
             }
-            alert("Session saved locally to IndexedDB.");
+
+            state.loadedCount++;
+          } catch (err) {
+            state.failedCount++;
+          } finally {
+            updateProgressDisplays();
+          }
         }
+      };
 
-        async function loadSessionFromIndexedDB() {
-            if (!db) return false;
-            return new Promise((resolve) => {
-                const tx = db.transaction("nftData", "readonly");
-                const store = tx.objectStore("nftData");
-                const request = store.getAll();
-                request.onsuccess = (e) => {
-                    const records = e.target.result;
-                    if (records && records.length > 0) {
-                        records.forEach(rec => { nftStore[rec.id] = rec; });
-                        resolve(true);
-                    } else {
-                        resolve(false);
-                    }
-                };
-                request.onerror = () => resolve(false);
-            });
-        }
+      // Launch Parallel Worker Pipeline
+      const workers = Array(CONCURRENCY_LIMIT).fill(null).map(() => workerPool());
+      await Promise.all(workers);
 
-        async function clearLocalSession() {
-            if (confirm("Reset local changes and re-fetch clean dataset?")) {
-                if (db) {
-                    const tx = db.transaction("nftData", "readwrite");
-                    tx.objectStore("nftData").clear();
-                }
-                location.reload();
-            }
-        }
+      state.isLoading = false;
+      $('dashStatusLabel').textContent = 'Ingestion Complete - All Metadata Ready';
+      renderFilterAccordion();
+      renderDashboard();
+    }
 
-        /**
-         * Initialization & Metadata Loader Engine
-         */
-        window.addEventListener('DOMContentLoaded', async () => {
-            await initDB();
-            const hasRestored = await loadSessionFromIndexedDB();
+    function updateProgressDisplays() {
+      const pct = ((state.loadedCount / TOTAL_TOKENS) * 100).toFixed(1);
+      
+      $('loadCounter').textContent = `${state.loadedCount.toLocaleString()} / 7,000`;
+      $('loadPercentage').textContent = `${pct}%`;
+      $('loadProgressBar').style.width = `${pct}%`;
 
-            if (!hasRestored) {
-                // Initialize default store skeleton
-                for (let i = 1; i <= CONFIG.TOTAL_NFTS; i++) {
-                    nftStore[i] = {
-                        id: i,
-                        name: `Item #${i}`,
-                        description: "",
-                        image: `${CONFIG.IMAGE_BASE_URL}${i}.jpeg`,
-                        originalImage: `${CONFIG.IMAGE_BASE_URL}${i}.jpeg`,
-                        customBlob: null,
-                        metadata: { attributes: [] },
-                        failed: false
-                    };
-                }
-                await loadAllMetadataInBatches();
-            } else {
-                rebuildTraitIndex();
-                populateFilterSidebar();
-                applyFilters();
-                updateStatusBar();
-            }
+      $('dashLoaded').textContent = state.loadedCount.toLocaleString();
+      $('dashLoadedPercent').textContent = `${pct}% completed`;
+      $('dashProgressBar').style.width = `${pct}%`;
+      $('dashFailedCount').textContent = `Errors: ${state.failedCount}`;
+      $('statActiveCount').textContent = `${state.loadedCount.toLocaleString()} Loaded`;
+      $('dashTraits').textContent = state.discoveredTraits.size;
+    }
+
+    // 2. AUTOMATIC TRAIT FILTER SYSTEM
+    function renderFilterAccordion() {
+      const container = $('filterAccordionContainer');
+      container.innerHTML = '';
+
+      if (state.discoveredTraits.size === 0) {
+        container.innerHTML = `<div class="text-gray-500 italic p-2 text-center">No traits discovered yet.</div>`;
+        return;
+      }
+
+      state.discoveredTraits.forEach((valuesMap, traitType) => {
+        const group = document.createElement('div');
+        group.className = 'border border-dark-border rounded-lg overflow-hidden bg-black/20';
+
+        let optionsHTML = '';
+        valuesMap.forEach((count, val) => {
+          const isChecked = state.activeFilters.has(traitType) && state.activeFilters.get(traitType).has(val);
+          optionsHTML += `
+            <label class="flex items-center justify-between p-1.5 hover:bg-white/5 cursor-pointer">
+              <div class="flex items-center space-x-2 truncate">
+                <input type="checkbox" onchange="toggleFilter('${traitType}', '${val}')" ${isChecked ? 'checked' : ''} class="rounded border-gray-700 text-brand-500 focus:ring-0 bg-dark-bg">
+                <span class="text-gray-300 truncate">${val}</span>
+              </div>
+              <span class="text-[10px] text-gray-500 font-mono ml-2">${count}</span>
+            </label>
+          `;
         });
 
-        async function loadAllMetadataInBatches() {
-            showProcessModal("Loading Metadata", "Batch requesting NFT metadata with concurrency...", 0);
-            const ids = Array.from({ length: CONFIG.TOTAL_NFTS }, (_, i) => i + 1);
-            let processed = 0;
-            let failedCount = 0;
+        group.innerHTML = `
+          <div class="p-2 bg-white/5 font-semibold text-gray-300 flex justify-between items-center cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+            <span class="truncate">${traitType}</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-gray-500"></i>
+          </div>
+          <div class="space-y-0.5 p-1 hidden">${optionsHTML}</div>
+        `;
+        container.appendChild(group);
+      });
+    }
 
-            const queue = [...ids];
-            const workers = Array(CONFIG.CONCURRENCY_LIMIT).fill(null).map(async () => {
-                while (queue.length > 0) {
-                    const id = queue.shift();
-                    const success = await fetchSingleMetadata(id);
-                    if (!success) failedCount++;
-                    processed++;
-                    
-                    if (processed % 50 === 0 || processed === CONFIG.TOTAL_NFTS) {
-                        const pct = Math.floor((processed / CONFIG.TOTAL_NFTS) * 100);
-                        updateProcessModal(`Loaded ${processed} / ${CONFIG.TOTAL_NFTS}`, pct);
-                        updateStatusBar();
-                    }
-                }
-            });
+    function toggleFilter(traitType, value) {
+      if (!state.activeFilters.has(traitType)) {
+        state.activeFilters.set(traitType, new Set());
+      }
+      const set = state.activeFilters.get(traitType);
+      if (set.has(value)) {
+        set.delete(value);
+        if (set.size === 0) state.activeFilters.delete(traitType);
+      } else {
+        set.add(value);
+      }
+      renderNFTGrid();
+    }
 
-            await Promise.all(workers);
-            hideProcessModal();
+    function clearAllFilters() {
+      state.activeFilters.clear();
+      renderFilterAccordion();
+      renderNFTGrid();
+    }
 
-            rebuildTraitIndex();
-            populateFilterSidebar();
-            applyFilters();
-            updateStatusBar();
+    // 3. VIRTUALIZED GALLERY GRID
+    function getFilteredTokens() {
+      const search = $('gallerySearch').value.toLowerCase().trim();
+      let results = [];
+
+      state.tokens.forEach((data, tokenId) => {
+        if (!data.loaded) return;
+        const meta = data.edited || data.original;
+
+        // Search Filter
+        if (search && !String(tokenId).includes(search) && !meta.name.toLowerCase().includes(search)) {
+          return;
         }
 
-        async function fetchSingleMetadata(id) {
-            const jsonUrl = `${CONFIG.METADATA_BASE_URL}${id}.json`;
-            try {
-                const res = await fetch(jsonUrl);
-                if (!res.ok) throw new Error("Metadata fetch failed");
-                const data = await res.json();
-                
-                nftStore[id].name = data.name || nftStore[id].name;
-                nftStore[id].description = data.description || "";
-                if (data.image) nftStore[id].image = resolveImageUrl(data.image, id);
-                nftStore[id].metadata = data.attributes ? data : { attributes: [] };
-                nftStore[id].failed = false;
-                return true;
-            } catch (err) {
-                nftStore[id].failed = true;
-                return false;
+        // Trait Filter Engine
+        if (state.activeFilters.size > 0) {
+          let matchesAll = true;
+          state.activeFilters.forEach((selectedVals, traitType) => {
+            const attr = meta.attributes?.find(a => a.trait_type === traitType);
+            if (!attr || !selectedVals.has(String(attr.value))) {
+              matchesAll = false;
             }
+          });
+          if (!matchesAll) return;
         }
 
-        function resolveImageUrl(imgStr, id) {
-            if (!imgStr) return `${CONFIG.IMAGE_BASE_URL}${id}.jpeg`;
-            if (imgStr.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${imgStr.slice(7)}`;
-            return imgStr;
+        results.push(tokenId);
+      });
+
+      return results;
+    }
+
+    function renderNFTGrid() {
+      const grid = $('nftGrid');
+      grid.innerHTML = '';
+      const matchingIds = getFilteredTokens();
+      
+      $('galleryResultCount').textContent = `Showing ${matchingIds.length.toLocaleString()} NFTs`;
+
+      // Slice first 60 for performance DOM rendering
+      const slice = matchingIds.slice(0, 60);
+
+      slice.forEach(tokenId => {
+        const data = state.tokens.get(tokenId);
+        const meta = data.edited || data.original;
+        const imgURL = normalizeIPFS(meta.image);
+
+        const card = document.createElement('div');
+        card.className = 'glass-panel rounded-xl overflow-hidden border border-dark-border hover:border-brand-500/50 transition cursor-pointer flex flex-col';
+        card.onclick = () => openNFTDetail(tokenId);
+
+        card.innerHTML = `
+          <div class="aspect-square bg-black/40 relative overflow-hidden">
+            <img src="${imgURL}" loading="lazy" class="w-full h-full object-cover" alt="NFT #${tokenId}">
+            ${data.edited ? `<span class="absolute top-2 right-2 bg-emerald-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Modified</span>` : ''}
+          </div>
+          <div class="p-2 space-y-1">
+            <div class="font-bold text-xs text-white truncate">${meta.name || `Token #${tokenId}`}</div>
+            <div class="text-[10px] text-gray-500 font-mono">ID: #${tokenId}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function selectFilteredTokens() {
+      const ids = getFilteredTokens();
+      ids.forEach(id => state.selectedTokens.add(id));
+      alert(`Selected ${ids.length} tokens.`);
+    }
+
+    // 4. IPFS URL NORMALIZER
+    function normalizeIPFS(url) {
+      if (!url) return '';
+      if (url.startsWith('ipfs://')) {
+        return url.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+      }
+      return url;
+    }
+
+    // 5. LOCAL LAYER LIBRARY SYSTEM
+    async function handleLayerUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const layerObj = {
+          id: 'layer_' + Date.now(),
+          name: file.name.replace('.png', ''),
+          type: 'Accessory',
+          dataURL: event.target.result,
+          dateAdded: new Date().toISOString()
+        };
+
+        await db.layers.add(layerObj);
+        await loadLibraryFromDB();
+        renderLayerLibrary();
+        populateEditorDropdowns();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function loadLibraryFromDB() {
+      state.layerLibrary = await db.layers.toArray();
+      $('dashLayers').textContent = state.layerLibrary.length;
+    }
+
+    function renderLayerLibrary() {
+      const grid = $('layerLibraryGrid');
+      grid.innerHTML = '';
+
+      if (state.layerLibrary.length === 0) {
+        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">No custom PNG layers uploaded to IndexedDB.</div>`;
+        return;
+      }
+
+      state.layerLibrary.forEach(layer => {
+        const card = document.createElement('div');
+        card.className = 'glass-panel p-3 rounded-xl border border-dark-border space-y-3 flex flex-col justify-between';
+        card.innerHTML = `
+          <div class="aspect-square bg-black/60 rounded-lg p-2 flex items-center justify-center relative border border-dark-border">
+            <img src="${layer.dataURL}" class="max-w-full max-h-full object-contain">
+          </div>
+          <div>
+            <div class="font-bold text-xs text-white truncate">${layer.name}</div>
+            <div class="text-[10px] text-gray-500 font-mono">${layer.type}</div>
+          </div>
+          <button onclick="deleteLayer('${layer.id}')" class="w-full py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-[10px] font-semibold transition">
+            Delete
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function deleteLayer(id) {
+      await db.layers.delete(id);
+      await loadLibraryFromDB();
+      renderLayerLibrary();
+      populateEditorDropdowns();
+    }
+
+    // 6. LAYER REPLACEMENT ENGINE & CANVAS COMPOSITING
+    function populateEditorDropdowns() {
+      const traitSel = $('editorTraitSelect');
+      traitSel.innerHTML = `<option value="">Select Trait...</option>`;
+      
+      state.discoveredTraits.forEach((_, traitType) => {
+        const opt = document.createElement('option');
+        opt.value = traitType;
+        opt.textContent = traitType;
+        traitSel.appendChild(opt);
+      });
+
+      const layerSel = $('editorLayerSelect');
+      layerSel.innerHTML = `<option value="">Select uploaded PNG layer...</option>`;
+      state.layerLibrary.forEach(layer => {
+        const opt = document.createElement('option');
+        opt.value = layer.id;
+        opt.textContent = layer.name;
+        layerSel.appendChild(opt);
+      });
+    }
+
+    function handleEditorTraitChange(e) {
+      const traitType = e.target.value;
+      const valSel = $('editorValueSelect');
+      valSel.innerHTML = `<option value="">Select Target Value...</option>`;
+      valSel.disabled = !traitType;
+
+      if (traitType && state.discoveredTraits.has(traitType)) {
+        state.discoveredTraits.get(traitType).forEach((count, val) => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = `${val} (${count} tokens)`;
+          valSel.appendChild(opt);
+        });
+      }
+      updateEditorMatchCount();
+    }
+
+    function updateEditorMatchCount() {
+      const trait = $('editorTraitSelect').value;
+      const val = $('editorValueSelect').value;
+      if (!trait || !val) {
+        $('editorMatchCount').textContent = '0 tokens';
+        return;
+      }
+      const count = state.discoveredTraits.get(trait)?.get(val) || 0;
+      $('editorMatchCount').textContent = `${count.toLocaleString()} tokens`;
+    }
+
+    function openReplacePreview() {
+      const trait = $('editorTraitSelect').value;
+      const val = $('editorValueSelect').value;
+      const layerId = $('editorLayerSelect').value;
+
+      if (!trait || !val || !layerId) {
+        alert('Please select Trait, Value, and Target PNG Layer.');
+        return;
+      }
+
+      // Find first sample token
+      let sampleTokenId = null;
+      state.tokens.forEach((data, id) => {
+        if (!sampleTokenId && data.original.attributes?.some(a => a.trait_type === trait && String(a.value) === val)) {
+          sampleTokenId = id;
         }
+      });
 
-        /**
-         * Dynamic Trait Indexing & Sidebar Engine
-         */
-        function rebuildTraitIndex() {
-            traitIndex = {};
-            for (let id in nftStore) {
-                const item = nftStore[id];
-                if (!item || !item.metadata || !item.metadata.attributes) continue;
+      if (!sampleTokenId) {
+        alert('No matching tokens found.');
+        return;
+      }
 
-                item.metadata.attributes.forEach(attr => {
-                    const tType = attr.trait_type || "Uncategorized";
-                    const tVal = String(attr.value);
+      const sampleData = state.tokens.get(sampleTokenId);
+      const meta = sampleData.original;
+      const layerObj = state.layerLibrary.find(l => l.id === layerId);
 
-                    if (!traitIndex[tType]) traitIndex[tType] = {};
-                    if (!traitIndex[tType][tVal]) traitIndex[tType][tVal] = new Set();
+      // Render Original
+      $('prevOrigContainer').innerHTML = `<img src="${normalizeIPFS(meta.image)}" class="w-full h-full object-cover">`;
+      $('prevOrigLabel').textContent = `${meta.name} (${trait}: ${val})`;
 
-                    traitIndex[tType][tVal].add(Number(id));
-                });
-            }
-            populateLayerDropdowns();
+      // Render Composited Canvas Preview
+      const canvas = $('prevCanvas');
+      const ctx = canvas.getContext('2d');
+      const baseImg = new Image();
+      baseImg.crossOrigin = 'anonymous';
+      baseImg.src = normalizeIPFS(meta.image);
+
+      baseImg.onload = () => {
+        canvas.width = baseImg.width || 1000;
+        canvas.height = baseImg.height || 1000;
+        ctx.drawImage(baseImg, 0, 0);
+
+        const overlayImg = new Image();
+        overlayImg.src = layerObj.dataURL;
+        overlayImg.onload = () => {
+          ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
+          $('prevNewLabel').textContent = `New Layer: ${layerObj.name}`;
+        };
+      };
+
+      const matchCount = state.discoveredTraits.get(trait)?.get(val) || 0;
+      $('prevTargetCount').textContent = matchCount.toLocaleString();
+
+      $('modalPreview').classList.remove('hidden');
+    }
+
+    async function executeGlobalReplacement() {
+      closeModal('modalPreview');
+      
+      const trait = $('editorTraitSelect').value;
+      const val = $('editorValueSelect').value;
+      const layerId = $('editorLayerSelect').value;
+      const nameTemplate = $('editorNameTemplate').value;
+      const layerObj = state.layerLibrary.find(l => l.id === layerId);
+
+      let modifiedInRun = 0;
+
+      state.tokens.forEach((data, tokenId) => {
+        const meta = data.edited ? JSON.parse(JSON.stringify(data.edited)) : JSON.parse(JSON.stringify(data.original));
+        const attr = meta.attributes?.find(a => a.trait_type === trait && String(a.value) === val);
+
+        if (attr) {
+          attr.value = layerObj.name; // Update Attribute Value
+
+          // Update Naming Template
+          let newName = nameTemplate
+            .replace('[Collection Name]', 'Mr.Stonk')
+            .replace('[Token ID]', tokenId)
+            .replace('[New Trait]', layerObj.name);
+
+          meta.name = newName;
+          meta.layerOverlay = layerObj.dataURL; // Track layer for export synthesis
+
+          data.edited = meta;
+          modifiedInRun++;
         }
+      });
 
-        function populateFilterSidebar() {
-            const container = document.getElementById('filter-groups-container');
-            container.innerHTML = '';
+      // Update State Statistics
+      state.editedCount = Array.from(state.tokens.values()).filter(t => t.edited !== null).length;
+      $('dashEdited').textContent = state.editedCount.toLocaleString();
+      $('badgeEditedCount').textContent = state.editedCount.toLocaleString();
 
-            for (let tType in traitIndex) {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'filter-group';
+      // Log History Entry
+      const logContainer = $('changeHistoryLog');
+      const entry = document.createElement('div');
+      entry.className = 'p-2 bg-black/40 border border-dark-border rounded text-xs space-y-1';
+      entry.innerHTML = `
+        <div class="font-bold text-brand-400">Replaced ${trait} = ${val}</div>
+        <div class="text-[10px] text-gray-400">New Value: ${layerObj.name} (${modifiedInRun} tokens affected)</div>
+      `;
+      logContainer.appendChild(entry);
 
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'group-title';
-                titleDiv.innerText = tType;
-                groupDiv.appendChild(titleDiv);
+      alert(`Successfully updated metadata and layer overlays for ${modifiedInRun} tokens!`);
+    }
 
-                for (let tVal in traitIndex[tType]) {
-                    const count = traitIndex[tType][tVal].size;
-                    const optDiv = document.createElement('div');
-                    optDiv.className = 'trait-option';
+    // 7. NFT DETAIL MODAL
+    function openNFTDetail(tokenId) {
+      const data = state.tokens.get(tokenId);
+      if (!data) return;
+      const meta = data.edited || data.original;
 
-                    const isChecked = selectedFilters[tType] && selectedFilters[tType].has(tVal);
+      $('detailModalTitle').textContent = `NFT #${tokenId}`;
+      $('detailName').textContent = meta.name;
+      $('detailImageCID').textContent = `Image: ${meta.image}`;
+      $('detailImageHost').innerHTML = `<img src="${normalizeIPFS(meta.image)}" class="w-full h-full object-cover">`;
 
-                    optDiv.innerHTML = `
-                        <label>
-                            <input type="checkbox" onchange="toggleFilter('${tType}', '${tVal}')" ${isChecked ? 'checked' : ''}>
-                            <span>${tVal}</span>
-                        </label>
-                        <span class="trait-count">(${count})</span>
-                    `;
-                    groupDiv.appendChild(optDiv);
-                }
-                container.appendChild(groupDiv);
-            }
+      const grid = $('detailAttributesGrid');
+      grid.innerHTML = '';
+      meta.attributes?.forEach(attr => {
+        const badge = document.createElement('div');
+        badge.className = 'p-2 bg-black/40 border border-dark-border rounded';
+        badge.innerHTML = `
+          <div class="text-[9px] text-gray-500 font-mono uppercase">${attr.trait_type}</div>
+          <div class="text-xs font-bold text-white truncate">${attr.value}</div>
+        `;
+        grid.appendChild(badge);
+      });
+
+      $('modalNFTDetail').classList.remove('hidden');
+    }
+
+    // 8. EDITED TOKENS TABLE
+    function renderEditedTokensTable() {
+      const tbody = $('tableEditedTokens');
+      tbody.innerHTML = '';
+
+      let count = 0;
+      state.tokens.forEach((data, tokenId) => {
+        if (!data.edited) return;
+        count++;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/5 font-mono';
+        tr.innerHTML = `
+          <td class="p-3 text-brand-400">#${tokenId}</td>
+          <td class="p-3 text-gray-400">${data.original.name}</td>
+          <td class="p-3 text-emerald-400 font-bold">${data.edited.name}</td>
+          <td class="p-3 text-gray-300">Modified Overlay Active</td>
+          <td class="p-3 text-right">
+            <button onclick="resetSingleToken(${tokenId})" class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded text-[10px]">Reset</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (count === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">No modified tokens found.</td></tr>`;
+      }
+    }
+
+    function resetSingleToken(tokenId) {
+      const data = state.tokens.get(tokenId);
+      if (data) data.edited = null;
+      renderEditedTokensTable();
+      updateProgressDisplays();
+    }
+
+    function resetAllEdits() {
+      if (!confirm('Are you sure you want to discard all local modifications? Original IPFS data remains safe.')) return;
+      state.tokens.forEach(data => data.edited = null);
+      state.editedCount = 0;
+      $('dashEdited').textContent = '0';
+      $('badgeEditedCount').textContent = '0';
+      alert('All local changes have been reset.');
+    }
+
+    // 9. CLIENT-SIDE ZIP EXPORT SYSTEM (JSZip)
+    async function startExport(type) {
+      if (state.tokens.size === 0) {
+        alert('Please fetch metadata before exporting.');
+        return;
+      }
+
+      const zip = new JSZip();
+      const metaFolder = (type === 'metadata' || type === 'full') ? zip.folder("metadata") : null;
+      const imgFolder = (type === 'images' || type === 'full') ? zip.folder("images") : null;
+
+      alert(`Preparing JSZip compression for ${state.tokens.size} tokens... This may take a moment.`);
+
+      state.tokens.forEach((data, tokenId) => {
+        const meta = data.edited || data.original;
+        
+        // Export Metadata
+        if (metaFolder) {
+          metaFolder.file(`${tokenId}.json`, JSON.stringify(meta, null, 2));
         }
-
-        function toggleFilter(tType, tVal) {
-            if (!selectedFilters[tType]) selectedFilters[tType] = new Set();
-            if (selectedFilters[tType].has(tVal)) {
-                selectedFilters[tType].delete(tVal);
-                if (selectedFilters[tType].size === 0) delete selectedFilters[tType];
-            } else {
-                selectedFilters[tType].add(tVal);
-            }
-            applyFilters();
-        }
-
-        function clearFilters() {
-            selectedFilters = {};
-            document.getElementById('global-search').value = '';
-            populateFilterSidebar();
-            applyFilters();
-        }
-
-        function handleSearch() {
-            applyFilters();
-        }
-
-        /**
-         * Filter Application & Lazy Rendering
-         */
-        function applyFilters() {
-            const query = document.getElementById('global-search').value.trim().toLowerCase();
-
-            visibleIDs = [];
-            for (let id = 1; id <= CONFIG.TOTAL_NFTS; id++) {
-                const item = nftStore[id];
-                if (!item) continue;
-
-                // 1. Search Query Check
-                let matchesSearch = true;
-                if (query) {
-                    const idMatch = String(item.id).includes(query) || `#${item.id}`.includes(query);
-                    const nameMatch = item.name.toLowerCase().includes(query);
-                    const traitMatch = item.metadata.attributes && item.metadata.attributes.some(a => 
-                        String(a.trait_type).toLowerCase().includes(query) || String(a.value).toLowerCase().includes(query)
-                    );
-                    matchesSearch = idMatch || nameMatch || traitMatch;
-                }
-
-                if (!matchesSearch) continue;
-
-                // 2. Trait Filters Check (AND logic across types, OR logic within type)
-                let matchesTraits = true;
-                for (let tType in selectedFilters) {
-                    const allowedValues = selectedFilters[tType];
-                    const hasTrait = item.metadata.attributes && item.metadata.attributes.some(a => 
-                        a.trait_type === tType && allowedValues.has(String(a.value))
-                    );
-                    if (!hasTrait) {
-                        matchesTraits = false;
-                        break;
-                    }
-                }
-
-                if (matchesTraits) {
-                    visibleIDs.push(id);
-                }
-            }
-
-            resetAndRenderGallery();
-            updateStatusBar();
-        }
-
-        function resetAndRenderGallery() {
-            const grid = document.getElementById('gallery-grid');
-            grid.innerHTML = '';
-            renderedCount = 0;
-            renderNextBatch();
-        }
-
-        function renderNextBatch() {
-            const grid = document.getElementById('gallery-grid');
-            const limit = Math.min(renderedCount + CONFIG.RENDER_BATCH_SIZE, visibleIDs.length);
-
-            for (let i = renderedCount; i < limit; i++) {
-                const id = visibleIDs[i];
-                const card = createNFTCardElement(nftStore[id]);
-                grid.appendChild(card);
-            }
-            renderedCount = limit;
-        }
-
-        function handleScroll() {
-            const container = document.getElementById('gallery-container');
-            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 200) {
-                if (renderedCount < visibleIDs.length) {
-                    renderNextBatch();
-                }
-            }
-        }
-
-        function createNFTCardElement(item) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.id = `card-${item.id}`;
-
-            const displayImg = item.customBlob || item.image;
-
-            let traitsSummary = "No traits available";
-            if (item.metadata && item.metadata.attributes && item.metadata.attributes.length > 0) {
-                traitsSummary = item.metadata.attributes.map(a => `${a.trait_type}: ${a.value}`).join(' | ');
-            }
-
-            card.innerHTML = `
-                <button class="delete-btn" onclick="removeCardFromView(${item.id})">✕ Delete</button>
-                <div class="img-wrapper">
-                    <img src="${displayImg}" alt="${item.name}" onerror="handleCardImgError(${item.id})" id="img-${item.id}">
-                    <div class="error-box" id="err-${item.id}">
-                        <span>Image Load Failed</span>
-                        <button style="padding:2px 6px; font-size:10px;" onclick="reloadSingleCard(${item.id})">Retry</button>
-                        <a href="${item.image}" target="_blank" class="direct-link" style="color:var(--accent); font-size:9px;">Direct Link</a>
-                    </div>
-                </div>
-                <div class="card-title">
-                    <span>${item.name}</span>
-                </div>
-                <div class="card-traits" title="${traitsSummary}">${traitsSummary}</div>
-                <div class="card-actions">
-                    <button onclick="openMetadataModal(${item.id})">Edit Metadata</button>
-                </div>
-            `;
-            return card;
-        }
-
-        function removeCardFromView(id) {
-            const card = document.getElementById(`card-${id}`);
-            if (card) card.remove();
-            visibleIDs = visibleIDs.filter(vId => vId !== id);
-            updateStatusBar();
-        }
-
-        function handleCardImgError(id) {
-            const img = document.getElementById(`img-${id}`);
-            const err = document.getElementById(`err-${id}`);
-            if (img) img.style.display = 'none';
-            if (err) err.style.display = 'flex';
-        }
-
-        function reloadSingleCard(id) {
-            const img = document.getElementById(`img-${id}`);
-            const err = document.getElementById(`err-${id}`);
-            if (err) err.style.display = 'none';
-            if (img) {
-                img.style.display = 'block';
-                img.src = `${nftStore[id].image}?t=${Date.now()}`;
-            }
-        }
-
-        /**
-         * Bulk Layer Replacement & Compositing Engine
-         */
-        function populateLayerDropdowns() {
-            const select = document.getElementById('layer-type-select');
-            select.innerHTML = '<option value="">-- Select Trait Type --</option>';
-            for (let tType in traitIndex) {
-                const opt = document.createElement('option');
-                opt.value = tType;
-                opt.innerText = tType;
-                select.appendChild(opt);
-            }
-            populateTraitValueDropdown();
-        }
-
-        function populateTraitValueDropdown() {
-            const tType = document.getElementById('layer-type-select').value;
-            const select = document.getElementById('trait-value-select');
-            select.innerHTML = '<option value="">-- Select Trait Value --</option>';
-
-            if (!tType || !traitIndex[tType]) {
-                updateLayerSelectionInfo();
-                return;
-            }
-
-            for (let tVal in traitIndex[tType]) {
-                const opt = document.createElement('option');
-                opt.value = tVal;
-                opt.innerText = tVal;
-                select.appendChild(opt);
-            }
-            updateLayerSelectionInfo();
-        }
-
-        function updateLayerSelectionInfo() {
-            const tType = document.getElementById('layer-type-select').value;
-            const tVal = document.getElementById('trait-value-select').value;
-            const countElem = document.getElementById('layer-match-count');
-
-            if (tType && tVal && traitIndex[tType] && traitIndex[tType][tVal]) {
-                countElem.innerText = traitIndex[tType][tVal].size;
-            } else {
-                countElem.innerText = "0";
-            }
-        }
-
-        function openLayerConfirmModal() {
-            const tType = document.getElementById('layer-type-select').value;
-            const tVal = document.getElementById('trait-value-select').value;
-            const fileInput = document.getElementById('layer-file-input');
-
-            if (!tType || !tVal) {
-                alert("Please select both a Trait Type and a Trait Value first.");
-                return;
-            }
-            if (!fileInput.files || !fileInput.files[0]) {
-                alert("Please upload a replacement layer image file.");
-                return;
-            }
-
-            const matchingIDs = Array.from(traitIndex[tType][tVal] || []);
-            if (matchingIDs.length === 0) {
-                alert("No NFTs match the selected layer.");
-                return;
-            }
-
-            const sampleID = matchingIDs[0];
-            document.getElementById('modal-desc').innerText = `Target Layer: ${tType} -> ${tVal}. This action will apply to ${matchingIDs.length} matching NFTs.`;
-
-            // Setup preview images
-            document.getElementById('prev-orig-img').src = nftStore[sampleID].customBlob || nftStore[sampleID].image;
-            
-            // Draw Composite Preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const newImg = new Image();
-                newImg.onload = () => {
-                    const canvas = document.getElementById('prev-canvas');
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                    const baseImg = new Image();
-                    baseImg.crossOrigin = "anonymous";
-                    baseImg.onload = () => {
-                        ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(newImg, 0, 0, canvas.width, canvas.height);
-                    };
-                    baseImg.src = nftStore[sampleID].customBlob || nftStore[sampleID].image;
-                };
-                newImg.src = e.target.result;
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-
-            openModal('layer-confirm-modal');
-        }
-
-        async function executeBulkLayerReplacement() {
-            closeModal('layer-confirm-modal');
-
-            const tType = document.getElementById('layer-type-select').value;
-            const tVal = document.getElementById('trait-value-select').value;
-            const fileInput = document.getElementById('layer-file-input');
-            const file = fileInput.files[0];
-
-            const matchingIDs = Array.from(traitIndex[tType][tVal] || []);
-
-            // Save Snapshot for Undo
-            lastBatchUndoState = {};
-            matchingIDs.forEach(id => {
-                lastBatchUndoState[id] = { customBlob: nftStore[id].customBlob };
-            });
-            document.getElementById('undo-btn').disabled = false;
-
-            showProcessModal("Applying Layer Replacement", `Updating ${matchingIDs.length} NFTs...`, 0);
-
-            // Read replacement layer image
-            const layerImgDataUrl = await new Promise(r => {
-                const rd = new FileReader();
-                rd.onload = e => r(e.target.result);
-                rd.readAsDataURL(file);
-            });
-
-            const replacementImg = new Image();
-            await new Promise(r => { replacementImg.onload = r; replacementImg.src = layerImgDataUrl; });
-
-            // Process Compositing asynchronously in chunks
-            for (let i = 0; i < matchingIDs.length; i++) {
-                const id = matchingIDs[i];
-                const compositeBlob = await compositeSingleNFT(id, replacementImg);
-                nftStore[id].customBlob = compositeBlob;
-
-                if (i % 10 === 0 || i === matchingIDs.length - 1) {
-                    const pct = Math.floor(((i + 1) / matchingIDs.length) * 100);
-                    updateProcessModal(`Composited ${i + 1} / ${matchingIDs.length}`, pct);
-                }
-            }
-
-            hideProcessModal();
-            resetAndRenderGallery();
-            alert("Bulk layer replacement applied successfully.");
-        }
-
-        function compositeSingleNFT(id, replacementImg) {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 1000; // Standard High-Res Compositing Dimension
-                canvas.height = 1000;
-                const ctx = canvas.getContext('2d');
-
-                const baseImg = new Image();
-                baseImg.crossOrigin = "anonymous";
-                baseImg.onload = () => {
-                    ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(replacementImg, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL("image/png"));
-                };
-                baseImg.onerror = () => {
-                    // Fallback to replacement layer alone if original image fails CORS
-                    ctx.drawImage(replacementImg, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL("image/png"));
-                };
-                baseImg.src = nftStore[id].customBlob || nftStore[id].image;
-            });
-        }
-
-        function undoLastBatch() {
-            if (!lastBatchUndoState) return;
-            for (let id in lastBatchUndoState) {
-                if (nftStore[id]) {
-                    nftStore[id].customBlob = lastBatchUndoState[id].customBlob;
-                }
-            }
-            lastBatchUndoState = null;
-            document.getElementById('undo-btn').disabled = true;
-            resetAndRenderGallery();
-            alert("Last batch layer modification undone.");
-        }
-
-        /**
-         * Metadata Editor (Single NFT)
-         */
-        function openMetadataModal(id) {
-            activeEditID = id;
-            const item = nftStore[id];
-            document.getElementById('meta-edit-id').innerText = id;
-            document.getElementById('meta-edit-name').value = item.name;
-            document.getElementById('meta-edit-desc').value = item.description || "";
-
-            const container = document.getElementById('meta-attributes-container');
-            container.innerHTML = '';
-
-            if (item.metadata && item.metadata.attributes) {
-                item.metadata.attributes.forEach(attr => {
-                    addMetaDataAttributeRow(attr.trait_type, attr.value);
-                });
-            }
-            openModal('metadata-modal');
-        }
-
-        function addMetaDataAttributeRow(type = "", val = "") {
-            const container = document.getElementById('meta-attributes-container');
-            const row = document.createElement('div');
-            row.className = 'form-row';
-            row.innerHTML = `
-                <input type="text" class="attr-type" placeholder="Trait Type" value="${type}">
-                <input type="text" class="attr-val" placeholder="Trait Value" value="${val}">
-                <button class="btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()">✕</button>
-            `;
-            container.appendChild(row);
-        }
-
-        function saveSingleMetadata() {
-            if (!activeEditID || !nftStore[activeEditID]) return;
-            const item = nftStore[activeEditID];
-
-            item.name = document.getElementById('meta-edit-name').value.trim();
-            item.description = document.getElementById('meta-edit-desc').value.trim();
-
-            const rows = document.querySelectorAll('#meta-attributes-container .form-row');
-            const newAttributes = [];
-
-            rows.forEach(row => {
-                const t = row.querySelector('.attr-type').value.trim();
-                const v = row.querySelector('.attr-val').value.trim();
-                if (t && v) {
-                    newAttributes.push({ trait_type: t, value: v });
-                }
-            });
-
-            item.metadata.attributes = newAttributes;
-            closeModal('metadata-modal');
-
-            rebuildTraitIndex();
-            populateFilterSidebar();
-            applyFilters();
-            alert(`Metadata updated for NFT #${activeEditID}`);
-        }
-
-        /**
-         * ZIP Export Engine
-         */
-        async function exportZIP() {
-            const scope = document.getElementById('export-scope').value;
-            let targetIDs = [];
-
-            if (scope === 'filtered') {
-                targetIDs = [...visibleIDs];
-            } else if (scope === 'layer') {
-                const tType = document.getElementById('layer-type-select').value;
-                const tVal = document.getElementById('trait-value-select').value;
-                if (!tType || !tVal) return alert("Select a layer first for Layer Export.");
-                targetIDs = Array.from(traitIndex[tType][tVal] || []);
-            } else {
-                targetIDs = Array.from({ length: CONFIG.TOTAL_NFTS }, (_, i) => i + 1);
-            }
-
-            if (targetIDs.length === 0) return alert("No NFTs match the export criteria.");
-
-            const zip = new JSZip();
-            const imgFolder = zip.folder("images");
-            const metaFolder = zip.folder("metadata");
-
-            showProcessModal("Preparing ZIP Export", `Exporting ${targetIDs.length} NFTs...`, 0);
-
-            for (let i = 0; i < targetIDs.length; i++) {
-                const id = targetIDs[i];
-                const item = nftStore[id];
-
-                // Export Metadata JSON
-                metaFolder.file(`${id}.json`, JSON.stringify(item.metadata, null, 2));
-
-                // Export Image
-                if (item.customBlob) {
-                    const base64Data = item.customBlob.split(',')[1];
-                    imgFolder.file(`${id}.png`, base64Data, { base64: true });
-                } else {
-                    try {
-                        const res = await fetch(item.image);
-                        if (res.ok) {
-                            const blob = await res.blob();
-                            imgFolder.file(`${id}.png`, blob);
-                        }
-                    } catch (e) {
-                        console.error(`Failed to fetch image for #${id} during export`);
-                    }
-                }
-
-                if (i % 20 === 0 || i === targetIDs.length - 1) {
-                    const pct = Math.floor(((i + 1) / targetIDs.length) * 100);
-                    updateProcessModal(`Bundled ${i + 1} / ${targetIDs.length}`, pct);
-                }
-            }
-
-            updateProcessModal("Compressing ZIP file...", 100);
-            const content = await zip.generateAsync({ type: "blob" });
-            saveAs(content, `NFT_Collection_Export_${Date.now()}.zip`);
-            hideProcessModal();
-        }
-
-        /**
-         * Failed Items & Retry Handler
-         */
-        async function retryFailedRequests() {
-            const failedIDs = [];
-            for (let id in nftStore) {
-                if (nftStore[id].failed) failedIDs.push(Number(id));
-            }
-            if (failedIDs.length === 0) return;
-
-            showProcessModal("Retrying Failed Requests", `Retrying ${failedIDs.length} items...`, 0);
-            let done = 0;
-
-            for (let id of failedIDs) {
-                await fetchSingleMetadata(id);
-                done++;
-                updateProcessModal(`Retried ${done} / ${failedIDs.length}`, Math.floor((done / failedIDs.length) * 100));
-            }
-
-            hideProcessModal();
-            rebuildTraitIndex();
-            populateFilterSidebar();
-            applyFilters();
-            updateStatusBar();
-        }
-
-        /**
-         * UI Helper Functions & Status Updates
-         */
-        function updateStatusBar() {
-            let loadedMeta = 0;
-            let failedCount = 0;
-
-            for (let id in nftStore) {
-                if (nftStore[id].failed) failedCount++;
-                else if (nftStore[id].metadata && nftStore[id].metadata.attributes.length > 0) loadedMeta++;
-            }
-
-            document.getElementById('st-total').innerText = CONFIG.TOTAL_NFTS;
-            document.getElementById('st-meta').innerText = loadedMeta;
-            document.getElementById('st-failed').innerText = failedCount;
-            document.getElementById('st-visible').innerText = visibleIDs.length;
-
-            const retryBtn = document.getElementById('retry-btn');
-            document.getElementById('failed-count').innerText = failedCount;
-            retryBtn.disabled = (failedCount === 0);
-        }
-
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        function showProcessModal(title, text, pct) {
-            document.getElementById('process-title').innerText = title;
-            document.getElementById('process-status').innerText = text;
-            document.getElementById('process-bar').style.width = `${pct}%`;
-            openModal('process-modal');
-        }
-
-        function updateProcessModal(text, pct) {
-            document.getElementById('process-status').innerText = text;
-            document.getElementById('process-bar').style.width = `${pct}%`;
-        }
-
-        function hideProcessModal() { closeModal('process-modal'); }
-    </script>
+      });
+
+      const content = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(content);
+      link.download = `NFT_Export_${type}_${Date.now()}.zip`;
+      link.click();
+    }
+
+    function closeModal(id) {
+      $(id).classList.add('hidden');
+    }
+  </script>
 </body>
 </html>
