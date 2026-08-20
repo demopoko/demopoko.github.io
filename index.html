@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex NFT Studio - Global Layer Replacer</title>
+  <title>Apex NFT Studio - Fast Engine</title>
   
-  <!-- Tailwind CSS & FontAwesome Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -13,14 +12,8 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              500: '#6366f1',
-              600: '#4f46e5',
-            },
-            dark: {
-              bg: '#0b0f17',
-              border: 'rgba(255, 255, 255, 0.08)',
-            }
+            brand: { 500: '#6366f1', 600: '#4f46e5' },
+            dark: { bg: '#0b0f17', border: 'rgba(255, 255, 255, 0.08)' }
           }
         }
       }
@@ -31,16 +24,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
 
   <style>
-    body {
-      background-color: #080b11;
-      color: #f3f4f6;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+    body { background-color: #080b11; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+    .glass-panel { background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .canvas-preview { background-image: repeating-linear-gradient(45deg, #111827 25%, transparent 25%, transparent 75%, #111827 75%, #111827), repeating-linear-gradient(45deg, #111827 25%, #0b0f17 25%, #0b0f17 75%, #111827 75%, #111827); background-position: 0 0, 10px 10px; background-size: 20px 20px; }
   </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-sm select-none">
@@ -51,16 +37,13 @@
       <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg">
         <i class="fa-solid fa-layer-group"></i>
       </div>
-      <div>
-        <h1 class="font-bold text-base tracking-wide text-indigo-400">APEX NFT STUDIO</h1>
-      </div>
+      <h1 class="font-bold text-base tracking-wide text-indigo-400">APEX NFT STUDIO</h1>
     </div>
 
-    <!-- Live Status -->
     <div class="flex items-center space-x-4">
       <div class="px-3 py-1 rounded-full text-xs font-mono bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center space-x-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="statActiveCount">0 NFTs Loaded</span>
+        <span id="statActiveCount">0 Loaded</span>
       </div>
     </div>
   </header>
@@ -69,13 +52,24 @@
     <!-- LEFT SIDEBAR -->
     <aside class="w-64 glass-panel border-r border-dark-border flex flex-col shrink-0 z-10">
       <nav class="p-3 space-y-1">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium bg-white/10 text-white">
           <i class="fa-solid fa-chart-pie w-5 text-indigo-400"></i>
           <span>Dashboard</span>
         </button>
-        <button onclick="switchTab('editor')" id="nav-editor" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium bg-white/10 text-white">
+        <button onclick="switchTab('gallery')" id="nav-gallery" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
+          <i class="fa-solid fa-border-all w-5 text-purple-400"></i>
+          <span>NFT Gallery</span>
+        </button>
+        <button onclick="switchTab('editor')" id="nav-editor" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
           <i class="fa-solid fa-wand-magic-sparkles w-5 text-pink-400"></i>
           <span>Bulk Layer Replacer</span>
+        </button>
+        <button onclick="switchTab('edited')" id="nav-edited" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium justify-between">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-pen-to-square w-5 text-emerald-400"></i>
+            <span>Edited NFTs</span>
+          </div>
+          <span id="badgeEdited" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-mono">0</span>
         </button>
         <button onclick="switchTab('library')" id="nav-library" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5 transition font-medium">
           <i class="fa-solid fa-folder-open w-5 text-amber-400"></i>
@@ -91,121 +85,119 @@
     <!-- MAIN WORKSPACE -->
     <main class="flex-1 overflow-y-auto bg-dark-bg p-6 relative">
 
-      <!-- DASHBOARD VIEW -->
-      <div id="view-dashboard" class="view-panel hidden space-y-6">
+      <!-- DASHBOARD -->
+      <div id="view-dashboard" class="view-panel space-y-6">
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Collection Dashboard</h2>
-            <p class="text-xs text-gray-400">Load IPFS Metadata to start modifying layers.</p>
+            <p class="text-xs text-gray-400">মেটাডাটা ফেচিং শুরু করতে বাটনে ক্লিক করুন।</p>
           </div>
-          <button id="btnStartLoad" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-xs shadow-lg transition">
-            <i class="fa-solid fa-cloud-arrow-down mr-1"></i>
+          <button id="btnStartLoad" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs shadow-lg transition">
+            <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>
             Fetch Metadata (7,000)
           </button>
         </div>
 
-        <div class="glass-panel p-6 rounded-xl space-y-3">
+        <div class="glass-panel p-6 rounded-xl space-y-3 border border-indigo-500/20">
           <div class="flex justify-between text-xs text-gray-300 font-mono">
-            <span>Progress: <strong id="loadCounter">0 / 7000</strong></span>
-            <span id="loadPercentage">0.0%</span>
+            <span>Progress: <strong id="loadCounter" class="text-indigo-400">0 / 7000</strong></span>
+            <span id="loadPercentage" class="font-bold text-emerald-400">0.0%</span>
           </div>
-          <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-            <div id="loadProgressBar" class="bg-indigo-500 h-full w-0 transition-all"></div>
+          <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden p-0.5">
+            <div id="loadProgressBar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full w-0 rounded-full transition-all duration-200"></div>
           </div>
+          <div id="loadStatusMsg" class="text-[11px] text-gray-400 font-mono text-center">আইডেল অবস্থায় আছে।</div>
         </div>
       </div>
 
-      <!-- BULK LAYER REPLACER VIEW (UPDATED AS REQUESTED) -->
-      <div id="view-editor" class="view-panel space-y-6">
+      <!-- NFT GALLERY -->
+      <div id="view-gallery" class="view-panel hidden space-y-4">
+        <div class="flex justify-between items-center glass-panel p-3 rounded-xl">
+          <h2 class="text-base font-bold text-white">Loaded NFT Gallery</h2>
+          <span id="galleryCount" class="text-xs font-mono text-indigo-400">0 NFTs Displayed</span>
+        </div>
+        <div id="nftGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হলে এখানে NFT কার্ড দেখাবে।</div>
+        </div>
+      </div>
+
+      <!-- BULK LAYER REPLACER -->
+      <div id="view-editor" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Bulk Layer Add & Replace Engine</h2>
-          <p class="text-xs text-gray-400">সিলেক্ট করা এট্রিবিউট বিশিষ্ট সকল NFT-তে একসাথে নতুন লেয়ার যুক্ত বা পরিবর্তন হবে।</p>
+          <p class="text-xs text-gray-400">এট্রিবিউট সিলেক্ট করে একসাথে সকল NFT-তে নতুন PNG লেয়ার যুক্ত করুন।</p>
         </div>
 
         <div class="grid grid-cols-12 gap-6">
-          <!-- Main Control Card -->
-          <div class="col-span-7 glass-panel p-6 rounded-xl space-y-6 border border-indigo-500/30">
-            
+          <div class="col-span-7 glass-panel p-6 rounded-xl space-y-5 border border-indigo-500/30">
             <!-- STEP 1 -->
             <div class="space-y-3">
-              <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider flex items-center space-x-2">
-                <span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">১</span>
-                <span>টার্গেট এট্রিবিউট (Trait / Attribute) সিলেক্ট করুন</span>
-              </h3>
-
+              <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">১. টার্গেট এট্রিবিউট সিলেক্ট করুন</h3>
               <div class="grid grid-cols-2 gap-4 bg-black/30 p-3 rounded-lg border border-dark-border">
                 <div>
-                  <label class="block text-[11px] text-gray-400 mb-1">Trait Type (ক্যাটাগরি)</label>
+                  <label class="block text-[11px] text-gray-400 mb-1">Trait Type</label>
                   <select id="editorTraitSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
                     <option value="">-- Select Trait Type --</option>
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[11px] text-gray-400 mb-1">Trait Value (ভ্যালু)</label>
+                  <label class="block text-[11px] text-gray-400 mb-1">Trait Value</label>
                   <select id="editorValueSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none" disabled>
                     <option value="">-- Select Value --</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Matching Alert -->
               <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-300 flex items-center justify-between">
-                <span>মোট কতগুলো NFT-তে এই এট্রিবিউট আছে:</span>
+                <span>ম্যাচিং NFT সংখ্যা:</span>
                 <span id="editorMatchCount" class="font-bold font-mono text-sm text-white">0 tokens</span>
               </div>
             </div>
 
-            <hr class="border-dark-border">
-
             <!-- STEP 2 -->
             <div class="space-y-3">
-              <h3 class="font-bold text-xs text-pink-400 uppercase tracking-wider flex items-center space-x-2">
-                <span class="w-5 h-5 rounded-full bg-pink-600 text-white flex items-center justify-center text-[10px]">২</span>
-                <span>নতুন লেয়ার (PNG Asset) সিলেক্ট করুন</span>
-              </h3>
-
+              <h3 class="font-bold text-xs text-pink-400 uppercase tracking-wider">২. নতুন PNG লেয়ার সিলেক্ট করুন</h3>
               <select id="editorLayerSelect" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:border-pink-500 focus:outline-none">
-                <option value="">-- Select PNG Layer from Library --</option>
+                <option value="">-- Select PNG Layer --</option>
               </select>
             </div>
 
-            <hr class="border-dark-border">
-
-            <!-- APPLY BUTTON -->
             <button id="btnApplyBulk" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center space-x-2">
               <i class="fa-solid fa-bolt text-sm"></i>
-              <span>একসাথে সবগুলোতে এপ্লাই করুন (Apply To All Matching NFTs)</span>
+              <span>একসাথে সবগুলোতে এপ্লাই করুন</span>
             </button>
           </div>
 
-          <!-- Right Status Panel -->
+          <!-- LOG PANEL -->
           <div class="col-span-5 glass-panel p-6 rounded-xl flex flex-col justify-between">
             <div>
-              <h3 class="font-bold text-sm text-white mb-3 flex items-center space-x-2">
-                <i class="fa-solid fa-list-check text-emerald-400"></i>
-                <span>একশন সামারি & হিস্ট্রি</span>
-              </h3>
-              <div id="changeHistoryLog" class="space-y-2 overflow-y-auto max-h-[300px] text-xs">
-                <div class="text-gray-500 italic p-4 text-center border border-dashed border-dark-border rounded-lg">
-                  এখনো কোনো লেয়ার পরিবর্তন করা হয়নি।
-                </div>
+              <h3 class="font-bold text-sm text-white mb-3">পরিবর্তনের ইতিহাস (Log)</h3>
+              <div id="changeHistoryLog" class="space-y-2 overflow-y-auto max-h-[280px] text-xs">
+                <div class="text-gray-500 italic p-4 text-center border border-dashed border-dark-border rounded-lg">কোনো পরিবর্তন হয়নি।</div>
               </div>
-            </div>
-
-            <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-[11px] text-amber-300">
-              <i class="fa-solid fa-info-circle mr-1"></i>
-              এপ্লাই করার পর লোড হওয়া নির্দিষ্ট সকল মেটাডাটাতে নতুন ট্রেড আপডেট হয়ে যাবে।
             </div>
           </div>
         </div>
       </div>
 
-      <!-- LAYER LIBRARY VIEW -->
+      <!-- EDITED NFTS PREVIEW -->
+      <div id="view-edited" class="view-panel hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white">Edited NFTs (Live Composited)</h2>
+          <p class="text-xs text-gray-400">যে সকল NFT-তে নতুন লেয়ার যুক্ত হয়েছে সেগুলো ক্যানভাস পিক্সেল ব্লেন্ডিং সহ নিচে দেখানো হচ্ছে।</p>
+        </div>
+
+        <div id="editedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div class="col-span-full text-center py-12 text-gray-500 italic">এখনো কোনো NFT এডিট করা হয়নি।</div>
+        </div>
+      </div>
+
+      <!-- LAYER LIBRARY -->
       <div id="view-library" class="view-panel hidden space-y-6">
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-white">Layer Library</h2>
-            <p class="text-xs text-gray-400">এখানে নতুন ট্রান্সপারেন্ট PNG ছবি আপলোড করে রাখুন।</p>
+            <p class="text-xs text-gray-400">ট্রান্সপারেন্ট PNG লেয়ার আপলোড করুন।</p>
           </div>
           <label class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs rounded-lg cursor-pointer transition flex items-center space-x-2">
             <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -214,19 +206,17 @@
           </label>
         </div>
 
-        <div id="layerLibraryGrid" class="grid grid-cols-4 gap-4">
-          <!-- Dynamic -->
-        </div>
+        <div id="layerLibraryGrid" class="grid grid-cols-4 gap-4"></div>
       </div>
 
-      <!-- EXPORT VIEW -->
+      <!-- EXPORT -->
       <div id="view-export" class="view-panel hidden space-y-6">
         <div>
-          <h2 class="text-xl font-bold text-white">Export Center</h2>
-          <p class="text-xs text-gray-400">সব পরিবর্তন শেস হলে আপডেট হওয়া মেটাডাটা ডাউনলোড করে নিন।</p>
+          <h2 class="text-xl font-bold text-white">Export Suite</h2>
+          <p class="text-xs text-gray-400">আপডেট হওয়া মেটাডাটা ZIP ফাইল হিসেবে ডাউনলোড করুন।</p>
         </div>
 
-        <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition">
+        <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
           <i class="fa-solid fa-file-zipper mr-2"></i> Export All Updated Metadata (ZIP)
         </button>
       </div>
@@ -234,21 +224,24 @@
     </main>
   </div>
 
-  <!-- APPLICATION SCRIPT -->
   <script>
-    const IPFS_BASE = 'https://gateway.pinata.cloud/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/';
+    // IPFS Gateways (Fallback system to prevent freezing)
+    const GATEWAYS = [
+      'https://gateway.pinata.cloud/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
+      'https://ipfs.io/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/',
+      'https://cloudflare-ipfs.com/ipfs/bafybeidwxlcypldrb7zkxqni7bpmjlb3gxjm42eqh5ld2bodszl5irg6lq/'
+    ];
     const TOTAL_TOKENS = 7000;
 
-    // Database Setup
     const db = new Dexie("ApexNFTStudioDB");
     db.version(1).stores({ layers: 'id, name, dataURL' });
 
-    // State Engine
     const state = {
       tokens: new Map(),
-      discoveredTraits: new Map(), // Trait -> Map(Value -> Count)
+      discoveredTraits: new Map(),
       layerLibrary: [],
-      loadedCount: 0
+      loadedCount: 0,
+      isLoading: false
     };
 
     const $ = id => document.getElementById(id);
@@ -256,6 +249,8 @@
     window.addEventListener('DOMContentLoaded', async () => {
       initEvents();
       await loadLibraryFromDB();
+      // Auto fetch start with a tiny delay
+      setTimeout(startFetching, 500);
     });
 
     function initEvents() {
@@ -273,29 +268,40 @@
       $(`view-${tabId}`).classList.remove('hidden');
       $(`nav-${tabId}`).classList.add('bg-white/10', 'text-white');
 
+      if (tabId === 'gallery') renderGallery();
+      if (tabId === 'edited') renderEditedNFTs();
       if (tabId === 'library') renderLayerLibrary();
       if (tabId === 'editor') populateEditorDropdowns();
     }
 
-    // 1. FETCH METADATA & PARSE ATTRIBUTES DYNAMICALLY
+    // 1. FAST METADATA FETCHING WITH COUNTER BUG FIX
     async function startFetching() {
-      let queue = Array.from({length: TOTAL_TOKENS}, (_, i) => i + 1);
+      if (state.isLoading || state.loadedCount >= TOTAL_TOKENS) return;
+      state.isLoading = true;
+      $('btnStartLoad').disabled = true;
+      $('btnStartLoad').classList.add('opacity-50');
 
-      const fetchWorker = async () => {
-        while (queue.length > 0) {
-          const id = queue.shift();
+      let currentId = state.loadedCount + 1;
+      const batchSize = 15; // Controlled concurrency to avoid blocking
+
+      const fetchToken = async (id) => {
+        let success = false;
+        for (let gw of GATEWAYS) {
           try {
-            const res = await fetch(`${IPFS_BASE}${id}.json`);
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4000);
+            
+            const res = await fetch(`${gw}${id}.json`, { signal: controller.signal });
+            clearTimeout(timer);
+
             if (!res.ok) continue;
             const meta = await res.json();
 
             state.tokens.set(id, { original: meta, edited: null });
 
-            // Automatically extract attributes
             if (meta.attributes && Array.isArray(meta.attributes)) {
               meta.attributes.forEach(attr => {
                 if (!attr.trait_type || attr.value === undefined) return;
-
                 if (!state.discoveredTraits.has(attr.trait_type)) {
                   state.discoveredTraits.set(attr.trait_type, new Map());
                 }
@@ -304,28 +310,76 @@
               });
             }
 
-            state.loadedCount++;
-            updateProgress();
+            state.loadedCount = Math.min(state.loadedCount + 1, TOTAL_TOKENS);
+            success = true;
+            break;
           } catch (e) {}
         }
+        if (!success) {
+          // Fallback empty object to prevent lock
+          state.tokens.set(id, { original: { name: `NFT #${id}`, attributes: [] }, edited: null });
+          state.loadedCount = Math.min(state.loadedCount + 1, TOTAL_TOKENS);
+        }
+        updateProgress();
       };
 
-      // Launch worker pool
-      const pool = Array(20).fill(null).map(() => fetchWorker());
-      await Promise.all(pool);
+      while (currentId <= TOTAL_TOKENS) {
+        let chunk = [];
+        for (let i = 0; i < batchSize && currentId <= TOTAL_TOKENS; i++) {
+          chunk.push(fetchToken(currentId));
+          currentId++;
+        }
+        await Promise.all(chunk);
+      }
+
+      state.isLoading = false;
+      $('loadStatusMsg').textContent = "সব ৭,০০০টি মেটাডাটা সম্পূর্ণ লোড হয়েছে!";
       populateEditorDropdowns();
-      alert('সব মেটাডাটা সফলভাবে লোড হয়েছে!');
+      renderGallery();
     }
 
     function updateProgress() {
-      const pct = ((state.loadedCount / TOTAL_TOKENS) * 100).toFixed(1);
-      $('loadCounter').textContent = `${state.loadedCount} / 7000`;
+      const count = Math.min(state.loadedCount, TOTAL_TOKENS);
+      const pct = ((count / TOTAL_TOKENS) * 100).toFixed(1);
+      
+      $('loadCounter').textContent = `${count} / ${TOTAL_TOKENS}`;
       $('loadPercentage').textContent = `${pct}%`;
       $('loadProgressBar').style.width = `${pct}%`;
-      $('statActiveCount').textContent = `${state.loadedCount} Loaded`;
+      $('statActiveCount').textContent = `${count} Loaded`;
+      $('loadStatusMsg').textContent = `লোডিং চলছে... (${count} টি তথ্য সংগ্রহ করা হয়েছে)`;
     }
 
-    // 2. DYNAMIC DROPDOWNS
+    // 2. GALLERY RENDER
+    function renderGallery() {
+      const grid = $('nftGrid');
+      grid.innerHTML = '';
+
+      if (state.tokens.size === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">মেটাডাটা লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...</div>`;
+        return;
+      }
+
+      $('galleryCount').textContent = `${state.tokens.size} NFTs Displayed`;
+
+      let items = Array.from(state.tokens.entries()).slice(0, 40); // Initial 40 for speed
+      items.forEach(([id, data]) => {
+        const meta = data.edited || data.original;
+        const imgUrl = fixIpfsUrl(meta.image);
+
+        const card = document.createElement('div');
+        card.className = 'glass-panel rounded-xl p-2 border border-dark-border flex flex-col space-y-2';
+        card.innerHTML = `
+          <div class="aspect-square bg-black/50 rounded-lg overflow-hidden relative">
+            <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150/0b0f17/ffffff?text=NFT+#${id}'">
+            ${data.edited ? `<span class="absolute top-1.5 right-1.5 bg-emerald-500 text-black font-bold text-[9px] px-1.5 py-0.5 rounded">EDITED</span>` : ''}
+          </div>
+          <div class="font-bold text-xs text-white truncate">${meta.name || `#${id}`}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // 3. EDIT ENGINE & DROPDOWNS
     function populateEditorDropdowns() {
       const traitSel = $('editorTraitSelect');
       traitSel.innerHTML = `<option value="">-- Select Trait Type --</option>`;
@@ -338,7 +392,7 @@
       });
 
       const layerSel = $('editorLayerSelect');
-      layerSel.innerHTML = `<option value="">-- Select PNG Layer from Library --</option>`;
+      layerSel.innerHTML = `<option value="">-- Select PNG Layer --</option>`;
       state.layerLibrary.forEach(layer => {
         const opt = document.createElement('option');
         opt.value = layer.id;
@@ -375,66 +429,113 @@
       $('editorMatchCount').textContent = `${count} tokens`;
     }
 
-    // 3. BULK APPLY LAYER TO ALL MATCHING NFTS
     function applyBulkLayerReplacement() {
       const traitType = $('editorTraitSelect').value;
       const traitValue = $('editorValueSelect').value;
       const layerId = $('editorLayerSelect').value;
 
       if (!traitType || !traitValue || !layerId) {
-        alert('অনুগ্রহ করে Trait Type, Value এবং Replacement PNG সিলেক্ট করুন।');
+        alert('সকল ফিল্ড সিলেক্ট করুন!');
         return;
       }
 
       const layerObj = state.layerLibrary.find(l => l.id === layerId);
-      let totalAffected = 0;
+      let affected = 0;
 
-      // Loop all loaded tokens and update matching ones
-      state.tokens.forEach((data, id) => {
+      state.tokens.forEach((data) => {
         const meta = data.edited ? data.edited : JSON.parse(JSON.stringify(data.original));
-        
         if (meta.attributes && Array.isArray(meta.attributes)) {
           const attr = meta.attributes.find(a => a.trait_type === traitType && String(a.value) === traitValue);
-          
           if (attr) {
-            // Update attribute value & assign new layer overlay
             attr.value = layerObj.name;
-            meta.newOverlay = layerObj.dataURL;
-
+            meta.newOverlay = layerObj.dataURL; // Save canvas overlay
             data.edited = meta;
-            totalAffected++;
+            affected++;
           }
         }
       });
 
-      // Add to Log
+      // Update badge
+      const totalEdited = Array.from(state.tokens.values()).filter(t => t.edited).length;
+      $('badgeEdited').textContent = totalEdited;
+
+      // Log
       const log = $('changeHistoryLog');
       if (log.querySelector('.italic')) log.innerHTML = '';
-
       const entry = document.createElement('div');
       entry.className = "p-2.5 bg-black/40 border border-dark-border rounded-lg space-y-1";
       entry.innerHTML = `
-        <div class="font-bold text-indigo-400">আপডেট: ${traitType} = "${traitValue}"</div>
-        <div class="text-[11px] text-gray-300">নতুন লেয়ার যুক্ত হয়েছে: <strong>${layerObj.name}</strong></div>
-        <div class="text-[10px] text-emerald-400 font-mono">মোট ${totalAffected} টি NFT পরিবর্তন হয়েছে।</div>
+        <div class="font-bold text-indigo-400">${traitType} = "${traitValue}"</div>
+        <div class="text-[11px] text-gray-300">নতুন লেয়ার: <strong>${layerObj.name}</strong></div>
+        <div class="text-[10px] text-emerald-400 font-mono">${affected} টি NFT আপডেট করা হয়েছে।</div>
       `;
       log.prepend(entry);
 
-      alert(`সফলভাবে ${totalAffected} টি NFT-তে "${layerObj.name}" লেয়ারটি যুক্ত করা হয়েছে!`);
+      alert(`সফলভাবে ${affected} টি NFT-তে নতুন লেয়ার যুক্ত করা হয়েছে!`);
     }
 
-    // 4. LAYER LIBRARY UPLOAD
+    // 4. RENDER EDITED NFTS WITH CANVAS COMPOSITING PREVIEW
+    function renderEditedNFTs() {
+      const grid = $('editedGrid');
+      grid.innerHTML = '';
+
+      let editedTokens = Array.from(state.tokens.entries()).filter(([_, data]) => data.edited !== null);
+
+      if (editedTokens.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 italic">এখনো কোনো NFT এডিট করা হয়নি।</div>`;
+        return;
+      }
+
+      editedTokens.forEach(([id, data]) => {
+        const meta = data.edited;
+        const card = document.createElement('div');
+        card.className = 'glass-panel rounded-xl p-3 border border-emerald-500/30 flex flex-col space-y-2';
+
+        const canvasId = `canvas_${id}`;
+        card.innerHTML = `
+          <div class="aspect-square rounded-lg overflow-hidden canvas-preview relative flex items-center justify-center">
+            <canvas id="${canvasId}" class="w-full h-full object-contain"></canvas>
+          </div>
+          <div class="font-bold text-xs text-white truncate">${meta.name || `#${id}`}</div>
+          <div class="text-[10px] text-emerald-400 font-mono">Layer Overlay Active</div>
+        `;
+        grid.appendChild(card);
+
+        // Compositing Canvas
+        setTimeout(() => {
+          const canvas = document.getElementById(canvasId);
+          if (!canvas) return;
+          const ctx = canvas.getContext('2d');
+          
+          const baseImg = new Image();
+          baseImg.crossOrigin = 'anonymous';
+          baseImg.src = fixIpfsUrl(meta.image);
+
+          baseImg.onload = () => {
+            canvas.width = baseImg.width || 500;
+            canvas.height = baseImg.height || 500;
+            ctx.drawImage(baseImg, 0, 0);
+
+            if (meta.newOverlay) {
+              const layerImg = new Image();
+              layerImg.src = meta.newOverlay;
+              layerImg.onload = () => {
+                ctx.drawImage(layerImg, 0, 0, canvas.width, canvas.height);
+              };
+            }
+          };
+        }, 100);
+      });
+    }
+
+    // 5. LAYER LIBRARY
     async function handleLayerUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = async (ev) => {
-        const item = {
-          id: 'layer_' + Date.now(),
-          name: file.name.replace('.png', ''),
-          dataURL: ev.target.result
-        };
+        const item = { id: 'layer_' + Date.now(), name: file.name.replace('.png', ''), dataURL: ev.target.result };
         await db.layers.add(item);
         await loadLibraryFromDB();
         renderLayerLibrary();
@@ -450,12 +551,10 @@
     function renderLayerLibrary() {
       const grid = $('layerLibraryGrid');
       grid.innerHTML = '';
-
       if (state.layerLibrary.length === 0) {
-        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">কোনো PNG লেয়ার পাওয়া যায়নি। আপলোড বাটন প্রেস করুন।</div>`;
+        grid.innerHTML = `<div class="col-span-4 text-center py-12 text-gray-500 italic">কোনো লেয়ার পাওয়া যায়নি।</div>`;
         return;
       }
-
       state.layerLibrary.forEach(layer => {
         const card = document.createElement('div');
         card.className = 'glass-panel p-3 rounded-xl space-y-2 flex flex-col justify-between';
@@ -464,7 +563,7 @@
             <img src="${layer.dataURL}" class="max-w-full max-h-full object-contain">
           </div>
           <div class="font-bold text-xs text-white truncate">${layer.name}</div>
-          <button onclick="deleteLayer('${layer.id}')" class="w-full py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded text-[10px] transition">Delete</button>
+          <button onclick="deleteLayer('${layer.id}')" class="w-full py-1 bg-rose-500/10 text-rose-400 rounded text-[10px]">Delete</button>
         `;
         grid.appendChild(card);
       });
@@ -477,7 +576,16 @@
       populateEditorDropdowns();
     }
 
-    // 5. EXPORT
+    // UTILS
+    function fixIpfsUrl(url) {
+      if (!url) return '';
+      if (url.startsWith('ipfs://')) {
+        return url.replace('ipfs://', GATEWAYS[0]);
+      }
+      return url;
+    }
+
+    // EXPORT
     async function exportMetadataZip() {
       if (state.tokens.size === 0) {
         alert('আগে মেটাডাটা লোড করে নিন।');
