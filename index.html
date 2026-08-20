@@ -220,12 +220,18 @@
       <div id="view-export" class="view-panel hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-white">Export Suite</h2>
-          <p class="text-xs text-gray-400">Download all 7,000 updated metadata files as a ZIP.</p>
+          <p class="text-xs text-gray-400">Download updated metadata, and the actual edited PNG images with the new layer baked in.</p>
         </div>
 
-        <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
-          <i class="fa-solid fa-file-zipper mr-2"></i> Export All Updated Metadata (ZIP)
-        </button>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="exportMetadataZip()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
+            <i class="fa-solid fa-file-zipper mr-2"></i> Export All Metadata (ZIP)
+          </button>
+          <button id="btnExportImages" onclick="exportImagesZip()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg">
+            <i class="fa-solid fa-images mr-2"></i> Export Edited Images (PNG ZIP)
+          </button>
+        </div>
+        <div id="exportStatusMsg" class="text-[11px] text-gray-400 font-mono"></div>
       </div>
 
     </main>
@@ -677,8 +683,17 @@
       const folder = zip.folder("updated_metadata");
 
       state.tokens.forEach((data, id) => {
-        const meta = data.edited || data.original;
-        folder.file(`${id}.json`, JSON.stringify(meta, null, 2));
+        if (data.edited) {
+          // Clone so we don't mutate live state, and point "image" at the
+          // baked PNG that exportImagesZip() produces, so metadata + image
+          // stay consistent when someone downloads both zips.
+          const meta = JSON.parse(JSON.stringify(data.edited));
+          meta.image = `images/${id}.png`;
+          delete meta.newOverlay; // internal-only field, not real NFT metadata
+          folder.file(`${id}.json`, JSON.stringify(meta, null, 2));
+        } else {
+          folder.file(`${id}.json`, JSON.stringify(data.original, null, 2));
+        }
       });
 
       const content = await zip.generateAsync({ type: "blob" });
@@ -686,6 +701,103 @@
       link.href = URL.createObjectURL(content);
       link.download = `Metadata_Export_${Date.now()}.zip`;
       link.click();
+    }
+
+    // Composites the base image + the applied overlay layer onto an
+    // off-screen canvas and resolves a PNG Blob - this is what actually
+    // "bakes" the edit into the picture instead of just changing a trait
+    // name in the JSON.
+    function renderEditedImageBlob(id, meta) {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const finish = () => {
+          canvas.toBlob(blob => {
+            if (blob) resolve(blob); else reject(new Error('toBlob failed'));
+          }, 'image/png');
+        };
+
+        const drawBase = (gatewayIndex) => {
+          const baseImg = new Image();
+          baseImg.crossOrigin = 'anonymous';
+          baseImg.src = meta.image ? fixIpfsUrl(meta.image, gatewayIndex) : placeholderImage(id);
+
+          baseImg.onload = () => {
+            canvas.width = baseImg.width || 500;
+            canvas.height = baseImg.height || 500;
+            ctx.drawImage(baseImg, 0, 0);
+
+            if (meta.newOverlay) {
+              const layerImg = new Image();
+              layerImg.crossOrigin = 'anonymous';
+              layerImg.src = meta.newOverlay;
+              layerImg.onload = () => { ctx.drawImage(layerImg, 0, 0, canvas.width, canvas.height); finish(); };
+              layerImg.onerror = () => reject(new Error(`Overlay layer failed to load for #${id}`));
+            } else {
+              finish();
+            }
+          };
+
+          baseImg.onerror = () => {
+            if (meta.image && meta.image.startsWith('ipfs://') && gatewayIndex + 1 < GATEWAY_BASES.length) {
+              drawBase(gatewayIndex + 1);
+            } else {
+              reject(new Error(`Base image failed to load on all gateways for #${id}`));
+            }
+          };
+        };
+
+        drawBase(0);
+      });
+    }
+
+    // Exports the actual edited PNGs (base image + new layer flattened
+    // together), one file per edited token, as a ZIP.
+    async function exportImagesZip() {
+      const editedTokens = Array.from(state.tokens.entries()).filter(([_, data]) => data.edited !== null);
+
+      if (editedTokens.length === 0) {
+        alert('No NFTs have been edited yet - use the Bulk Layer Replacer first.');
+        return;
+      }
+
+      const btn = $('btnExportImages');
+      const statusEl = $('exportStatusMsg');
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      const zip = new JSZip();
+      const folder = zip.folder("images");
+
+      let done = 0;
+      let failed = 0;
+      const total = editedTokens.length;
+
+      // Render sequentially (not all at once) so we don't blow up memory /
+      // hammer the IPFS gateways with thousands of simultaneous image loads.
+      for (const [id, data] of editedTokens) {
+        statusEl.textContent = `Rendering edited images... ${done}/${total} (${failed} failed)`;
+        try {
+          const blob = await renderEditedImageBlob(id, data.edited);
+          folder.file(`${id}.png`, blob);
+        } catch (err) {
+          console.error(err);
+          failed++;
+        }
+        done++;
+      }
+
+      statusEl.textContent = `Zipping ${done - failed} images...`;
+      const content = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(content);
+      link.download = `Edited_Images_${Date.now()}.zip`;
+      link.click();
+
+      statusEl.textContent = `Done. ${done - failed}/${total} edited images exported${failed ? `, ${failed} failed (likely a blocked/slow IPFS gateway - try again)` : ''}.`;
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   </script>
 </body>
