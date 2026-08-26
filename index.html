@@ -10,10 +10,11 @@
 .wrap{max-width:1050px;margin:auto;padding:36px 18px}.card{background:#11151a;border:1px solid #27303a;border-radius:18px;padding:26px}
 h1{margin:0 0 8px;font-size:29px}.muted{color:#9aa6b2;line-height:1.55}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
-.drop{display:block;border:2px dashed #37424e;border-radius:14px;padding:24px;cursor:pointer;background:#0d1115}.drop:hover{border-color:#778391}
+.drop{display:block;border:2px dashed #37424e;border-radius:14px;padding:24px;cursor:pointer;background:#0d1115;position:relative}.drop:hover{border-color:#778391}
 .drop b{display:block;margin-bottom:6px}.drop span{color:#8f9ba7;font-size:13px}.file{margin-top:9px;color:#cbd4dd;font-size:13px}
-input[type=file]{position:absolute;left:-10000px;width:1px;height:1px;opacity:0}
-.drop button{margin-top:14px;background:#242b33;color:#edf2f7;padding:10px 14px;border-radius:9px}input[type=text]{width:100%;padding:12px;border-radius:9px;border:1px solid #303943;background:#0b0e12;color:#fff}
+input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.drop button{margin-top:14px;background:#242b33;color:#edf2f7;padding:10px 14px;border-radius:9px;pointer-events:none}
+input[type=text]{width:100%;padding:12px;border-radius:9px;border:1px solid #303943;background:#0b0e12;color:#fff}
 button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;background:#f0f3f6;color:#11151a}
 button:disabled{opacity:.45;cursor:not-allowed}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .status{margin-top:18px;padding:14px;border-radius:10px;background:#0c1014;border:1px solid #252d36;white-space:pre-wrap;font-size:13px}
@@ -29,19 +30,19 @@ Extracts the actual visual layers from the Argonauts renderer's Ethereum Mainnet
 No wallet connection and no transaction are required.
 </p>
 
-<h2>Source ZIPs</h2>
+<h2>Source Files / ZIPs</h2>
 <div class="grid">
 <div class="drop" id="rendererDrop" role="button" tabindex="0">
-  <b>Renderer ZIP</b><span>Click to choose or drag & drop</span>
-  <input id="rendererZip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+  <b>Renderer ZIP or Files</b><span>Click to choose or drag & drop .zip / folder</span>
+  <input id="rendererZip" type="file" multiple accept=".zip,application/zip,application/x-zip-compressed,.sol">
   <div id="rendererFile" class="file">Not selected</div>
-  <button type="button" id="rendererBtn">Choose Renderer ZIP</button>
+  <button type="button" id="rendererBtn">Choose File / ZIP</button>
 </div>
 <div class="drop" id="collectionDrop" role="button" tabindex="0">
-  <b>Collection ZIP</b><span>Click to choose or drag & drop</span>
-  <input id="collectionZip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+  <b>Collection ZIP or Files</b><span>Click to choose or drag & drop .zip / folder</span>
+  <input id="collectionZip" type="file" multiple accept=".zip,application/zip,application/x-zip-compressed,.sol">
   <div id="collectionFile" class="file">Not selected</div>
-  <button type="button" id="collectionBtn">Choose Collection ZIP</button>
+  <button type="button" id="collectionBtn">Choose File / ZIP</button>
 </div>
 </div>
 
@@ -55,7 +56,7 @@ No wallet connection and no transaction are required.
 </div>
 
 <div class="row"><button id="run">Read Onchain Layers & Build ZIP</button><button id="download" disabled>Download NFT_Layers.zip</button></div>
-<div id="status" class="status">Select both ZIPs, then click the extract button.</div>
+<div id="status" class="status">Select both ZIP files or source code files, then click the extract button.</div>
 <div id="result"></div>
 </div></div>
 
@@ -68,24 +69,25 @@ let outputBlob=null;
 const $=id=>document.getElementById(id);
 
 function setupFilePicker(inputId, btnId, dropId, displayId){
-  const input=$(inputId), btn=$(btnId), drop=$(dropId), display=$(displayId);
+  const input=$(inputId), drop=$(dropId), display=$(displayId);
 
-  btn.addEventListener("click",(e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    input.click();
-  });
-
-  // Do not depend on the input being visible. This works in Chrome/Edge/Firefox
-  // even when the page is opened directly as a local HTML file.
   input.addEventListener("change",()=>{
-    const f=input.files && input.files[0];
-    display.textContent=f ? `${f.name} (${(f.size/1024/1024).toFixed(2)} MB)` : "Not selected";
+    const files=input.files;
+    if(!files || files.length === 0){
+      display.textContent="Not selected";
+      return;
+    }
+    if(files.length === 1){
+      const f = files[0];
+      display.textContent=`${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
+    } else {
+      display.textContent=`${files.length} files selected`;
+    }
   });
 
   drop.addEventListener("dragover",(e)=>{
     e.preventDefault();
-    drop.style.borderColor="#9aa7b4";
+    drop.style.borderColor="#778391";
   });
   drop.addEventListener("dragleave",()=>{
     drop.style.borderColor="";
@@ -93,20 +95,10 @@ function setupFilePicker(inputId, btnId, dropId, displayId){
   drop.addEventListener("drop",(e)=>{
     e.preventDefault();
     drop.style.borderColor="";
-    const files=[...e.dataTransfer.files];
-    const f=files.find(x=>/\\.zip$/i.test(x.name) || /zip/i.test(x.type));
-    if(!f){
-      display.textContent="Please drop a .zip file";
-      return;
-    }
-    try{
-      const dt=new DataTransfer();
-      dt.items.add(f);
-      input.files=dt.files;
-      display.textContent=`${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
-    }catch(err){
-      // Fallback: keep the file selected by opening the native picker.
-      display.textContent="Drop detected. Please use the Choose button.";
+    if(e.dataTransfer.files && e.dataTransfer.files.length > 0){
+      input.files = e.dataTransfer.files;
+      const event = new Event('change');
+      input.dispatchEvent(event);
     }
   });
 }
@@ -117,8 +109,6 @@ function status(t,c=""){ $("status").className="status "+c; $("status").textCont
 function hexBytes(h){h=h.startsWith("0x")?h.slice(2):h;const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.slice(i*2,i*2+2),16);return a;}
 function u256hex(n){return BigInt(n).toString(16).padStart(64,"0");}
 function selector(sig){
-  // Ethereum function selector via a compact pure-JS Keccak implementation is intentionally
-  // avoided. We use eth_call with full calldata assembled from precomputed selectors below.
   return ({
     "blobCount()":"0x3b2b1f0e",
     "layout()":"0x18f0d5e0",
@@ -126,10 +116,6 @@ function selector(sig){
     "headbandHeadIndex()":"0x6e6f7d8e"
   })[sig];
 }
-/*
-  The page uses raw JSON-RPC eth_call instead of ethers.js.
-  This removes the CDN dependency that caused "ethers is not defined".
-*/
 async function rpcCall(url,to,data){
   const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},
     body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to,data},"latest"]})});
@@ -158,7 +144,6 @@ function dynamicBytesFromResult(x){
 }
 function decodeSSTORE2(code){
   if(!code || code==="0x") throw Error("SSTORE2 pointer has no runtime bytecode");
-  // Standard SSTORE2 pointer runtime begins with 0x00 followed by the stored bytes.
   return code.startsWith("0x00")?code.slice(4):code.slice(2);
 }
 function svgFromBlob(hex){
@@ -182,32 +167,52 @@ function svgFromBlob(hex){
     }
     pixel+=run;
   }
-  if(pixel<576) console.warn("Blob rendered fewer than 576 pixels:",pixel);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">${body}</svg>`;
 }
-function safeName(s){return (s||"None").replace(/[<>:"/\\\\|?*\x00-\x1f]/g,"_").trim()||"None";}
-async function zipHas(zipFile,needle){
-  const z=await JSZip.loadAsync(zipFile);
-  const name=Object.keys(z.files).find(n=>n.toLowerCase().endsWith(needle.toLowerCase()));
-  if(!name) throw Error(`Could not find ${needle} in ${zipFile.name}`);
-  return await z.files[name].async("string");
+async function getFileContentFromInput(fileInputEl, targetFilename){
+  const files = fileInputEl.files;
+  if(!files || files.length === 0) throw Error(`No files selected for ${targetFilename}`);
+  
+  for(let i=0; i<files.length; i++){
+    const f = files[i];
+    if(f.name.toLowerCase().endsWith(".zip")){
+      const z = await JSZip.loadAsync(f);
+      const matchName = Object.keys(z.files).find(n=>n.toLowerCase().endsWith(targetFilename.toLowerCase()));
+      if(matchName){
+        return await z.files[matchName].async("string");
+      }
+    } else if(f.name.toLowerCase() === targetFilename.toLowerCase() || f.webkitRelativePath?.toLowerCase().endsWith(targetFilename.toLowerCase())){
+      return await f.text();
+    }
+  }
+  
+  for(let i=0; i<files.length; i++){
+    const f = files[i];
+    const text = await f.text();
+    if(f.name.toLowerCase().includes(targetFilename.toLowerCase().replace(".sol",""))) {
+      return text;
+    }
+  }
+  
+  throw Error(`Could not find ${targetFilename} in the selected inputs.`);
 }
+
 async function main(){
   $("run").disabled=true;$("download").disabled=true;outputBlob=null;
   try{
-    const rz=$("rendererZip").files[0], cz=$("collectionZip").files[0];
-    if(!rz||!cz) throw Error("Please select both the Renderer ZIP and Collection ZIP.");
+    const rz=$("rendererZip").files, cz=$("collectionZip").files;
+    if(!rz.length||!cz.length) throw Error("Please select both Renderer files/ZIP and Collection files/ZIP.");
 
     status("Checking the supplied source files…");
-    const renderer=await zipHas(rz,"Renderer.sol");
-    const traits=await zipHas(rz,"TraitDefs.sol");
-    await zipHas(cz,"Argonauts.sol");
+    const renderer=await getFileContentFromInput($("rendererZip"), "Renderer.sol");
+    const traits=await getFileContentFromInput($("rendererZip"), "TraitDefs.sol");
+    await getFileContentFromInput($("collectionZip"), "Argonauts.sol");
 
     if(!renderer.includes("SSTORE2")||!renderer.includes("blobs")) throw Error("Renderer.sol does not contain the expected SSTORE2 blob system.");
     for(const n of layerNames) if(!traits.includes(`return "${n}"`)) throw Error(`TraitDefs.sol verification failed for layer: ${n}`);
 
     const url=$("rpc").value.trim();
-    if(!/^https?:\\/\\//i.test(url)) throw Error("RPC URL must start with http:// or https://");
+    if(!/^https?:\/\//i.test(url)) throw Error("RPC URL must start with http:// or https://");
 
     status("Testing Ethereum Mainnet RPC…");
     const chain=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},
@@ -219,8 +224,6 @@ async function main(){
     const count=Number(uintFromResult(await rpcCall(url,RENDERER,selector("blobCount()"))));
     if(!count||count>255) throw Error("Unexpected blobCount: "+count);
 
-    // NOTE: the selectors above are fixed for the supplied ABI signatures.
-    // Layout is dynamic bytes; blobs(uint256) returns address.
     status(`Renderer reports ${count} blobs. Reading blob pointers…`);
     const pointers=[];
     for(let i=0;i<count;i++){
