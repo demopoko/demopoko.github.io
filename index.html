@@ -198,8 +198,8 @@ const ZIP = {
       async read(e){
         if(e.flags & 1) throw new Error("Encrypted ZIP entries are not supported: "+e.name);
         const lv=new DataView(b.buffer);
-        if(this.u32(lv,e.localOff)!==0x04034b50) throw new Error("Invalid local ZIP header: "+e.name);
-        const nl=this.u16(lv,e.localOff+26), el=this.u16(lv,e.localOff+28);
+        if(ZIP.u32(lv,e.localOff)!==0x04034b50) throw new Error("Invalid local ZIP header: "+e.name);
+        const nl=ZIP.u16(lv,e.localOff+26), el=ZIP.u16(lv,e.localOff+28);
         const start=e.localOff+30+nl+el, end=start+e.csize;
         if(end>b.length) throw new Error("Truncated ZIP entry: "+e.name);
         const compressed=b.slice(start,end);
