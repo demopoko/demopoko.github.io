@@ -1,105 +1,162 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Etherscan Source Code Downloader</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EVM Smart Contract Downloader</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .card { background: #1e1e1e; padding: 25px; border-radius: 10px; width: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    h2 { margin-top: 0; color: #4CAF50; }
-    label { font-size: 14px; margin-top: 10px; display: block; text-align: left; color: #bbb; }
-    input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; background: #2a2a2a; border: 1px solid #444; border-radius: 5px; color: #fff; }
-    button { width: 100%; margin-top: 20px; padding: 12px; background: #4CAF50; border: none; border-radius: 5px; color: #fff; font-size: 16px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #45a049; }
-    #status { margin-top: 15px; font-size: 14px; word-break: break-all; }
-  </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-<div class="card">
-  <h2>Smart Contract Downloader</h2>
-  <label for="apiKey">Etherscan API Key:</label>
-  <input type="text" id="apiKey" placeholder="Your Etherscan API Key">
+  <div class="max-w-xl w-full bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-6 sm:p-8">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-emerald-400">EVM Source Downloader</h1>
+      <p class="text-slate-400 text-sm mt-1">
+        Fetch verified smart contract source code and download it as a organized .zip file.
+      </p>
+    </div>
 
-  <label for="contractAddress">Contract Address:</label>
-  <input type="text" id="contractAddress" placeholder="0x...">
+    <form id="downloaderForm" class="space-y-4">
+      <div>
+        <label for="network" class="block text-sm font-medium text-slate-300 mb-1">Network</label>
+        <select id="network" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <option value="ethereum">Ethereum Mainnet (Etherscan)</option>
+          <option value="arbitrum">Arbitrum One (Arbiscan)</option>
+          <option value="base">Base (Basescan)</option>
+          <option value="polygon">Polygon (Polygonscan)</option>
+        </select>
+      </div>
 
-  <button onclick="downloadSourceCode()">Download ZIP</button>
+      <div>
+        <label for="contractAddress" class="block text-sm font-medium text-slate-300 mb-1">Contract Address</label>
+        <input type="text" id="contractAddress" placeholder="0x..." required
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm"/>
+      </div>
 
-  <div id="status"></div>
-</div>
+      <div>
+        <label for="apiKey" class="block text-sm font-medium text-slate-300 mb-1">Explorer API Key</label>
+        <input type="password" id="apiKey" placeholder="Paste your Explorer API key" required
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"/>
+      </div>
 
-<script>
-async function downloadSourceCode() {
-  const apiKey = document.getElementById('apiKey').value.trim();
-  const address = document.getElementById('contractAddress').value.trim();
-  const status = document.getElementById('status');
+      <button type="submit" id="submitBtn" 
+        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        Fetch Source Code
+      </button>
+    </form>
 
-  if (!apiKey || !address) {
-    status.style.color = 'red';
-    status.innerText = 'অনুগ্রহ করে API Key এবং Contract Address দুটোই দিন।';
-    return;
-  }
+    <div id="statusContainer" class="hidden mt-6 p-4 rounded-lg bg-slate-900 border border-slate-700">
+      <p id="statusText" class="text-sm text-slate-300 font-mono"></p>
+    </div>
 
-  status.style.color = '#ff9800';
-  status.innerText = 'Etherscan থেকে ডেটা ফেচ করা হচ্ছে...';
+    <div id="downloadContainer" class="hidden mt-4">
+      <a id="downloadBtn" download="contract_source.zip"
+        class="block text-center w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200">
+        Download .ZIP Archive
+      </a>
+    </div>
+  </div>
 
-  try {
-    const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey}`;
-    const response = await fetch(url);
-    const data = await response.json();
+  <script>
+    const API_ENDPOINTS = {
+      ethereum: 'https://api.etherscan.io/api',
+      arbitrum: 'https://api.arbiscan.io/api',
+      base: 'https://api.basescan.org/api',
+      polygon: 'https://api.polygonscan.com/api'
+    };
 
-    if (data.status !== "1" || !data.result || !data.result[0].SourceCode) {
-      status.style.color = 'red';
-      status.innerText = 'ত্রুটি: সোর্স কোড পাওয়া যায়নি বা API Key ভুল।';
-      return;
-    }
+    const form = document.getElementById('downloaderForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusContainer = document.getElementById('statusContainer');
+    const statusText = document.getElementById('statusText');
+    const downloadContainer = document.getElementById('downloadContainer');
+    const downloadBtn = document.getElementById('downloadBtn');
 
-    const rawSource = data.result[0].SourceCode;
-    const contractName = data.result[0].ContractName || "Contract";
-    const zip = new JSZip();
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const network = document.getElementById('network').value;
+      const address = document.getElementById('contractAddress').value.trim();
+      const apiKey = document.getElementById('apiKey').value.trim();
 
-    // Standard JSON-Input Check (যেমন স্ক্রিনশটের argonauts.sol)
-    if (rawSource.startsWith('{{') && rawSource.endsWith('}}')) {
-      const parsedJson = JSON.parse(rawSource.slice(1, -1));
-      const sources = parsedJson.sources;
+      // Reset UI state
+      downloadContainer.classList.add('hidden');
+      statusContainer.classList.remove('hidden');
+      statusText.textContent = 'Fetching contract metadata...';
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
-      for (const [filePath, fileContent] of Object.entries(sources)) {
-        zip.file(filePath, fileContent.content);
+      try {
+        const endpoint = API_ENDPOINTS[network];
+        const url = `${endpoint}?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status !== '1' || !data.result || data.result.length === 0) {
+          throw new Error(data.result || 'Failed to fetch source code.');
+        }
+
+        const resultData = data.result[0];
+        const rawSourceCode = resultData.SourceCode;
+        const contractName = resultData.ContractName || 'Contract';
+
+        if (!rawSourceCode) {
+          throw new Error('Contract source code is not verified or empty.');
+        }
+
+        statusText.textContent = 'Parsing source files & dynamic directory tree...';
+        const zip = new JSZip();
+        
+        parseAndAddToZip(zip, rawSourceCode, contractName);
+
+        statusText.textContent = 'Generating .ZIP archive...';
+        const content = await zip.generateAsync({ type: 'blob' });
+        
+        const zipUrl = URL.createObjectURL(content);
+        downloadBtn.href = zipUrl;
+        downloadBtn.download = `${contractName}_${address.substring(0, 8)}.zip`;
+
+        statusText.textContent = 'Success! Your files are ready to download.';
+        downloadContainer.classList.remove('hidden');
+      } catch (err) {
+        statusText.textContent = `Error: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
       }
-    } else if (rawSource.startsWith('{') && rawSource.endsWith('}')) {
-      const parsedJson = JSON.parse(rawSource);
-      const sources = parsedJson.sources || parsedJson;
+    });
 
-      for (const [filePath, fileContent] of Object.entries(sources)) {
-        zip.file(filePath, fileContent.content || fileContent);
+    function parseAndAddToZip(zip, sourceCode, defaultName) {
+      let cleaned = sourceCode.trim();
+
+      // Handle Standard JSON-Input format wrapped in extra curly braces {{...}}
+      if (cleaned.startsWith('{{') && cleaned.endsWith('}}')) {
+        cleaned = cleaned.slice(1, -1);
       }
-    } else {
-      // সিঙ্গেল ফাইল হলে
-      zip.file(`${contractName}.sol`, rawSource);
+
+      // Check if source code is JSON formatted
+      if (cleaned.startsWith('{')) {
+        try {
+          const parsedJson = JSON.parse(cleaned);
+          let sources = parsedJson.sources || parsedJson;
+
+          for (const [filePath, fileData] of Object.entries(sources)) {
+            // Remove leading slashes if present to maintain clean relative paths
+            const cleanPath = filePath.replace(/^\/+/, '');
+            const fileContent = typeof fileData.content === 'string' ? fileData.content : fileData;
+            zip.file(cleanPath, fileContent);
+          }
+          return;
+        } catch (e) {
+          // Fall through to single source if JSON parsing fails
+        }
+      }
+
+      // Handle standard single-file format
+      zip.file(`${defaultName}.sol`, sourceCode);
     }
-
-    status.innerText = 'ZIP ফাইল তৈরি করা হচ্ছে...';
-    
-    const blob = await zip.generateAsync({ type: "blob" });
-    const downloadUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = `${contractName}_SourceCode.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    status.style.color = '#4CAF50';
-    status.innerText = 'ডাউনলোড সম্পন্ন হয়েছে!';
-
-  } catch (err) {
-    status.style.color = 'red';
-    status.innerText = 'ত্রুটি: ' + err.message;
-  }
-}
-</script>
-
+  </script>
 </body>
 </html>
