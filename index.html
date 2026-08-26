@@ -12,7 +12,8 @@ h1{margin:0 0 8px;font-size:29px}.muted{color:#9aa6b2;line-height:1.55}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
 .drop{display:block;border:2px dashed #37424e;border-radius:14px;padding:24px;cursor:pointer;background:#0d1115}.drop:hover{border-color:#778391}
 .drop b{display:block;margin-bottom:6px}.drop span{color:#8f9ba7;font-size:13px}.file{margin-top:9px;color:#cbd4dd;font-size:13px}
-input[type=file]{display:none}input[type=text]{width:100%;padding:12px;border-radius:9px;border:1px solid #303943;background:#0b0e12;color:#fff}
+input[type=file]{position:absolute;left:-10000px;width:1px;height:1px;opacity:0}
+.drop button{margin-top:14px;background:#242b33;color:#edf2f7;padding:10px 14px;border-radius:9px}input[type=text]{width:100%;padding:12px;border-radius:9px;border:1px solid #303943;background:#0b0e12;color:#fff}
 button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;background:#f0f3f6;color:#11151a}
 button:disabled{opacity:.45;cursor:not-allowed}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .status{margin-top:18px;padding:14px;border-radius:10px;background:#0c1014;border:1px solid #252d36;white-space:pre-wrap;font-size:13px}
@@ -30,8 +31,18 @@ No wallet connection and no transaction are required.
 
 <h2>Source ZIPs</h2>
 <div class="grid">
-<label class="drop"><b>Renderer ZIP</b><span>Select ArgonautsRenderer ZIP</span><input id="rendererZip" type="file" accept=".zip"><div id="rendererFile" class="file">Not selected</div></label>
-<label class="drop"><b>Collection ZIP</b><span>Select Argonauts collection ZIP</span><input id="collectionZip" type="file" accept=".zip"><div id="collectionFile" class="file">Not selected</div></label>
+<div class="drop" id="rendererDrop" role="button" tabindex="0">
+  <b>Renderer ZIP</b><span>Click to choose or drag & drop</span>
+  <input id="rendererZip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+  <div id="rendererFile" class="file">Not selected</div>
+  <button type="button" id="rendererBtn">Choose Renderer ZIP</button>
+</div>
+<div class="drop" id="collectionDrop" role="button" tabindex="0">
+  <b>Collection ZIP</b><span>Click to choose or drag & drop</span>
+  <input id="collectionZip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+  <div id="collectionFile" class="file">Not selected</div>
+  <button type="button" id="collectionBtn">Choose Collection ZIP</button>
+</div>
 </div>
 
 <h2>Ethereum Mainnet RPC</h2>
@@ -55,8 +66,52 @@ const layerNames=["Palette","Bones","Cloak","Relic","Sight","Artifact","Crown"];
 let outputBlob=null;
 
 const $=id=>document.getElementById(id);
-$("rendererZip").onchange=e=>$("rendererFile").textContent=e.target.files[0]?.name||"Not selected";
-$("collectionZip").onchange=e=>$("collectionFile").textContent=e.target.files[0]?.name||"Not selected";
+
+function setupFilePicker(inputId, btnId, dropId, displayId){
+  const input=$(inputId), btn=$(btnId), drop=$(dropId), display=$(displayId);
+
+  btn.addEventListener("click",(e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    input.click();
+  });
+
+  // Do not depend on the input being visible. This works in Chrome/Edge/Firefox
+  // even when the page is opened directly as a local HTML file.
+  input.addEventListener("change",()=>{
+    const f=input.files && input.files[0];
+    display.textContent=f ? `${f.name} (${(f.size/1024/1024).toFixed(2)} MB)` : "Not selected";
+  });
+
+  drop.addEventListener("dragover",(e)=>{
+    e.preventDefault();
+    drop.style.borderColor="#9aa7b4";
+  });
+  drop.addEventListener("dragleave",()=>{
+    drop.style.borderColor="";
+  });
+  drop.addEventListener("drop",(e)=>{
+    e.preventDefault();
+    drop.style.borderColor="";
+    const files=[...e.dataTransfer.files];
+    const f=files.find(x=>/\\.zip$/i.test(x.name) || /zip/i.test(x.type));
+    if(!f){
+      display.textContent="Please drop a .zip file";
+      return;
+    }
+    try{
+      const dt=new DataTransfer();
+      dt.items.add(f);
+      input.files=dt.files;
+      display.textContent=`${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
+    }catch(err){
+      // Fallback: keep the file selected by opening the native picker.
+      display.textContent="Drop detected. Please use the Choose button.";
+    }
+  });
+}
+setupFilePicker("rendererZip","rendererBtn","rendererDrop","rendererFile");
+setupFilePicker("collectionZip","collectionBtn","collectionDrop","collectionFile");
 
 function status(t,c=""){ $("status").className="status "+c; $("status").textContent=t; }
 function hexBytes(h){h=h.startsWith("0x")?h.slice(2):h;const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.slice(i*2,i*2+2),16);return a;}
