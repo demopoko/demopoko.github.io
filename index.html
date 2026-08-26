@@ -1,384 +1,510 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Argonauts Onchain SVG Layer Extractor</title>
-    <!-- Tailwind CSS for clean, modern UI styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- JSZip for local ZIP generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- fflate or similar not needed as JSZip is loaded via CDN; also include unzipper / fflate fallback reader via CDN for robust ZIP parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.2/fflate.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Argonauts Onchain Layer Extractor</title>
+<style>
+:root{--bg:#07090c;--panel:#0e1217;--line:#222a33;--text:#f1f5f9;--muted:#8d99a6;--accent:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -20%,#18202a 0,#07090c 48%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:48px 18px 70px}
+.card{background:rgba(14,18,23,.96);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 20px 70px rgba(0,0,0,.35)}
+h1{font-size:30px;line-height:1.1;margin:0 0 10px;letter-spacing:-.7px}
+h2{font-size:15px;margin:28px 0 10px}
+p{line-height:1.55}.muted{color:var(--muted)}
+.addr,code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.address{padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:#090c10;font-size:12px;word-break:break-all}
+.upload{position:relative;border:1.5px dashed #3a4550;border-radius:16px;padding:26px;background:#0a0e12;text-align:center;transition:.15s}
+.upload.drag{border-color:#aab5c0;background:#10161c}
+.upload strong{display:block;font-size:15px;margin-bottom:6px}
+.upload span{font-size:12px;color:var(--muted)}
+input[type=file]{position:absolute;left:-10000px;width:1px;height:1px;opacity:0}
+button{border:0;border-radius:11px;padding:12px 17px;background:#f3f5f7;color:#0a0c0f;font-weight:800;cursor:pointer}
+button.secondary{background:#202831;color:#e7edf2;border:1px solid #303a44}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.file{margin-top:12px;font-size:12px;color:#cbd5df;word-break:break-word}
+label.small{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}
+input[type=text]{width:100%;background:#090c10;color:#f4f7fa;border:1px solid var(--line);border-radius:10px;padding:12px 13px;outline:none}
+input[type=text]:focus{border-color:#52606e}
+.status{margin-top:18px;border:1px solid var(--line);background:#090c10;border-radius:12px;padding:14px;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;color:#aeb9c4}
+.status.ok{color:#b8f3c6;border-color:#244b30}.status.err{color:#ffb2b2;border-color:#5a2929}
+.progress{height:5px;background:#1a2027;border-radius:999px;overflow:hidden;margin-top:14px;display:none}
+.progress i{display:block;height:100%;width:0;background:#e8edf1;transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.stat{padding:14px;background:#0a0e12;border:1px solid var(--line);border-radius:12px}
+.stat b{font-size:20px}.stat span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.note{font-size:11px;color:#77838e;margin-top:14px}
+@media(max-width:620px){.stats{grid-template-columns:1fr 1fr}.card{padding:20px}}
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center py-10 px-4">
-    <div class="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
-        <header class="mb-8 border-b border-slate-800 pb-5">
-            <h1 class="text-3xl font-extrabold tracking-tight text-amber-400">Argonauts Onchain Layer Extractor</h1>
-            <p class="text-slate-400 mt-2 text-sm">
-                Upload the original Renderer source ZIP. The app reads the deployed renderer's SSTORE2 data from Ethereum Mainnet and extracts the individual SVG layers.
-            </p>
-        </header>
+<body>
+<div class="wrap">
+<div class="card">
+  <h1>Argonauts Onchain Layer Extractor</h1>
+  <p class="muted">
+    Upload only the original Renderer source ZIP. The app reads the deployed renderer's
+    SSTORE2 data from Ethereum Mainnet and reconstructs the individual 24×24 SVG layers.
+    The source ZIP is processed locally in your browser.
+  </p>
 
-        <div class="space-y-6">
-            <!-- File Upload -->
-            <div>
-                <label class="block text-sm font-semibold text-slate-300 mb-2">Renderer Source ZIP</label>
-                <div class="flex items-center gap-4">
-                    <label class="cursor-pointer bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 px-5 rounded-xl transition duration-200 shadow-md">
-                        <span>Choose ZIP</span>
-                        <input type="file" id="zipFile" accept=".zip" class="hidden" />
-                    </label>
-                    <span id="fileInfo" class="text-sm text-slate-400 italic">No file chosen</span>
-                </div>
-            </div>
-
-            <!-- RPC URL -->
-            <div>
-                <label class="block text-sm font-semibold text-slate-300 mb-2">Ethereum Mainnet RPC</label>
-                <input type="text" id="rpcUrl" value="https://ethereum-rpc.publicnode.com" 
-                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 font-mono text-sm" />
-            </div>
-
-            <!-- Renderer Contract -->
-            <div>
-                <label class="block text-sm font-semibold text-slate-300 mb-2">Renderer Contract</label>
-                <input type="text" id="rendererAddress" value="0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597" readonly
-                    class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-400 font-mono text-sm select-all" />
-            </div>
-
-            <!-- Action Button -->
-            <button id="extractBtn" disabled
-                class="w-full bg-amber-500/50 cursor-not-allowed hover:bg-amber-500 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg text-lg">
-                Extract SVG Layers
-            </button>
-        </div>
-
-        <!-- Progress Section -->
-        <div id="progressSection" class="mt-8 hidden">
-            <h3 class="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Extraction Progress</h3>
-            <div id="logBox" class="bg-slate-950 border border-slate-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-xs text-slate-300 space-y-1"></div>
-        </div>
-
-        <!-- Download Section -->
-        <div id="downloadSection" class="mt-6 hidden">
-            <a id="downloadBtn" href="#" download="NFT_Layers.zip"
-                class="block text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg text-lg">
-                Download NFT_Layers.zip
-            </a>
-        </div>
+  <h2>Renderer source ZIP</h2>
+  <div class="upload" id="drop">
+    <strong>Choose or drop the Renderer ZIP</strong>
+    <span>No Collection ZIP is required.</span>
+    <input id="file" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+    <div class="row" style="justify-content:center">
+      <button type="button" id="choose">Choose ZIP</button>
     </div>
+    <div class="file" id="filename">No file selected</div>
+  </div>
 
-    <script>
-        const LAYER_LABELS = ['Palette', 'Bones', 'Cloak', 'Relic', 'Sight', 'Artifact', 'Crown'];
-        
-        // Exact trait tables from TraitDefs.sol
-        const TRAIT_TABLES = {
-            0: [
-                "Bubblegum", "Yellow", "Violet", "Wine", "Sky", "Void", "MuseGreen", "Ancient",
-                "Punkblue", "Blush", "Offwhite", "Hot Rose", "Emerald", "Bright Lilac", "Neon Mint", "Paper White",
-                "Radioactive Void Charcoal", "Radioactive Deep Raspberry", "Radioactive Seafoam", "Radioactive Lavender", "Radioactive Paper White",
-                "Ice Prism Pink", "Violet Pink", "Violet Cyan", "Navy Pink", "Void Pink",
-                "Void Blue", "Void Cyan", "Navy Blue Vignette", "Void Teal Vignette",
-                "Siren", "Seafoam", "Lavender", "Storm"
-            ],
-            1: ["Alien", "Radioactive", "Gold", "Petrified", "Floral", "Coral", "Silver", "Prehistoric", "Bone", "Floral"],
-            2: ["", "Servant", "Death", "Royalty", "Ivory", "Clergy"],
-            3: ["", "Gold"],
-            4: ["", "Shades", "Glasses", "Digital", "Eye Patch", "3D Glasses", "Designer", "Gucci", "Louis Vuitton", "Prada", "Versace", "Dior", "Balenciaga", "Chanel", "Eye Patch"],
-            5: ["", "Woodpipe", "THC Vape"],
-            6: ["", "Oarsman's Band", "Bandana", "Dawn Pink Beanie", "Aegean Blue Beanie", "Purphat", "Golden Fleece", "Corsair"]
-        };
+  <h2>Ethereum Mainnet RPC</h2>
+  <input id="rpc" type="text" value="https://ethereum-rpc.publicnode.com">
+  <p class="note">Read-only JSON-RPC. No wallet, private key, Alchemy key, or transaction is required.</p>
 
-        const zipFileInput = document.getElementById('zipFile');
-        const fileInfo = document.getElementById('fileInfo');
-        const extractBtn = document.getElementById('extractBtn');
-        const rpcUrlInput = document.getElementById('rpcUrl');
-        const progressSection = document.getElementById('progressSection');
-        const logBox = document.getElementById('logBox');
-        const downloadSection = document.getElementById('downloadSection');
-        const downloadBtn = document.getElementById('downloadBtn');
+  <h2>Renderer contract</h2>
+  <div class="address">0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597</div>
 
-        let uploadedZipData = null;
+  <div class="row">
+    <button id="extract" disabled>Extract SVG Layers</button>
+    <button id="download" class="secondary" disabled>Download NFT_Layers.zip</button>
+  </div>
 
-        zipFileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            fileInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-            try {
-                const buffer = await file.arrayBuffer();
-                uploadedZipData = buffer;
-                extractBtn.disabled = false;
-                extractBtn.classList.remove('bg-amber-500/50', 'cursor-not-allowed');
-                extractBtn.classList.add('bg-amber-500', 'hover:bg-amber-600', 'cursor-pointer');
-            } catch (err) {
-                alert("Failed to read ZIP file: " + err.message);
-            }
-        });
+  <div class="progress" id="progress"><i></i></div>
+  <div class="status" id="status">Select the Renderer ZIP to begin.</div>
+  <div id="stats"></div>
+</div>
+</div>
 
-        function log(msg, type = 'info') {
-            const div = document.createElement('div');
-            div.textContent = `> ${msg}`;
-            if (type === 'error') div.className = 'text-rose-400 font-bold';
-            if (type === 'success') div.className = 'text-emerald-400 font-bold';
-            logBox.appendChild(div);
-            logBox.scrollTop = logBox.scrollHeight;
+<script>
+"use strict";
+
+/* ============================================================
+   Constants
+   ============================================================ */
+const RENDERER = "0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597";
+const CHAIN_ID = "0x1";
+const SEL = {
+  blobCount: "0x6fd7549f",
+  blobs: "0x2abc3d4e",
+  layout: "0x00167634"
+};
+
+const SOURCE_TRAITS = {"Palette": ["Bubblegum", "Yellow", "Violet", "Wine", "Sky", "Void", "MuseGreen", "Ancient", "Punkblue", "Blush", "Offwhite", "Hot Rose", "Emerald", "Bright Lilac", "Neon Mint", "Paper White", "Radioactive Void Charcoal", "Radioactive Deep Raspberry", "Radioactive Seafoam", "Radioactive Lavender", "Radioactive Paper White", "Ice Prism Pink", "Violet Pink", "Violet Cyan", "Navy Pink", "Void Pink", "Void Blue", "Void Cyan", "Navy Blue Vignette", "Void Teal Vignette", "Siren", "Seafoam", "Lavender", "Storm"], "Bones": ["Alien", "Radioactive", "Gold", "Petrified", "Floral", "Coral", "Silver", "Prehistoric", "Bone", "Floral"], "Cloak": ["", "Servant", "Death", "Royalty", "Ivory", "Clergy"], "Relic": ["", "Gold"], "Sight": ["", "Shades", "Glasses", "Digital", "Eye Patch", "3D Glasses", "Designer", "Gucci", "Louis Vuitton", "Prada", "Versace", "Dior", "Balenciaga", "Chanel", "Eye Patch"], "Artifact": ["", "Woodpipe", "THC Vape"], "Crown": ["", "Oarsman's Band", "Bandana", "Dawn Pink Beanie", "Aegean Blue Beanie", "Purphat", "Golden Fleece", "Corsair"]};
+const LAYERS = ["Palette","Bones","Cloak","Relic","Sight","Artifact","Crown"];
+
+let selectedFile = null;
+let resultZip = null;
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+function setStatus(text, type=""){
+  $("status").className = "status " + type;
+  $("status").textContent = text;
+}
+function setProgress(value, visible=true){
+  $("progress").style.display = visible ? "block" : "none";
+  $("progress").firstElementChild.style.width = Math.max(0,Math.min(100,value))+"%";
+}
+function fail(err){
+  console.error(err);
+  setProgress(0,false);
+  setStatus("Failed\n\n"+(err && err.message ? err.message : String(err)), "err");
+  $("extract").disabled = !selectedFile;
+}
+
+/* ============================================================
+   File picker + drag/drop
+   ============================================================ */
+const fileInput = $("file");
+$("choose").addEventListener("click", e => { e.preventDefault(); fileInput.click(); });
+fileInput.addEventListener("change", () => {
+  selectedFile = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+  updateFile();
+});
+function updateFile(){
+  if(!selectedFile){
+    $("filename").textContent = "No file selected";
+    $("extract").disabled = true;
+    return;
+  }
+  const mb=(selectedFile.size/1048576).toFixed(2);
+  $("filename").textContent = selectedFile.name + "  •  " + mb + " MB";
+  $("extract").disabled = false;
+}
+["dragenter","dragover"].forEach(ev => $("drop").addEventListener(ev,e=>{
+  e.preventDefault(); $("drop").classList.add("drag");
+}));
+["dragleave","drop"].forEach(ev => $("drop").addEventListener(ev,e=>{
+  e.preventDefault(); $("drop").classList.remove("drag");
+}));
+$("drop").addEventListener("drop", e=>{
+  const f=[...e.dataTransfer.files].find(x=>/\.zip$/i.test(x.name) || /zip/i.test(x.type));
+  if(!f){ setStatus("Please drop a ZIP file.","err"); return; }
+  selectedFile=f;
+  updateFile();
+});
+
+/* ============================================================
+   Minimal ZIP reader
+   Supports Store (0) and Deflate (8), with no external library.
+   ============================================================ */
+const ZIP = {
+  u16(v,o){return v.getUint16(o,true)},
+  u32(v,o){return v.getUint32(o,true)},
+  findEOCD(b){
+    const start=Math.max(0,b.length-22-65535), sig=0x06054b50;
+    for(let i=b.length-22;i>=start;i--) if(this.u32(b,i)===sig) return i;
+    throw new Error("Invalid ZIP: end-of-central-directory record not found.");
+  },
+  decodeName(bytes){
+    try{return new TextDecoder("utf-8",{fatal:false}).decode(bytes)}
+    catch{return Array.from(bytes).map(x=>String.fromCharCode(x)).join("")}
+  },
+  async open(file){
+    const b=new Uint8Array(await file.arrayBuffer()), v=new DataView(b.buffer);
+    const e=this.findEOCD(b);
+    const total=this.u16(v,e+10), cdSize=this.u32(v,e+12), cdOff=this.u32(v,e+16);
+    if(cdOff+cdSize>b.length) throw new Error("Invalid ZIP: central directory is outside the file.");
+    const entries=[];
+    let p=cdOff;
+    for(let n=0;n<total;n++){
+      if(this.u32(v,p)!==0x02014b50) throw new Error("Invalid ZIP central-directory entry.");
+      const flags=this.u16(v,p+8), method=this.u16(v,p+10);
+      const csize=this.u32(v,p+20), usize=this.u32(v,p+24);
+      const nameLen=this.u16(v,p+28), extraLen=this.u16(v,p+30), commentLen=this.u16(v,p+32);
+      const localOff=this.u32(v,p+42);
+      const name=this.decodeName(b.slice(p+46,p+46+nameLen));
+      entries.push({name,flags,method,csize,usize,localOff});
+      p += 46+nameLen+extraLen+commentLen;
+    }
+    return {
+      async text(name){
+        const e=entries.find(x=>x.name===name || x.name.replace(/^\.\//,"")===name);
+        if(!e) throw new Error("ZIP file is missing: "+name);
+        return new TextDecoder("utf-8").decode(await this.read(e));
+      },
+      names:entries.map(x=>x.name),
+      async read(e){
+        if(e.flags & 1) throw new Error("Encrypted ZIP entries are not supported: "+e.name);
+        const lv=new DataView(b.buffer);
+        if(this.u32(lv,e.localOff)!==0x04034b50) throw new Error("Invalid local ZIP header: "+e.name);
+        const nl=this.u16(lv,e.localOff+26), el=this.u16(lv,e.localOff+28);
+        const start=e.localOff+30+nl+el, end=start+e.csize;
+        if(end>b.length) throw new Error("Truncated ZIP entry: "+e.name);
+        const compressed=b.slice(start,end);
+        if(e.method===0) return compressed;
+        if(e.method!==8) throw new Error("Unsupported ZIP compression method "+e.method+" for "+e.name+". Please use a normal ZIP/Deflate ZIP.");
+        if(typeof DecompressionStream==="undefined") throw new Error("This browser does not support Deflate decompression. Please use a current Chrome or Edge.");
+        const ds=new DecompressionStream("deflate-raw");
+        const out=await new Response(new Blob([compressed]).stream().pipeThrough(ds)).arrayBuffer();
+        const u=new Uint8Array(out);
+        if(e.usize && u.length!==e.usize) throw new Error("ZIP decompression size mismatch for "+e.name);
+        return u;
+      }
+    };
+  }
+};
+
+/* ============================================================
+   Source verification
+   ============================================================ */
+function sourceLooksCorrect(renderer,sstore,traits){
+  if(!renderer.includes("function _rects(bytes memory blob)")) throw new Error("Renderer.sol is not the expected ArgonautsRenderer source: _rects() was not found.");
+  if(!renderer.includes("SSTORE2.read(blobs[id])")) throw new Error("Renderer.sol does not contain the expected SSTORE2 renderer.");
+  if(!renderer.includes("function blobCount()")) throw new Error("Renderer.sol does not expose blobCount().");
+  if(!renderer.includes("bytes public layout")) throw new Error("Renderer.sol does not contain the expected layout.");
+  if(!sstore.includes("Runtime is 0x00 (STOP) ++ data")) throw new Error("SSTORE2.sol does not match the supplied SSTORE2 format.");
+  if(!sstore.includes("start += 1") || !sstore.includes("extcodecopy")) throw new Error("SSTORE2.sol read() does not match the expected bytecode reader.");
+  if(!traits.includes('return "Palette"') || !traits.includes('return "Crown"')) throw new Error("TraitDefs.sol does not match the expected 7-layer definitions.");
+}
+
+/* ============================================================
+   JSON-RPC
+   ============================================================ */
+async function rpc(url, method, params){
+  const r=await fetch(url,{
+    method:"POST",
+    headers:{"content-type":"application/json"},
+    body:JSON.stringify({jsonrpc:"2.0",id:Date.now(),method,params})
+  });
+  if(!r.ok) throw new Error("RPC HTTP "+r.status);
+  const j=await r.json();
+  if(j.error) throw new Error("RPC "+j.error.code+": "+j.error.message);
+  return j.result;
+}
+function wordHex(n){return BigInt(n).toString(16).padStart(64,"0")}
+function resultBytes(hex){
+  const b=hexToBytes(hex);
+  if(b.length<64) throw new Error("Malformed ABI bytes return data.");
+  const offset=Number(readU256(b,0));
+  if(offset+32>b.length) throw new Error("Malformed dynamic ABI offset.");
+  const len=Number(readU256(b,offset));
+  const start=offset+32;
+  if(start+len>b.length) throw new Error("Malformed dynamic ABI length.");
+  return b.slice(start,start+len);
+}
+function readU256(b,off){
+  let x=0n;
+  for(let i=0;i<32;i++) x=(x<<8n)|BigInt(b[off+i]);
+  return x;
+}
+function hexToBytes(h){
+  if(!h || h==="0x") return new Uint8Array();
+  h=h.slice(2);
+  if(h.length%2) throw new Error("Odd-length hex returned by RPC.");
+  const b=new Uint8Array(h.length/2);
+  for(let i=0;i<b.length;i++) b[i]=parseInt(h.slice(i*2,i*2+2),16);
+  return b;
+}
+function bytesToHex(b){let s="";for(const x of b)s+=x.toString(16).padStart(2,"0");return s}
+function addressFromWord(hex){
+  if(!hex || hex.length<42) throw new Error("Malformed address return data.");
+  return "0x"+hex.slice(-40);
+}
+
+/* ============================================================
+   Renderer layout
+   layout = [count][blob id ...] for each of 7 layers.
+   0xFF means no blob.
+   ============================================================ */
+function decodeLayout(bytes){
+  const tables=[]; let p=0;
+  for(let layer=0;layer<7;layer++){
+    if(p>=bytes.length) throw new Error("layout() ended before layer "+layer+".");
+    const count=bytes[p++];
+    if(p+count>bytes.length) throw new Error("layout() is truncated in layer "+layer+".");
+    const ids=Array.from(bytes.slice(p,p+count)); p+=count;
+    tables.push(ids);
+  }
+  if(p!==bytes.length) throw new Error("layout() contains unexpected trailing bytes.");
+  return tables;
+}
+
+/* ============================================================
+   SSTORE2
+   Supplied SSTORE2.sol says runtime is:
+       0x00 ++ raw data
+   and read() skips exactly one byte.
+   ============================================================ */
+async function readSSTORE2(url,pointer){
+  const code=await rpc(url,"eth_getCode",[pointer,"latest"]);
+  const bytes=hexToBytes(code);
+  if(bytes.length<1) throw new Error("SSTORE2 pointer has empty bytecode: "+pointer);
+  if(bytes[0]!==0) throw new Error("Invalid SSTORE2 pointer: runtime does not start with 0x00: "+pointer);
+  return bytes.slice(1);
+}
+
+/* ============================================================
+   Exact Renderer._rects() equivalent
+   ============================================================ */
+function byteHex(x){return x.toString(16).padStart(2,"0")}
+function opacityAttr(a){
+  if(a===255) return '"/>';
+  const m=Math.floor((a*1000)/255);
+  return '" fill-opacity="0.'+String(m).padStart(3,"0")+'"/>';
+}
+function decodeSprite(blob){
+  if(blob.length<2) throw new Error("Sprite blob is shorter than the required 2-byte palette header.");
+  const p=(blob[0]<<8)|blob[1];
+  const paletteEnd=2+p*4;
+  if(paletteEnd>blob.length) throw new Error("Sprite palette extends beyond blob.");
+  let off=paletteEnd, pixel=0, rects=0, out="";
+  while(off<blob.length){
+    if(off+3>blob.length) throw new Error("Sprite RLE record is truncated.");
+    const ci=(blob[off]<<8)|blob[off+1];
+    const run=blob[off+2];
+    if(run===0) throw new Error("Sprite contains an RLE run of length 0.");
+    if(ci!==0){
+      const e=2+(ci-1)*4;
+      if(e+4>blob.length || ci>p) throw new Error("Sprite palette index "+ci+" is invalid.");
+      out += '<rect x="'+(pixel%24)+'" y="'+Math.floor(pixel/24)+'" width="'+run+'" height="1" fill="#'
+          +byteHex(blob[e])+byteHex(blob[e+1])+byteHex(blob[e+2])
+          +opacityAttr(blob[e+3]);
+      rects++;
+    }
+    pixel+=run;
+    off+=3;
+    if(pixel>576) throw new Error("Sprite RLE exceeds the 24×24 canvas.");
+  }
+  if(pixel!==576) throw new Error("Sprite RLE covers "+pixel+" pixels instead of exactly 576 (24×24).");
+  return {
+    svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">'+out+'</svg>',
+    rects
+  };
+}
+
+/* ============================================================
+   Minimal ZIP writer. All generated SVGs are stored uncompressed,
+   so no external compression library is needed.
+   ============================================================ */
+const CRC_TABLE=(()=>{
+  const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){
+    let c=n;
+    for(let k=0;k<8;k++) c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);
+    t[n]=c>>>0;
+  }
+  return t;
+})();
+function crc32(bytes){
+  let c=0xffffffff;
+  for(const x of bytes)c=CRC_TABLE[(c^x)&255]^(c>>>8);
+  return (c^0xffffffff)>>>0;
+}
+function put16(a,x){a.push(x&255,(x>>>8)&255)}
+function put32(a,x){a.push(x&255,(x>>>8)&255,(x>>>16)&255,(x>>>24)&255)}
+function makeZip(files){
+  const chunks=[], central=[]; let offset=0;
+  for(const f of files){
+    const name=new TextEncoder().encode(f.name), data=f.data, crc=crc32(data);
+    const local=[];
+    put32(local,0x04034b50); put16(local,20); put16(local,0); put16(local,0);
+    put16(local,0); put16(local,0); put32(local,crc); put32(local,data.length); put32(local,data.length);
+    put16(local,name.length); put16(local,0);
+    chunks.push(new Uint8Array([...local,...name,...data]));
+    const c=[];
+    put32(c,0x02014b50); put16(c,20); put16(c,20); put16(c,0); put16(c,0);
+    put16(c,0); put16(c,0); put32(c,crc); put32(c,data.length); put32(c,data.length);
+    put16(c,name.length); put16(c,0); put16(c,0); put16(c,0); put16(c,0); put32(c,0); put32(c,offset);
+    central.push(new Uint8Array([...c,...name]));
+    offset += local.length+name.length+data.length;
+  }
+  const cdOffset=offset, cdSize=central.reduce((n,x)=>n+x.length,0);
+  const end=[]; put32(end,0x06054b50); put16(end,0); put16(end,0);
+  put16(end,files.length); put16(end,files.length); put32(end,cdSize); put32(end,cdOffset); put16(end,0);
+  return new Blob([...chunks,...central,new Uint8Array(end)],{type:"application/zip"});
+}
+
+/* ============================================================
+   Main extraction
+   ============================================================ */
+$("extract").addEventListener("click", async ()=>{
+  if(!selectedFile)return;
+  $("extract").disabled=true; $("download").disabled=true; resultZip=null;
+  $("stats").innerHTML=""; setProgress(2,true);
+  try{
+    const zip=await ZIP.open(selectedFile);
+    const names=zip.names.map(x=>x.replace(/^\.?\//,""));
+    const findName=(exact)=>names.find(x=>x===exact);
+    const rendererName=findName("src/Renderer.sol");
+    const sstoreName=findName("src/libraries/SSTORE2.sol");
+    const traitsName=findName("src/libraries/TraitDefs.sol");
+    if(!rendererName) throw new Error("src/Renderer.sol was not found in the uploaded ZIP.");
+    if(!sstoreName) throw new Error("src/libraries/SSTORE2.sol was not found in the uploaded ZIP.");
+    if(!traitsName) throw new Error("src/libraries/TraitDefs.sol was not found in the uploaded ZIP.");
+
+    setStatus("Reading Renderer.sol, SSTORE2.sol and TraitDefs.sol...");
+    const [renderer,sstore,traits]=await Promise.all([
+      zip.text(rendererName),zip.text(sstoreName),zip.text(traitsName)
+    ]);
+    sourceLooksCorrect(renderer,sstore,traits);
+    setProgress(8,true);
+
+    const rpcUrl=$("rpc").value.trim();
+    if(!/^https?:\/\//i.test(rpcUrl)) throw new Error("RPC URL must start with http:// or https://");
+
+    setStatus("Checking Ethereum Mainnet RPC...");
+    const chain=await rpc(rpcUrl,"eth_chainId",[]);
+    if(chain.toLowerCase()!==CHAIN_ID) throw new Error("The selected RPC is not Ethereum Mainnet. Chain ID returned: "+chain);
+
+    const rendererCode=await rpc(rpcUrl,"eth_getCode",[RENDERER,"latest"]);
+    if(!rendererCode || rendererCode==="0x") throw new Error("No contract bytecode was found at the Renderer address.");
+    setProgress(12,true);
+
+    setStatus("Reading blobCount()...");
+    const countN=readU256(hexToBytes(await rpc(rpcUrl,"eth_call",[{to:RENDERER,data:SEL.blobCount},"latest"])),0);
+    const count=Number(countN);
+    if(!Number.isSafeInteger(count) || count<=0 || count>10000) throw new Error("Unexpected renderer blobCount: "+count);
+
+    setStatus("Reading layout()...");
+    const layout=resultBytes(await rpc(rpcUrl,"eth_call",[{to:RENDERER,data:SEL.layout},"latest"]));
+    const tables=decodeLayout(layout);
+    setProgress(18,true);
+
+    let totalRefs=0;
+    for(const t of tables) totalRefs+=t.filter(x=>x!==255).length;
+    if(totalRefs===0) throw new Error("layout() contains no usable blob references.");
+
+    setStatus("Reading "+count+" SSTORE2 blob pointers...");
+    const pointers=new Array(count);
+    for(let i=0;i<count;i++){
+      const data=SEL.blobs+wordHex(i);
+      const ret=await rpc(rpcUrl,"eth_call",[{to:RENDERER,data},"latest"]);
+      pointers[i]=addressFromWord(ret);
+      setProgress(18+Math.floor((i+1)/count*17),true);
+    }
+
+    const blobCache=new Map();
+    const files=[];
+    const manifest={
+      network:"Ethereum Mainnet", chainId:1,
+      renderer:RENDERER,
+      extraction:"Renderer.sol _rects() + SSTORE2.sol read()",
+      blobCount:count,
+      layers:[]
+    };
+
+    let generated=0, rectTotal=0;
+    for(let layer=0;layer<7;layer++){
+      const ids=tables[layer], namesForLayer=SOURCE_TRAITS[LAYERS[layer]]||[];
+      const entries=[];
+      for(let idx=0;idx<ids.length;idx++){
+        const id=ids[idx];
+        if(id===255){
+          entries.push({index:idx,blobId:null,file:null});
+          continue;
         }
-
-        async function rpcCall(url, method, params) {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-            return data.result;
+        if(id>=count) throw new Error("layout references blob "+id+" but blobCount is "+count);
+        if(!blobCache.has(id)){
+          setStatus("Reading SSTORE2 blob "+(id+1)+" / "+count+"...");
+          blobCache.set(id,await readSSTORE2(rpcUrl,pointers[id]));
         }
+        const decoded=decodeSprite(blobCache.get(id));
+        const trait=(namesForLayer[idx]!==undefined && namesForLayer[idx]!=="" ? namesForLayer[idx] : "None");
+        const fileName=String(idx).padStart(2,"0")+"_"+trait.replace(/[<>:"\/\\|?*\x00-\x1f]/g,"_")+".svg";
+        const path=LAYERS[layer]+"/"+fileName;
+        const data=new TextEncoder().encode(decoded.svg);
+        files.push({name:path,data});
+        entries.push({index:idx,trait:trait,blobId:id,sstore2Pointer:pointers[id],file:path,rects:decoded.rects});
+        generated++; rectTotal+=decoded.rects;
+        const done=generated/totalRefs;
+        setProgress(35+done*58,true);
+      }
+      manifest.layers.push({index:layer,name:LAYERS[layer],layoutCount:ids.length,traits:entries});
+    }
 
-        function hexToBytes(hex) {
-            if (hex.startsWith('0x')) hex = hex.slice(2);
-            const bytes = new Uint8Array(hex.length / 2);
-            for (let i = 0; i < bytes.length; i++) {
-                bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
-            }
-            return bytes;
-        }
+    manifest.generatedFiles=generated;
+    manifest.totalRects=rectTotal;
+    files.push({name:"manifest.json",data:new TextEncoder().encode(JSON.stringify(manifest,null,2))});
+    setStatus("Creating NFT_Layers.zip...");
+    resultZip=makeZip(files);
+    setProgress(100,true);
+    $("download").disabled=false;
+    $("stats").innerHTML='<div class="stats">'
+      +'<div class="stat"><b>'+count+'</b><span>On-chain blobs</span></div>'
+      +'<div class="stat"><b>'+generated+'</b><span>SVG layers</span></div>'
+      +'<div class="stat"><b>'+rectTotal+'</b><span>SVG rects</span></div>'
+      +'</div>';
+    setStatus("Done.\n"+generated+" individual SVG layers were extracted from the deployed Renderer SSTORE2 data.\n\nThe source ZIP was processed locally. Only read-only Ethereum RPC calls were made.","ok");
+  }catch(e){
+    fail(e);
+  }finally{
+    $("extract").disabled=!selectedFile;
+  }
+});
 
-        // Function selectors
-        // blobCount() -> 0x8a923d8e
-        // blobs(uint256) -> 0x12d3dbbe
-        // layout() -> 0x9b35b6a7
-
-        extractBtn.addEventListener('click', async () => {
-            progressSection.classList.remove('hidden');
-            downloadSection.classList.add('hidden');
-            logBox.innerHTML = '';
-            extractBtn.disabled = true;
-
-            try {
-                log("Reading Renderer.sol, SSTORE2.sol, and TraitDefs.sol from ZIP...");
-                const unzipped = fflate.unzipSync(new Uint8Array(uploadedZipData));
-                
-                let foundRenderer = false, foundSstore2 = false, foundTraitDefs = false;
-                for (const filename of Object.keys(unzipped)) {
-                    if (filename.endsWith('Renderer.sol')) foundRenderer = true;
-                    if (filename.endsWith('SSTORE2.sol')) foundSstore2 = true;
-                    if (filename.endsWith('TraitDefs.sol')) foundTraitDefs = true;
-                }
-
-                if (!foundRenderer || !foundSstore2 || !foundTraitDefs) {
-                    throw new Error("Missing required source files (Renderer.sol, SSTORE2.sol, or TraitDefs.sol) in ZIP.");
-                }
-                log("Source files validated successfully.", "success");
-
-                const rpcUrl = rpcUrlInput.value.trim();
-                const rendererAddr = document.getElementById('rendererAddress').value.trim();
-
-                log("Connecting to Ethereum Mainnet...");
-                const chainIdHex = await rpcCall(rpcUrl, 'eth_chainId', []);
-                const chainId = parseInt(chainIdHex, 16);
-                log(`Connected to Chain ID: ${chainId}`);
-                if (chainId !== 1) {
-                    throw new Error("RPC is not Ethereum Mainnet (Chain ID is not 1).");
-                }
-
-                log("Checking Renderer contract bytecode...");
-                const code = await rpcCall(rpcUrl, 'eth_getCode', [rendererAddr, 'latest']);
-                if (!code || code === '0x' || code === '0x0') {
-                    throw new Error("Renderer contract has no bytecode on Ethereum Mainnet.");
-                }
-
-                log("Reading blobCount()...");
-                const blobCountHex = await rpcCall(rpcUrl, 'eth_call', [{
-                    to: rendererAddr,
-                    data: '0x8a923d8e'
-                }, 'latest']);
-                const blobCount = parseInt(blobCountHex, 16);
-                log(`Total blobs found: ${blobCount}`, "success");
-
-                log("Reading layout()...");
-                const layoutHex = await rpcCall(rpcUrl, 'eth_call', [{
-                    to: rendererAddr,
-                    data: '0x9b35b6a7'
-                }, 'latest']);
-                
-                // Decode ABI encoded bytes
-                const layoutBytesFull = hexToBytes(layoutHex);
-                // ABI encoded bytes start with offset (32 bytes), length (32 bytes), then data
-                const layoutLen = parseInt(layoutHex.substr(66, 64), 16);
-                const layoutDataHex = layoutHex.substr(130, layoutLen * 2);
-                const layoutBytes = hexToBytes(layoutDataHex);
-                log(`Layout decoded successfully (${layoutBytes.length} bytes).`);
-
-                log("Reading blob pointers...");
-                const blobAddresses = [];
-                for (let i = 0; i < blobCount; i++) {
-                    // blobs(uint256) selector: 0x12d3dbbe with padded uint256 index
-                    const paddedIdx = i.toString(16).padStart(64, '0');
-                    const res = await rpcCall(rpcUrl, 'eth_call', [{
-                        to: rendererAddr,
-                        data: '0x12d3dbbe' + paddedIdx
-                    }, 'latest']);
-                    // address is last 20 bytes (40 hex chars) of result
-                    const addr = '0x' + res.slice(-40);
-                    blobAddresses.push(addr);
-                }
-                log(`Retrieved ${blobAddresses.length} SSTORE2 blob pointers.`);
-
-                // Read and cache blob runtime bytecodes (SSTORE2 decoding: strip 1 byte STOP prefix 0x00)
-                log("Fetching SSTORE2 blob bytecodes...");
-                const decodedBlobs = {};
-                for (let i = 0; i < blobAddresses.length; i++) {
-                    const ptr = blobAddresses[i];
-                    const runtimeCode = await rpcCall(rpcUrl, 'eth_getCode', [ptr, 'latest']);
-                    if (!runtimeCode || runtimeCode === '0x' || runtimeCode === '0x0') {
-                        throw new Error(`Invalid SSTORE2 pointer at index ${i}: ${ptr}`);
-                    }
-                    const runtimeBytes = hexToBytes(runtimeCode);
-                    // SSTORE2.sol: codeSize = pointer.code.length - 1; read skips 1 byte STOP prefix.
-                    // runtimeBytes[0] is 0x00 STOP, data follows at index 1.
-                    const blobData = runtimeBytes.slice(1);
-                    decodedBlobs[i] = blobData;
-                }
-                log("All SSTORE2 blobs decoded successfully.", "success");
-
-                // Parse layout per layer
-                // layout format: per layer: [count 1B][blob id 1B per table index]; 0xFF = none
-                let pos = 0;
-                const layerTraitBlobIds = {};
-
-                for (let layer = 0; layer < 7; layer++) {
-                    if (pos >= layoutBytes.length) break;
-                    const count = layoutBytes[pos];
-                    pos += 1;
-                    const blobIds = [];
-                    for (let idx = 0; idx < count; idx++) {
-                        if (pos >= layoutBytes.length) throw new Error("Invalid layout format");
-                        blobIds.push(layoutBytes[pos]);
-                        pos += 1;
-                    }
-                    layerTraitBlobIds[layer] = blobIds;
-                }
-
-                // Helper for opacity formatting matching _opacity() in Renderer.sol
-                function formatOpacity(a) {
-                    if (a === 255) return '"/>';
-                    const m = Math.floor((a * 1000) / 255);
-                    let d = m.toString();
-                    while (d.length < 3) d = '0' + d;
-                    return `" fill-opacity="0.${d}"/>`;
-                }
-
-                // Helper for hex color matching _hex()
-                function formatHex(r, g, b) {
-                    const sym = "0123456789abcdef";
-                    return sym[r >> 4] + sym[r & 15] +
-                           sym[g >> 4] + sym[g & 15] +
-                           sym[b >> 4] + sym[b & 15];
-                }
-
-                // Decoder reproducing _rects()
-                function decodeBlobToRects(blob) {
-                    const p = (blob[0] << 8) | blob[1];
-                    let off = 2 + p * 4;
-                    let pixel = 0;
-                    let rectsOut = '';
-
-                    while (off < blob.length) {
-                        const ci = (blob[off] << 8) | blob[off + 1];
-                        const run = blob[off + 2];
-
-                        if (ci !== 0) {
-                            const e = 2 + (ci - 1) * 4;
-                            const x = pixel % 24;
-                            const y = Math.floor(pixel / 24);
-                            const fillColor = formatHex(blob[e], blob[e+1], blob[e+2]);
-                            const opacityStr = formatOpacity(blob[e+3]);
-
-                            rectsOut += `<rect x="${x}" y="${y}" width="${run}" height="1" fill="#${fillColor}${opacityStr}`;
-                        }
-                        pixel += run;
-                        off += 3;
-                    }
-                    return rectsOut;
-                }
-
-                log("Generating individual layer SVGs...");
-                const zip = new JSZip();
-                const manifestLayers = [];
-
-                for (let layer = 0; layer < 7; layer++) {
-                    const layerName = LAYER_LABELS[layer];
-                    const blobIds = layerTraitBlobIds[layer] || [];
-                    const traitNames = TRAIT_TABLES[layer] || [];
-                    const layerFolder = zip.folder(layerName);
-                    
-                    const layerManifestEntries = [];
-
-                    for (let idx = 0; idx < blobIds.length; idx++) {
-                        const blobId = blobIds[idx];
-                        const traitName = traitNames[idx] !== undefined ? traitNames[idx] : `Trait_${idx}`;
-                        const sanitizedName = traitName.replace(/[^a-zA-Z0-9-_]/g, '_');
-                        const fileName = `${idx.toString().padStart(2, '0')}_${sanitizedName || 'None'}.svg`;
-
-                        if (blobId === 0xFF) {
-                            log(`[${layerName}] Trait ${idx} (${traitName}): 0xFF (none), skipping.`);
-                            layerManifestEntries.push({ index: idx, trait: traitName, blobId: null, svgFile: null });
-                            continue;
-                        }
-
-                        if (blobId >= blobCount) {
-                            throw new Error(`Layout references blob ID ${blobId} which is outside blobCount (${blobCount})`);
-                        }
-
-                        const blobBytes = decodedBlobs[blobId];
-                        if (!blobBytes) {
-                            throw new Error(`Missing blob data for blob ID ${blobId}`);
-                        }
-
-                        const rects = decodeBlobToRects(blobBytes);
-                        const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">${rects}</svg>`;
-
-                        layerFolder.file(fileName, svgContent);
-                        layerManifestEntries.push({ index: idx, trait: traitName, blobId: blobId, svgFile: `${layerName}/${fileName}` });
-                        log(`Generated ${layerName}/${fileName} (Blob #${blobId})`);
-                    }
-
-                    manifestLayers.push({
-                        layerIndex: layer,
-                        layerLabel: layerName,
-                        traits: layerManifestEntries
-                    });
-                }
-
-                // Create manifest.json
-                const manifest = {
-                    network: "Ethereum Mainnet",
-                    chainId: 1,
-                    renderer: rendererAddr,
-                    collection: "0x387c41b0b2f1128de44db1bcf8baad085f26392c",
-                    blobCount: blobCount,
-                    layers: manifestLayers
-                };
-
-                zip.file("manifest.json", JSON.stringify(manifest, null, 2));
-
-                log("Creating NFT_Layers.zip...", "success");
-                const content = await zip.generateAsync({ type: "blob" });
-                
-                const url = URL.createObjectURL(content);
-                downloadBtn.href = url;
-                downloadSection.classList.remove('hidden');
-                log("Done! Ready for download.", "success");
-
-            } catch (err) {
-                log("ERROR: " + err.message, "error");
-                console.error(err);
-            } finally {
-                extractBtn.disabled = false;
-            }
-        });
-    </script>
+$("download").addEventListener("click",()=>{
+  if(!resultZip)return;
+  const url=URL.createObjectURL(resultZip);
+  const a=document.createElement("a");
+  a.href=url;a.download="NFT_Layers.zip";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+});
+</script>
 </body>
 </html>
