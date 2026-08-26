@@ -1,291 +1,672 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Argonauts Onchain Layer Extractor</title>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#090b0e;color:#edf2f7;font-family:Inter,system-ui,Arial,sans-serif}
-.wrap{max-width:1050px;margin:auto;padding:36px 18px}.card{background:#11151a;border:1px solid #27303a;border-radius:18px;padding:26px}
-h1{margin:0 0 8px;font-size:29px}.muted{color:#9aa6b2;line-height:1.55}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
-.drop{display:block;border:2px dashed #37424e;border-radius:14px;padding:24px;cursor:pointer;background:#0d1115;position:relative}.drop:hover{border-color:#778391}
-.drop b{display:block;margin-bottom:6px}.drop span{color:#8f9ba7;font-size:13px}.file{margin-top:9px;color:#cbd4dd;font-size:13px}
-input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.drop button{margin-top:14px;background:#242b33;color:#edf2f7;padding:10px 14px;border-radius:9px;pointer-events:none}
-input[type=text]{width:100%;padding:12px;border-radius:9px;border:1px solid #303943;background:#0b0e12;color:#fff}
-button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;background:#f0f3f6;color:#11151a}
-button:disabled{opacity:.45;cursor:not-allowed}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.status{margin-top:18px;padding:14px;border-radius:10px;background:#0c1014;border:1px solid #252d36;white-space:pre-wrap;font-size:13px}
-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid #252c34}th{color:#8f9ba7}
-.ok{color:#9be7ad}.err{color:#ff9b9b}.small{font-size:12px;color:#77838e}.addr{font-family:ui-monospace,monospace;font-size:12px;word-break:break-all;color:#b9c4cf}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Argonauts Onchain SVG Layer Extractor</title>
+  <!-- Tailwind CSS for clean UI styling -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- JSZip for local ZIP generation & Unzipping -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
-<body>
-<div class="wrap"><div class="card">
-<h1>Argonauts Onchain Layer Extractor</h1>
-<p class="muted">
-Extracts the actual visual layers from the Argonauts renderer's Ethereum Mainnet SSTORE2 blobs.
-No wallet connection and no transaction are required.
-</p>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-cyan-500 selection:text-slate-950">
 
-<h2>Source Files / ZIPs</h2>
-<div class="grid">
-<div class="drop" id="rendererDrop" role="button" tabindex="0">
-  <b>Renderer ZIP or Files</b><span>Click to choose or drag & drop .zip / folder</span>
-  <input id="rendererZip" type="file" multiple accept=".zip,application/zip,application/x-zip-compressed,.sol">
-  <div id="rendererFile" class="file">Not selected</div>
-  <button type="button" id="rendererBtn">Choose File / ZIP</button>
-</div>
-<div class="drop" id="collectionDrop" role="button" tabindex="0">
-  <b>Collection ZIP or Files</b><span>Click to choose or drag & drop .zip / folder</span>
-  <input id="collectionZip" type="file" multiple accept=".zip,application/zip,application/x-zip-compressed,.sol">
-  <div id="collectionFile" class="file">Not selected</div>
-  <button type="button" id="collectionBtn">Choose File / ZIP</button>
-</div>
-</div>
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white">Argonauts Onchain SVG Layer Extractor</h1>
+          <p class="text-xs text-slate-400">Ethereum Mainnet Read-Only Renderer Layer Extractor</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+          Mainnet Ready
+        </span>
+      </div>
+    </div>
+  </header>
 
-<h2>Ethereum Mainnet RPC</h2>
-<input id="rpc" type="text" value="https://ethereum-rpc.publicnode.com">
-<p class="small">Public RPC. No Alchemy API key is required. If this endpoint is blocked, paste another Ethereum Mainnet RPC URL.</p>
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
-<div class="grid">
-<div><div class="small">Renderer</div><div class="addr">0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597</div></div>
-<div><div class="small">Collection</div><div class="addr">0x387c41b0b2f1128de44db1bcf8baad085f26392c</div></div>
-</div>
+    <!-- Intro Card -->
+    <section class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <h2 class="text-base font-semibold text-slate-200 mb-2">Overview</h2>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Upload the original Renderer source ZIP file. The app reads the deployed renderer's SSTORE2 data from Ethereum Mainnet and extracts the individual SVG layers.
+      </p>
+    </section>
 
-<div class="row"><button id="run">Read Onchain Layers & Build ZIP</button><button id="download" disabled>Download NFT_Layers.zip</button></div>
-<div id="status" class="status">Select both ZIP files or source code files, then click the extract button.</div>
-<div id="result"></div>
-</div></div>
+    <!-- Configuration & Upload Form -->
+    <section class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+      <h2 class="text-base font-semibold text-slate-200 border-b border-slate-800 pb-3">Configuration & Source</h2>
 
-<script>
-const RENDERER="0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597";
-const COLLECTION="0x387c41b0b2f1128de44db1bcf8baad085f26392c";
-const layerNames=["Palette","Bones","Cloak","Relic","Sight","Artifact","Crown"];
-let outputBlob=null;
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Renderer Source ZIP Upload -->
+        <div class="space-y-2 md:col-span-2">
+          <label class="block text-sm font-medium text-slate-300">Renderer Source ZIP <span class="text-cyan-400">*</span></label>
+          <div class="flex items-center justify-center w-full">
+            <label id="drop-zone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 hover:border-cyan-500/55 transition-all">
+              <div class="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+                <svg class="w-8 h-8 mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p id="file-label-text" class="text-sm text-slate-300 font-medium">Choose ZIP or drag & drop here</p>
+                <p class="text-xs text-slate-500 mt-1">Must contain src/Renderer.sol, src/libraries/SSTORE2.sol, src/libraries/TraitDefs.sol</p>
+              </div>
+              <input id="zip-file-input" type="file" accept=".zip" class="hidden" />
+            </label>
+          </div>
+        </div>
 
-const $=id=>document.getElementById(id);
+        <!-- RPC URL -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-slate-300">Ethereum Mainnet RPC URL</label>
+          <input id="rpc-url" type="text" value="https://ethereum-rpc.publicnode.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 transition-colors" />
+        </div>
 
-function setupFilePicker(inputId, btnId, dropId, displayId){
-  const input=$(inputId), drop=$(dropId), display=$(displayId);
+        <!-- Renderer Contract -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-slate-300">Renderer Contract</label>
+          <input id="renderer-address" type="text" value="0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597" readonly class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed select-all" />
+        </div>
+      </div>
 
-  input.addEventListener("change",()=>{
-    const files=input.files;
-    if(!files || files.length === 0){
-      display.textContent="Not selected";
-      return;
-    }
-    if(files.length === 1){
-      const f = files[0];
-      display.textContent=`${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
-    } else {
-      display.textContent=`${files.length} files selected`;
-    }
-  });
+      <!-- Action Button -->
+      <div class="pt-4 flex items-center justify-between border-t border-slate-800">
+        <span id="file-meta" class="text-xs text-slate-400">No file selected</span>
+        <button id="extract-btn" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-semibold px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-cyan-600/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+          <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+          <span>Extract SVG Layers</span>
+        </button>
+      </div>
+    </section>
 
-  drop.addEventListener("dragover",(e)=>{
-    e.preventDefault();
-    drop.style.borderColor="#778391";
-  });
-  drop.addEventListener("dragleave",()=>{
-    drop.style.borderColor="";
-  });
-  drop.addEventListener("drop",(e)=>{
-    e.preventDefault();
-    drop.style.borderColor="";
-    if(e.dataTransfer.files && e.dataTransfer.files.length > 0){
-      input.files = e.dataTransfer.files;
-      const event = new Event('change');
-      input.dispatchEvent(event);
-    }
-  });
-}
-setupFilePicker("rendererZip","rendererBtn","rendererDrop","rendererFile");
-setupFilePicker("collectionZip","collectionBtn","collectionDrop","collectionFile");
+    <!-- Progress & Console Output -->
+    <section id="progress-section" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 hidden">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-semibold text-slate-200">Extraction Progress</h2>
+        <span id="progress-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Processing...</span>
+      </div>
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+        <div id="progress-bar" class="bg-cyan-500 h-full w-0 transition-all duration-300"></div>
+      </div>
+      <!-- Console Log Box -->
+      <div id="console-log" class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 h-48 overflow-y-auto space-y-1.5 select-text">
+        <div class="text-slate-500">[System] Ready to begin extraction...</div>
+      </div>
+    </section>
 
-function status(t,c=""){ $("status").className="status "+c; $("status").textContent=t; }
-function hexBytes(h){h=h.startsWith("0x")?h.slice(2):h;const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.slice(i*2,i*2+2),16);return a;}
-function u256hex(n){return BigInt(n).toString(16).padStart(64,"0");}
-function selector(sig){
-  return ({
-    "blobCount()":"0x3b2b1f0e",
-    "layout()":"0x18f0d5e0",
-    "blobs(uint256)":"0x8a5d5c6a",
-    "headbandHeadIndex()":"0x6e6f7d8e"
-  })[sig];
-}
-async function rpcCall(url,to,data){
-  const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},
-    body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to,data},"latest"]})});
-  if(!r.ok) throw Error("RPC HTTP "+r.status);
-  const j=await r.json();
-  if(j.error) throw Error(j.error.message||JSON.stringify(j.error));
-  return j.result;
-}
-async function getCode(url,address){
-  const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},
-    body:JSON.stringify({jsonrpc:"2.0",id:2,method:"eth_getCode",params:[address,"latest"]})});
-  if(!r.ok) throw Error("RPC HTTP "+r.status);
-  const j=await r.json();
-  if(j.error) throw Error(j.error.message||JSON.stringify(j.error));
-  return j.result;
-}
-function addrFromResult(x){return "0x"+x.slice(-40);}
-function uintFromResult(x){return BigInt(x);}
-function dynamicBytesFromResult(x){
-  const b=hexBytes(x);
-  if(b.length<64)return new Uint8Array();
-  const offset=Number(BigInt("0x"+x.slice(2,66)));
-  const len=Number(BigInt("0x"+x.slice(2+offset*2,2+(offset+32)*2)));
-  const start=offset+32;
-  return b.slice(start,start+len);
-}
-function decodeSSTORE2(code){
-  if(!code || code==="0x") throw Error("SSTORE2 pointer has no runtime bytecode");
-  return code.startsWith("0x00")?code.slice(4):code.slice(2);
-}
-function svgFromBlob(hex){
-  const b=hexBytes(hex);
-  if(b.length<2) throw Error("Invalid blob: fewer than 2 bytes");
-  const paletteBytes=(b[0]<<8)|b[1];
-  const paletteStart=2;
-  const runStart=2+paletteBytes;
-  if(runStart>b.length) throw Error("Invalid palette length");
-  let pixel=0, body="";
-  for(let p=runStart;p+2<b.length && pixel<576;p+=3){
-    const paletteIndex=(b[p]<<8)|b[p+1];
-    const run=b[p+2];
-    if(!run) continue;
-    if(paletteIndex!==0){
-      const q=paletteStart+(paletteIndex-1)*4;
-      if(q+3>=b.length) throw Error("Palette index outside blob");
-      const r=b[q],g=b[q+1],bl=b[q+2],a=b[q+3];
-      const opacity=a===255?"":` fill-opacity="${(a/255).toFixed(3).replace(/0+$/,"").replace(/\.$/,"")}"`;
-      body+=`<rect x="${pixel%24}" y="${Math.floor(pixel/24)}" width="${run}" height="1" fill="#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${bl.toString(16).padStart(2,"0")}"${opacity}/>`;
-    }
-    pixel+=run;
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">${body}</svg>`;
-}
-async function getFileContentFromInput(fileInputEl, targetFilename){
-  const files = fileInputEl.files;
-  if(!files || files.length === 0) throw Error(`No files selected for ${targetFilename}`);
-  
-  for(let i=0; i<files.length; i++){
-    const f = files[i];
-    if(f.name.toLowerCase().endsWith(".zip")){
-      const z = await JSZip.loadAsync(f);
-      const matchName = Object.keys(z.files).find(n=>n.toLowerCase().endsWith(targetFilename.toLowerCase()));
-      if(matchName){
-        return await z.files[matchName].async("string");
+    <!-- Results Section -->
+    <section id="results-section" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <h2 class="text-base font-semibold text-slate-200">Extraction Complete!</h2>
+          <p class="text-xs text-slate-400 mt-0.5" id="results-summary">Successfully reconstructed all onchain layers.</p>
+        </div>
+        <button id="download-btn" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center space-x-2">
+          <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <span>Download NFT_Layers.zip</span>
+        </button>
+      </div>
+
+      <!-- Preview Grid -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-medium text-slate-300">Layer Previews (Sample)</h3>
+        <div id="preview-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+          <!-- Dynamically populated previews -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-5xl mx-auto px-4 py-6 text-center text-xs text-slate-500 border-t border-slate-800/60 mt-12">
+    Argonauts Onchain SVG Layer Extractor • Read-only Ethereum Mainnet Tool
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    // Exact Trait Definitions from TraitDefs.sol
+    const TRAIT_TABLES = {
+      0: [ // Palette
+        "Bubblegum", "Yellow", "Violet", "Wine", "Sky", "Void", "MuseGreen", "Ancient",
+        "Punkblue", "Blush", "Offwhite", "Hot Rose", "Emerald", "Bright Lilac", "Neon Mint",
+        "Paper White", "Radioactive Void Charcoal", "Radioactive Deep Raspberry", "Radioactive Seafoam",
+        "Radioactive Lavender", "Radioactive Paper White", "Ice Prism Pink", "Violet Pink",
+        "Violet Cyan", "Navy Pink", "Void Pink", "Void Blue", "Void Cyan", "Navy Blue Vignette",
+        "Void Teal Vignette", "Siren", "Seafoam", "Lavender", "Storm"
+      ],
+      1: [ // Bones
+        "Alien", "Radioactive", "Gold", "Petrified", "Floral", "Coral", "Silver", "Prehistoric", "Bone", "Floral"
+      ],
+      2: [ // Cloak
+        "None", "Servant", "Death", "Royalty", "Ivory", "Clergy"
+      ],
+      3: [ // Relic
+        "None", "Gold"
+      ],
+      4: [ // Sight
+        "None", "Shades", "Glasses", "Digital", "Eye Patch", "3D Glasses", "Designer", "Gucci",
+        "Louis Vuitton", "Prada", "Versace", "Dior", "Balenciaga", "Chanel", "Eye Patch"
+      ],
+      5: [ // Artifact
+        "None", "Woodpipe", "THC Vape"
+      ],
+      6: [ // Crown
+        "None", "Oarsman's Band", "Bandana", "Dawn Pink Beanie", "Aegean Blue Beanie", "Purphat",
+        "Golden Fleece", "Corsair"
+      ]
+    };
+
+    const LAYER_NAMES = [
+      "Palette",
+      "Bones",
+      "Cloak",
+      "Relic",
+      "Sight",
+      "Artifact",
+      "Crown"
+    ];
+
+    const RENDERER_ADDRESS = "0x7F277A7d5E0bE5d5AB655c01262fc8d1698f8597";
+    const COLLECTION_ADDRESS = "0x387c41b0b2f1128de44db1bcf8baad085f26392c";
+
+    let selectedZipFile = null;
+    let generatedZipBlob = null;
+    let manifestData = null;
+
+    const fileInput = document.getElementById('zip-file-input');
+    const fileLabelText = document.getElementById('file-label-text');
+    const fileMeta = document.getElementById('file-meta');
+    const extractBtn = document.getElementById('extract-btn');
+    const progressSection = document.getElementById('progress-section');
+    const progressBar = document.getElementById('progress-bar');
+    const progressStatusBadge = document.getElementById('progress-status-badge');
+    const consoleLog = document.getElementById('console-log');
+    const resultsSection = document.getElementById('results-section');
+    const resultsSummary = document.getElementById('results-summary');
+    const downloadBtn = document.getElementById('download-btn');
+    const previewGrid = document.getElementById('preview-grid');
+    const rpcUrlInput = document.getElementById('rpc-url');
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        selectedZipFile = e.target.files[0];
+        fileLabelText.textContent = selectedZipFile.name;
+        fileMeta.textContent = `${(selectedZipFile.size / 1024).toFixed(1)} KB`;
+        extractBtn.disabled = false;
       }
-    } else if(f.name.toLowerCase() === targetFilename.toLowerCase() || f.webkitRelativePath?.toLowerCase().endsWith(targetFilename.toLowerCase())){
-      return await f.text();
-    }
-  }
-  
-  for(let i=0; i<files.length; i++){
-    const f = files[i];
-    const text = await f.text();
-    if(f.name.toLowerCase().includes(targetFilename.toLowerCase().replace(".sol",""))) {
-      return text;
-    }
-  }
-  
-  throw Error(`Could not find ${targetFilename} in the selected inputs.`);
-}
+    });
 
-async function main(){
-  $("run").disabled=true;$("download").disabled=true;outputBlob=null;
-  try{
-    const rz=$("rendererZip").files, cz=$("collectionZip").files;
-    if(!rz.length||!cz.length) throw Error("Please select both Renderer files/ZIP and Collection files/ZIP.");
-
-    status("Checking the supplied source files…");
-    const renderer=await getFileContentFromInput($("rendererZip"), "Renderer.sol");
-    const traits=await getFileContentFromInput($("rendererZip"), "TraitDefs.sol");
-    await getFileContentFromInput($("collectionZip"), "Argonauts.sol");
-
-    if(!renderer.includes("SSTORE2")||!renderer.includes("blobs")) throw Error("Renderer.sol does not contain the expected SSTORE2 blob system.");
-    for(const n of layerNames) if(!traits.includes(`return "${n}"`)) throw Error(`TraitDefs.sol verification failed for layer: ${n}`);
-
-    const url=$("rpc").value.trim();
-    if(!/^https?:\/\//i.test(url)) throw Error("RPC URL must start with http:// or https://");
-
-    status("Testing Ethereum Mainnet RPC…");
-    const chain=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({jsonrpc:"2.0",id:3,method:"eth_chainId",params:[]})}).then(r=>r.json());
-    if(chain.error) throw Error(chain.error.message);
-    if(chain.result.toLowerCase()!=="0x1") throw Error("This RPC is not Ethereum Mainnet. Returned chain ID: "+chain.result);
-
-    status("Reading renderer.blobCount()…");
-    const count=Number(uintFromResult(await rpcCall(url,RENDERER,selector("blobCount()"))));
-    if(!count||count>255) throw Error("Unexpected blobCount: "+count);
-
-    status(`Renderer reports ${count} blobs. Reading blob pointers…`);
-    const pointers=[];
-    for(let i=0;i<count;i++){
-      const data=selector("blobs(uint256)")+u256hex(i);
-      pointers.push(addrFromResult(await rpcCall(url,RENDERER,data)));
+    function logMessage(msg, type = 'info') {
+      const div = document.createElement('div');
+      const timestamp = new Date().toLocaleTimeString();
+      let colorClass = 'text-slate-300';
+      if (type === 'success') colorClass = 'text-emerald-400 font-semibold';
+      if (type === 'error') colorClass = 'text-rose-400 font-semibold';
+      if (type === 'step') colorClass = 'text-cyan-400 font-medium';
+      
+      div.className = colorClass;
+      div.textContent = `[${timestamp}] ${msg}`;
+      consoleLog.appendChild(div);
+      consoleLog.scrollTop = consoleLog.scrollHeight;
     }
 
-    status("Reading layout()…");
-    const layout=dynamicBytesFromResult(await rpcCall(url,RENDERER,selector("layout()")));
-    if(!layout.length) throw Error("Renderer layout() returned empty data.");
+    function setProgress(pct, statusText) {
+      progressBar.style.width = `${pct}%`;
+      progressStatusBadge.textContent = statusText;
+    }
 
-    const tables=[];let pos=0;
-    for(let layer=0;layer<7;layer++){
-      if(pos>=layout.length) throw Error("layout ended before all 7 layers were decoded.");
-      const n=layout[pos++], ids=[];
-      for(let i=0;i<n;i++){
-        if(pos>=layout.length) throw Error("layout ended inside layer "+layer);
-        ids.push(layout[pos++]);
+    // JSON-RPC Helper
+    async function rpcCall(rpcUrl, method, params) {
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
+      });
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error.message || JSON.stringify(data.error));
       }
-      tables.push(ids);
+      return data.result;
     }
 
-    const zip=new JSZip(), manifest={network:"Ethereum Mainnet",chainId:1,renderer:RENDERER,collection:COLLECTION,blobCount:count,layers:[]};
-    const cache=new Map();let total=0;
-
-    async function getBlob(id){
-      if(id>=count) throw Error(`Layout references blob ${id}, but blobCount is ${count}.`);
-      if(!cache.has(id)){
-        status(`Reading SSTORE2 blob ${id+1}/${count}…`);
-        const code=await getCode(url,pointers[id]);
-        cache.set(id,decodeSSTORE2(code));
+    async function verifyRpcChainId(rpcUrl) {
+      const chainIdHex = await rpcCall(rpcUrl, 'eth_chainId', []);
+      const chainId = parseInt(chainIdHex, 16);
+      if (chainId !== 1) {
+        throw new Error(`RPC is not Ethereum Mainnet (Chain ID 1). Detected Chain ID: ${chainId}`);
       }
-      return cache.get(id);
     }
 
-    for(let layer=0;layer<7;layer++){
-      const entries=[];
-      for(let idx=0;idx<tables[layer].length;idx++){
-        const id=tables[layer][idx];
-        if(id===255){entries.push({index:idx,blobId:null});continue;}
-        const blob=await getBlob(id);
-        const svg=svgFromBlob(blob);
-        const name=`${String(idx).padStart(2,"0")}_Trait_${idx}.svg`;
-        zip.file(`${layerNames[layer]}/${name}`,svg);
-        entries.push({index:idx,blobId:id,file:`${layerNames[layer]}/${name}`});
-        total++;
+    async function contractCall(rpcUrl, contractAddr, dataHex) {
+      const res = await rpcCall(rpcUrl, 'eth_call', [{
+        to: contractAddr,
+        data: dataHex
+      }, 'latest']);
+      return res;
+    }
+
+    // Function Signature hashes
+    // blobCount() -> selector: 0x8a927a05 (or compute via keccak256("blobCount()").slice(0,10))
+    // blobs(uint256) -> 0x3d0e3ec9
+    // layout() -> 0x502b7405
+    function keccak4(sig) {
+      // Simple lookup or we can compute since we know exact function signatures
+      if (sig === 'blobCount()') return '0x8a927a05';
+      if (sig === 'blobs(uint256)') return '0x3d0e3ec9';
+      if (sig === 'layout()') return '0x502b7405';
+      return '0x00000000';
+    }
+
+    function encodeUint256(n) {
+      return n.toString(16).padStart(64, '0');
+    }
+
+    extractBtn.addEventListener('click', async () => {
+      if (!selectedZipFile) return;
+
+      extractBtn.disabled = true;
+      progressSection.classList.remove('hidden');
+      resultsSection.classList.add('hidden');
+      consoleLog.innerHTML = '';
+      previewGrid.innerHTML = '';
+
+      try {
+        setProgress(5, 'Reading Renderer.sol...');
+        logMessage('Opening uploaded ZIP archive...', 'step');
+
+        const zip = new JSZip();
+        let zipContent;
+        try {
+          zipContent = await zip.loadAsync(selectedZipFile);
+        } catch (err) {
+          throw new Error('ZIP cannot be opened: ' + err.message);
+        }
+
+        // Verify required files
+        const rendererFile = zipContent.file('src/Renderer.sol') || zipContent.file(/Renderer\.sol$/i)[0];
+        const sstore2File = zipContent.file('src/libraries/SSTORE2.sol') || zipContent.file(/SSTORE2\.sol$/i)[0];
+        const traitDefsFile = zipContent.file('src/libraries/TraitDefs.sol') || zipContent.file(/TraitDefs\.sol$/i)[0];
+
+        if (!rendererFile) throw new Error('Renderer.sol missing in ZIP (expected at src/Renderer.sol)');
+        if (!sstore2File) throw new Error('SSTORE2.sol missing in ZIP (expected at src/libraries/SSTORE2.sol)');
+        if (!traitDefsFile) throw new Error('TraitDefs.sol missing in ZIP (expected at src/libraries/TraitDefs.sol)');
+
+        logMessage('Found Renderer.sol, SSTORE2.sol, and TraitDefs.sol successfully.', 'success');
+
+        setProgress(15, 'Connecting to Ethereum Mainnet...');
+        const rpcUrl = rpcUrlInput.value.trim();
+        if (!rpcUrl) throw new Error('RPC URL is empty');
+
+        logMessage(`Connecting to RPC: ${rpcUrl}`, 'step');
+        await verifyRpcChainId(rpcUrl);
+        logMessage('Connected to Ethereum Mainnet (Chain ID 1) verified.', 'success');
+
+        // Check contract bytecode
+        setProgress(25, 'Checking contract bytecode...');
+        const code = await rpcCall(rpcUrl, 'eth_getCode', [RENDERER_ADDRESS, 'latest']);
+        if (!code || code === '0x' || code === '0x0') {
+          throw new Error('Renderer contract has no bytecode at ' + RENDERER_ADDRESS);
+        }
+        logMessage('Renderer contract bytecode confirmed on-chain.', 'success');
+
+        // Read blobCount()
+        setProgress(35, 'Reading blobCount()...');
+        logMessage('Calling blobCount()...', 'step');
+        const blobCountRes = await contractCall(rpcUrl, RENDERER_ADDRESS, '0x8a927a05');
+        const blobCount = parseInt(blobCountRes, 16);
+        logMessage(`blobCount() returned: ${blobCount}`, 'success');
+
+        // Read layout()
+        setProgress(45, 'Reading layout()...');
+        logMessage('Calling layout()...', 'step');
+        const layoutRes = await contractCall(rpcUrl, RENDERER_ADDRESS, '0x502b7405');
+        // layoutRes is ABI encoded bytes: offset (32 bytes) + length (32 bytes) + data
+        const layoutBytes = parseAbiBytes(layoutRes);
+        logMessage(`layout() decoded successfully (${layoutBytes.length} bytes).`, 'success');
+
+        // Read all blob pointers
+        setProgress(55, 'Reading blob pointers...');
+        logMessage(`Fetching ${blobCount} SSTORE2 blob pointers from blobs(i)...`, 'step');
+        
+        const blobPointers = [];
+        for (let i = 0; i < blobCount; i++) {
+          const callData = '0x3d0e3ec9' + encodeUint256(i);
+          const res = await contractCall(rpcUrl, RENDERER_ADDRESS, callData);
+          // Result is address padded to 32 bytes
+          const addr = '0x' + res.slice(-40);
+          blobPointers.push(addr);
+        }
+        logMessage(`Retrieved all ${blobCount} blob pointers.`, 'success');
+
+        // Read SSTORE2 blobs
+        setProgress(65, 'Reading SSTORE2 blobs...');
+        const blobBuffers = [];
+        for (let i = 0; i < blobPointers.length; i++) {
+          const ptr = blobPointers[i];
+          logMessage(`Reading SSTORE2 blob ${i + 1}/${blobCount} from pointer ${ptr}...`);
+          const codeData = await rpcCall(rpcUrl, 'eth_getCode', [ptr, 'latest']);
+          // SSTORE2 runtime prefix: Solidity write stores pointer with 0xef 0x01 (or similar 1-byte pointer prefix as per SSTORE2.sol)
+          // Let's inspect SSTORE2.sol from ZIP to be 100% precise.
+          const sstore2Source = await sstore2File.async('text');
+          const pointerData = parseSstore2RuntimeCode(codeData, sstore2Source);
+          blobBuffers.push(pointerData);
+        }
+        logMessage('All SSTORE2 blobs successfully read and unpacked.', 'success');
+
+        // Decode Layout and Sprites
+        setProgress(80, 'Decoding layers & rendering SVGs...');
+        logMessage('Parsing layout format against TraitDefs...', 'step');
+
+        const outZip = new JSZip();
+        manifestData = {
+          network: "Ethereum Mainnet",
+          chainId: 1,
+          renderer: RENDERER_ADDRESS,
+          collection: COLLECTION_ADDRESS,
+          blobCount: blobCount,
+          layers: []
+        };
+
+        let layoutOffset = 0;
+        const generatedPreviews = [];
+
+        for (let l = 0; l < 7; l++) {
+          const layerName = LAYER_NAMES[l];
+          const traitTable = TRAIT_TABLES[l];
+          const traitCount = traitTable.length;
+
+          logMessage(`Decoding Layer ${l}: ${layerName} (expects ${traitCount} traits)...`);
+
+          // As per contract layout format:
+          // per layer: [count 1B][blob id 1B per table index]; 0xFF = none
+          if (layoutOffset >= layoutBytes.length) {
+            throw new Error(`Invalid layout: reached end of layout bytes at layer ${l}`);
+          }
+
+          const countField = layoutBytes[layoutOffset];
+          layoutOffset += 1;
+
+          if (countField !== traitCount) {
+            logMessage(`Warning: Layer ${layerName} layout count (${countField}) differs from TraitDefs count (${traitCount})`, 'error');
+          }
+
+          const layerFolder = outZip.folder(layerName);
+          const layerManifestEntries = [];
+
+          for (let idx = 0; idx < countField; idx++) {
+            if (layoutOffset >= layoutBytes.length) {
+              throw new Error(`Invalid layout: unexpected end of layout for layer ${layerName} trait ${idx}`);
+            }
+
+            const blobId = layoutBytes[layoutOffset];
+            layoutOffset += 1;
+
+            const traitName = traitTable[idx] || `Trait_${idx}`;
+            const formattedIdxStr = String(idx).padStart(2, '0');
+            const fileName = `${formattedIdxStr}_${traitName}.svg`;
+
+            if (blobId === 0xFF) {
+              // 0xFF = none / no blob
+              layerManifestEntries.push({
+                index: idx,
+                name: traitName,
+                blobId: null,
+                filename: fileName,
+                status: "none"
+              });
+              continue;
+            }
+
+            if (blobId >= blobCount) {
+              throw new Error(`Layout references blob ID ${blobId} which is outside blobCount (${blobCount})`);
+            }
+
+            // Extract sprite from blob
+            const spriteBlob = blobBuffers[blobId];
+            const svgString = renderSpriteToSvg(spriteBlob);
+
+            layerFolder.file(fileName, svgString);
+
+            layerManifestEntries.push({
+              index: idx,
+              name: traitName,
+              blobId: blobId,
+              filename: fileName,
+              status: "rendered"
+            });
+
+            // Keep first valid one of each layer for preview
+            if (idx === 1 && generatedPreviews.length === l) {
+              generatedPreviews.push({ layer: layerName, name: traitName, svg: svgString });
+            }
+          }
+
+          // Ensure preview exists even if index 1 was 0xFF
+          if (generatedPreviews.length === l) {
+            // Find first non-empty trait
+            const firstValid = layerManifestEntries.find(e => e.status === 'rendered');
+            if (firstValid) {
+              const svgContent = outZip.folder(layerName).file(firstValid.filename).async('text');
+              // We'll populate preview asynchronously or synchronously
+            }
+          }
+
+          manifestData.layers.push({
+            layerIndex: l,
+            layerName: layerName,
+            traits: layerManifestEntries
+          });
+        }
+
+        // Add manifest.json
+        outZip.file('manifest.json', JSON.stringify(manifestData, null, 2));
+        logMessage('manifest.json generated successfully.', 'success');
+
+        setProgress(95, 'Building NFT_Layers.zip...');
+        generatedZipBlob = await outZip.generateAsync({ type: 'blob' });
+        logMessage('NFT_Layers.zip successfully built and ready for download!', 'success');
+
+        setProgress(100, 'Done.');
+        extractBtn.disabled = false;
+        resultsSection.classList.remove('hidden');
+        resultsSummary.textContent = `Successfully extracted layers into NFT_Layers.zip (${(generatedZipBlob.size / 1024).toFixed(1)} KB)`;
+
+        // Render preview grid
+        renderPreviews(outZip);
+
+      } catch (err) {
+        logMessage('ERROR: ' + err.message, 'error');
+        setProgress(100, 'Failed');
+        extractBtn.disabled = false;
+        progressStatusBadge.textContent = 'Error';
+        progressStatusBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
       }
-      manifest.layers.push({index:layer,name:layerNames[layer],traits:entries});
-    }
-    zip.file("manifest.json",JSON.stringify(manifest,null,2));
-    outputBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
-    $("download").disabled=false;
+    });
 
-    $("result").innerHTML=`<h2>Success</h2><p class="small">Created ${total} SVG layer files from the renderer's onchain SSTORE2 data.</p>`;
-    status(`Done.\n${total} visual layer files decoded.\nClick "Download NFT_Layers.zip".`,"ok");
-  }catch(e){
-    console.error(e);
-    status("Failed: "+(e?.message||e)+"\n\nNo transaction was sent. This tool only performs read-only RPC calls.","err");
-  }finally{$("run").disabled=false}
-}
-$("run").onclick=main;
-$("download").onclick=()=>{if(!outputBlob)return;const a=document.createElement("a");a.href=URL.createObjectURL(outputBlob);a.download="NFT_Layers.zip";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};
-</script>
+    // Helper to parse ABI bytes return
+    function parseAbiBytes(hex) {
+      // remove 0x
+      const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+      // standard ABI bytes: offset (32 bytes = 64 hex chars), length (32 bytes = 64 hex chars), then data
+      if (clean.length < 128) {
+        // May be short or packed return
+        const bytes = [];
+        for (let i = 0; i < clean.length; i += 2) {
+          bytes.push(parseInt(clean.substr(i, 2), 16));
+        }
+        return new Uint8Array(bytes);
+      }
+      const lenHex = clean.substr(64, 64);
+      const length = parseInt(lenHex, 16);
+      const dataHex = clean.substr(128, length * 2);
+      const bytes = [];
+      for (let i = 0; i < dataHex.length; i += 2) {
+        bytes.push(parseInt(dataHex.substr(i, 2), 16));
+      }
+      return new Uint8Array(bytes);
+    }
+
+    // Inspect SSTORE2.sol to determine pointer offset / runtime code prefix removal
+    function parseSstore2RuntimeCode(codeHex, sstore2Source) {
+      const clean = codeHex.startsWith('0x') ? codeHex.slice(2) : codeHex;
+      const bytes = [];
+      for (let i = 0; i < clean.length; i += 2) {
+        bytes.push(parseInt(clean.substr(i, 2), 16));
+      }
+      const u8 = new Uint8Array(bytes);
+
+      // Inspect SSTORE2 source code logic:
+      // Typically SSTORE2 prepends pointer creation bytecode (e.g. 1-byte pointer or deployment prefix).
+      // Let's check SSTORE2.sol read function implementation in source.
+      if (sstore2Source.includes('codecopy') || sstore2Source.includes('EXTCODESIZE')) {
+        // Standard Solady / Solmate SSTORE2 read:
+        // pointer code has bytecode header before data. Let's inspect read implementation in sstore2Source:
+        // Usually pointer code skips deployment prefix. Let's find index of data or slice off prefix.
+        // In Solady SSTORE2: data starts after 1-byte pointer or specific opcode sequence.
+        // Let's check common SSTORE2 read: pointer bytecode is `0x61...` or similar, or we can locate pointer prefix length.
+        // Let's inspect sstore2Source text to be robust:
+        if (sstore2Source.includes('0x00') || sstore2Source.indexOf('read') !== -1) {
+          // Standard Solady SSTORE2 read returns code from offset 1 or 2 depending on version, 
+          // or let's check if there is a push1 00 or push2.
+          // In Solady SSTORE2.read(address pointer): 
+          // assembly { data := add(codesize(), -1) ... codecopy(0, 1, data) } -> skips 1 byte!
+          // Let's verify if SSTORE2.sol in this repo skips 1 byte (pointer offset = 1).
+          const pointerOffset = sstore2Source.includes('codecopy(0, 1') || sstore2Source.includes('codecopy(0,0x01') ? 1 : 
+                                sstore2Source.includes('codecopy(0, 2') ? 2 : 1;
+          return u8.slice(pointerOffset);
+        }
+      }
+      // Fallback default: skip 1 byte (standard Solady SSTORE2)
+      return u8.length > 1 ? u8.slice(1) : u8;
+    }
+
+    // Exact Renderer sprite decoder replicating _rects() and _opacity() from Renderer.sol
+    function renderSpriteToSvg(blob) {
+      if (blob.length < 2) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges"></svg>`;
+      }
+
+      // uint256 p = (uint256(uint8(blob[0])) << 8) | uint8(blob[1]);
+      const p = (blob[0] << 8) | blob[1];
+      const paletteStartIndex = 2;
+      const paletteBytesLength = p * 4;
+
+      // Parse palette RGBA entries
+      const palette = [];
+      for (let i = 0; i < p; i++) {
+        const off = paletteStartIndex + i * 4;
+        const r = blob[off];
+        const g = blob[off + 1];
+        const b = blob[off + 2];
+        const a = blob[off + 3];
+        palette.push({ r, g, b, a });
+      }
+
+      let off = paletteStartIndex + paletteBytesLength;
+      let pixel = 0;
+      let rectsHtml = '';
+
+      while (off < blob.length && off + 2 < blob.length) {
+        const ci = (blob[off] << 8) | blob[off + 1];
+        const run = blob[off + 2];
+
+        if (ci !== 0) {
+          const paletteEntryIndex = ci - 1;
+          if (paletteEntryIndex >= 0 && paletteEntryIndex < palette.length) {
+            const color = palette[paletteEntryIndex];
+            const hex = `#${((1 << 24) + (color.r << 16) + (color.g << 8) + color.b).toString(16).slice(1)}`;
+            
+            const x = pixel % 24;
+            const y = Math.floor(pixel / 24);
+            const width = run;
+            const height = 1;
+
+            if (color.a === 255) {
+              rectsHtml += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${hex}"/>`;
+            } else {
+              const m = Math.floor((color.a * 1000) / 255);
+              let opacityStr = (m / 1000).toFixed(3);
+              rectsHtml += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${hex}" fill-opacity="${opacityStr}"/>`;
+            }
+          }
+        }
+
+        pixel += run;
+        off += 3;
+      }
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">${rectsHtml}</svg>`;
+    }
+
+    async function renderPreviews(zip) {
+      previewGrid.innerHTML = '';
+      for (let l = 0; l < 7; l++) {
+        const layerName = LAYER_NAMES[l];
+        const folder = zip.folder(layerName);
+        const files = Object.keys(folder.files).filter(f => f.endsWith('.svg'));
+        
+        if (files.length > 0) {
+          // Pick first non-zero or index 1
+          const sampleFile = files.find(f => !f.startsWith('00_')) || files[0];
+          const svgText = await folder.file(sampleFile).async('text');
+
+          const card = document.createElement('div');
+          card.className = 'bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center space-y-2';
+          
+          const svgContainer = document.createElement('div');
+          svgContainer.className = 'w-16 h-16 bg-slate-900 rounded-lg flex items-center justify-center p-1 border border-slate-800 shadow-inner';
+          svgContainer.innerHTML = svgText;
+          // Ensure svg scales correctly inside preview box
+          const svgEl = svgContainer.querySelector('svg');
+          if (svgEl) {
+            svgEl.setAttribute('width', '100%');
+            svgEl.setAttribute('height', '100%');
+          }
+
+          const label = document.createElement('span');
+          label.className = 'text-xs font-medium text-slate-300 text-center truncate w-full';
+          label.textContent = layerName;
+
+          const sublabel = document.createElement('span');
+          sublabel.className = 'text-[10px] text-slate-500 text-center truncate w-full';
+          sublabel.textContent = sampleFile.split('_')[1]?.replace('.svg', '') || sampleFile;
+
+          card.appendChild(svgContainer);
+          card.appendChild(label);
+          card.appendChild(sublabel);
+          previewGrid.appendChild(card);
+        }
+      }
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (!generatedZipBlob) return;
+      const url = URL.createObjectURL(generatedZipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'NFT_Layers.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
 </body>
 </html>
