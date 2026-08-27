@@ -91,7 +91,6 @@
     .edit-btn { background: #c0c0c0; border: 2px solid; border-top-color:#ffffff; border-left-color:#ffffff; border-right-color:#808080; border-bottom-color:#808080; padding:2px 6px; cursor:pointer; font-size:10px; margin-left:4px; }
     .edit-btn:active { border-top-color:#808080; border-left-color:#808080; border-right-color:#ffffff; border-bottom-color:#ffffff; transform:translate(1px,1px); }
     
-    /* ফিক্স: 24x24 ডিসপ্লে ভিউ */
     .nft-display {
       width: 100%;
       aspect-ratio: 1/1;
@@ -172,7 +171,7 @@
           <div class="win95-content">
             <div class="info-text">✓ ফোল্ডার গুলো: Background, Bones, Cloak, Crown, Palette, Relic, Sight, Artifact</div>
             <div class="info-text">✓ প্রতিটি NFT তৈরি হয় সিলেক্টেড লেয়ার কম্বিনেশন থেকে।</div>
-            <div class="info-text">✓ Stacking order সবসময় নির্ধারিত ফোল্ডার অর্ডার অনুসারে (নিচ থেকে উপরে)</div>
+            <div class="info-text">✓ Stacking order: প্রথমে সিলেক্ট করা ফোল্ডারটি সবার নিচে থাকবে এবং সিরিয়াল হবে (1>2>3>4>5...)</div>
             <div class="info-text">✓ প্রতিটি ক্যাটাগরি থেকে একাধিক লেয়ার সিলেক্ট করা যায়। মিন্ট করার সময় প্রতিটি NFT-তে প্রতি ক্যাটাগরি থেকে র‍্যান্ডমভাবে একটি লেয়ার বাছাই হয়।</div>
             <div class="info-text">✓ প্রতিটি NFT purely SVG হিসেবে সংরক্ষিত হয় (PNG নয়)</div>
             <div class="info-text">✓ সব লেয়ার 512x512 সাইজের, ডিসপ্লেতে 24x24 পিক্সেল স্টাইলে দেখানো হয়</div>
@@ -193,7 +192,7 @@
           <div class="win95-content">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
               <div style="flex:1;">
-                <div class="text-pixel text-[8px] mb-2" style="color:#000080;">⬇ BOTTOM</div>
+                <div class="text-pixel text-[8px] mb-2" style="color:#000080;">⬇ BOTTOM (1 -> 2 -> 3...)</div>
                 <div id="order-preview-list"></div>
                 <div class="text-pixel text-[8px] mt-2" style="color:#000080;">⬆ TOP</div>
               </div>
@@ -280,11 +279,6 @@
 <div id="toast" class="hidden"></div>
 
 <script>
-// ============================================================
-// SVG NFT GENERATOR - 7 FIXED CATEGORIES
-// সব লেয়ার 512x512 সাইজের, ডিসপ্লেতে 24x24 স্টাইল
-// ============================================================
-
 const FOLDERS = [
   'Background', 'Bones', 'Cloak', 'Crown', 'Palette', 'Relic', 'Sight', 'Artifact'
 ];
@@ -317,7 +311,7 @@ function populateFolderDropdown() {
 }
 
 // ============================================================
-// FIREBASE
+// FIREBASE & LOCAL STORAGE (NFTs লোকাল স্টোরেজে এবং লেয়ার ফায়ারবেইসে)
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyAzyWZLtzpysvn6nxk8pN96gLsfMS2oL2M",
@@ -335,7 +329,7 @@ let layersByFolder = {};
 let selectedLayers = [];
 let nfts = [], filteredNFTs = null;
 let openFolder = null;
-let globalSelectionCounter = 0;
+let globalSelectionCounter = 1; // সিরিয়াল ১ থেকে শুরু করার জন্য
 
 FOLDERS.forEach(f => {
   layersByFolder[f] = [];
@@ -346,24 +340,27 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]||m));
 }
 
-async function saveNFTsToFirebase() {
-  try { await database.ref('user_nfts').set(nfts); } catch(e) { console.error(e); }
-}
-async function updateNFTsInFirebase() {
-  await saveNFTsToFirebase();
-  localStorage.setItem('404punks_backup', JSON.stringify(nfts));
+// NFT গুলো লোকাল স্টোরেজে সেভ করার ফাংশন (ক্র্যাশ এড়াতে)
+async function saveNFTsToLocalStorage() {
+  try { 
+    localStorage.setItem('404punks_local_nfts', JSON.stringify(nfts)); 
+  } catch(e) { 
+    console.error(e); 
+    showToast('⚠️ Storage limit reached!');
+  }
 }
 
-async function loadNFTsFromFirebase() {
+async function updateNFTsInStorage() {
+  await saveNFTsToLocalStorage();
+}
+
+async function loadNFTsFromStorage() {
   try {
-    const snap = await database.ref('user_nfts').once('value');
-    const data = snap.val();
-    if (data && Array.isArray(data)) nfts = data;
-    else { const local = localStorage.getItem('404punks_backup'); nfts = local ? JSON.parse(local) : []; }
+    const local = localStorage.getItem('404punks_local_nfts');
+    nfts = local ? JSON.parse(local) : [];
     renderCollection();
   } catch(e) {
-    const local = localStorage.getItem('404punks_backup');
-    nfts = local ? JSON.parse(local) : [];
+    nfts = [];
     renderCollection();
   }
 }
@@ -381,10 +378,6 @@ function listenFirebase() {
     renderSections();
     renderCreateSections();
   });
-  database.ref('user_nfts').on('value', snap => {
-    const data = snap.val();
-    if (data && Array.isArray(data)) { nfts = data; localStorage.setItem('404punks_backup', JSON.stringify(nfts)); renderCollection(); }
-  });
 }
 
 async function addLayerToFirebase(folder, layer) {
@@ -392,6 +385,7 @@ async function addLayerToFirebase(folder, layer) {
   await database.ref(`layers_svg/${folder}`).set(arr);
   showToast(`ADDED: ${layer.traitValue}`);
 }
+
 async function deleteLayerFromFirebase(folder, id) {
   let filtered = layersByFolder[folder].filter(l => String(l.id) !== String(id));
   await database.ref(`layers_svg/${folder}`).set(filtered);
@@ -410,12 +404,11 @@ async function updateLayerInFirebase(folder, id, newTraitType, newTraitValue, ne
 }
 
 function toggleLayerSelection(layerId) {
-  // Multi-select: clicking toggles that single layer on/off. Any number of
-  // layers can be selected within the same folder — at mint time one is
-  // picked at random per folder for each NFT.
   let idx = selectedLayers.findIndex(l => l.id === layerId);
   if (idx !== -1) {
     selectedLayers.splice(idx, 1);
+    // রিমুভ করার পর সিরিয়াল রি-অর্ডার করা
+    recalculateSelectionOrder();
   } else {
     for (let f of FOLDERS) {
       let found = layersByFolder[f].find(l => l.id === layerId);
@@ -436,11 +429,19 @@ function toggleLayerSelection(layerId) {
   updateLivePreview();
 }
 
-function getAllSelectedLayersInOrder() {
-  return [...selectedLayers].sort((a, b) => FOLDERS.indexOf(a.folder) - FOLDERS.indexOf(b.folder));
+// সিলেক্ট করার ক্রমানুসারে সিরিয়াল ঠিক করার ফাংশন (1>2>3>4>5)
+function recalculateSelectionOrder() {
+  globalSelectionCounter = 1;
+  selectedLayers.forEach(l => {
+    l.selectionOrder = globalSelectionCounter++;
+  });
 }
 
-// Group currently-selected layers by folder, e.g. { Background: [...], Bones: [...] }
+// অর্ডার প্রিভিউ এর জন্য সিলেক্ট করার সিরিয়াল অনুযায়ী সাজানো
+function getAllSelectedLayersInOrder() {
+  return [...selectedLayers].sort((a, b) => (a.selectionOrder || 0) - (b.selectionOrder || 0));
+}
+
 function getSelectedLayersByFolder() {
   let map = {};
   FOLDERS.forEach(f => map[f] = []);
@@ -448,22 +449,25 @@ function getSelectedLayersByFolder() {
   return map;
 }
 
-// Pick ONE random layer from each folder that has selections, in FOLDERS
-// (bottom -> top) order. Folders with nothing selected are simply skipped
-// for that NFT (that trait category won't appear).
 function pickRandomLayerSet(map) {
   map = map || getSelectedLayersByFolder();
   let picked = [];
-  FOLDERS.forEach(f => {
-    let arr = map[f];
-    if (arr && arr.length) {
-      picked.push(arr[Math.floor(Math.random() * arr.length)]);
+  // প্রথমে সিলেক্ট করা লেয়ারগুলো যেভাবে যোগ করা হয়েছে ঠিক সেই সিরিয়ালে থাকবে
+  let orderedSelections = getAllSelectedLayersInOrder();
+  let processedFolders = new Set();
+  
+  orderedSelections.forEach(l => {
+    if(!processedFolders.has(l.folder)) {
+      processedFolders.add(l.folder);
+      let folderItems = map[l.folder];
+      if(folderItems && folderItems.length) {
+        picked.push(folderItems[Math.floor(Math.random() * folderItems.length)]);
+      }
     }
   });
   return picked;
 }
 
-// Total number of unique trait combinations possible from current selection.
 function calculatePossibleCombos() {
   let map = getSelectedLayersByFolder();
   let combos = 1, any = false;
@@ -536,9 +540,10 @@ function renderCreateSections() {
       ${isOpen ? `<div style="padding:12px;">
         <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:10px;">
           ${layers.map(l => {
+            let foundSel = selectedLayers.find(s => s.id === l.id);
             return `<div onclick="App.toggleLayerSelection('${l.id}')"
               class="layer-item ${selectedIds.includes(l.id) ? 'selected' : ''}" style="padding:6px; text-align:center;">
-              ${selectedIds.includes(l.id) ? `<div class="order-num">✓</div>` : ''}
+              ${foundSel ? `<div class="order-num">${foundSel.selectionOrder}</div>` : ''}
               <div class="layer-preview-thumb" style="margin:0 auto 4px;width:60px;height:60px;">${l.svg}</div>
               <div class="text-pixel text-[6px]">${escapeHtml(l.traitType)}</div>
               <div class="text-[10px]">${escapeHtml(l.traitValue)}</div>
@@ -557,26 +562,19 @@ function renderCreateSections() {
 function updateOrderPreview() {
   let div = document.getElementById('order-preview-list');
   if (!div) return;
-  let map = getSelectedLayersByFolder();
-  let usedFolders = FOLDERS.filter(f => map[f].length > 0);
-  if (!usedFolders.length) {
-    div.innerHTML = '<div class="selected-order-item" style="color:#808080;">[ Select layers first ]</div>';
+  let ordered = getAllSelectedLayersInOrder();
+  if (!ordered.length) {
+    div.innerHTML = '<div class="selected-order-item" style="color:#808080;">[ Select layers first (1>2>3...) ]</div>';
     return;
   }
-  div.innerHTML = usedFolders.map((f, i) => {
-    let names = map[f].map(l => escapeHtml(l.traitValue)).join(', ');
+  div.innerHTML = ordered.map((l, i) => {
     return `<div class="selected-order-item">
-      <span>${i + 1}. <strong>${FOLDER_LABELS[f]}</strong> (${map[f].length}): ${names}</span>
-      <span style="color:#808080;font-size:7px;">${i === 0 ? '⬇ BOTTOM' : i === usedFolders.length-1 ? '⬆ TOP' : ''}</span>
+      <span>${i + 1} > <strong>${FOLDER_LABELS[l.folder]}</strong>: ${escapeHtml(l.traitValue)}</span>
+      <span style="color:#808080;font-size:7px;">${i === 0 ? '⬇ BOTTOM' : i === ordered.length-1 ? '⬆ TOP' : ''}</span>
     </div>`;
   }).join('');
 }
 
-// ============================================================
-// SVG HELPERS — extract viewBox / inner content robustly so
-// every layer, regardless of its own authored canvas size,
-// is scaled to fill the full 512x512 (or preview) canvas.
-// ============================================================
 function extractViewBox(svgString) {
   if (!svgString) return '0 0 512 512';
   let vbMatch = svgString.match(/viewBox\s*=\s*["']([^"']+)["']/i);
@@ -593,8 +591,6 @@ function extractInnerSVG(svgString) {
   return match ? match[1] : svgString;
 }
 
-// Wrap a single layer's SVG so it always fills the target size,
-// regardless of the coordinate system it was originally drawn in.
 function wrapLayerToSize(svgString, size) {
   let vb = extractViewBox(svgString);
   let inner = extractInnerSVG(svgString);
@@ -604,16 +600,12 @@ function wrapLayerToSize(svgString, size) {
 function updateLivePreview() {
   let container = document.getElementById('svg-live-preview');
   if (!container) return;
-  let map = getSelectedLayersByFolder();
-  let hasAny = FOLDERS.some(f => map[f].length > 0);
-  if (!hasAny) {
+  let ordered = getAllSelectedLayersInOrder();
+  if (!ordered.length) {
     container.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" fill="#f0f0f0"/><text x="3" y="14" font-family="monospace" font-size="4" fill="#666">Select</text></svg>`;
     return;
   }
-  // Draw one random combination — one layer per folder, chosen at random
-  // from that folder's selected layers — to preview what a minted NFT
-  // could look like. Use the REROLL button to sample another combo.
-  let sample = pickRandomLayerSet(map);
+  let sample = pickRandomLayerSet();
   let combined = `<svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">`;
   sample.forEach(l => {
     combined += wrapLayerToSize(l.svg, 24);
@@ -622,10 +614,6 @@ function updateLivePreview() {
   container.innerHTML = combined;
 }
 
-// SVG composition: returns combined SVG string with 512x512 viewBox.
-// Each layer is wrapped as a nested <svg> forced to fill 0..512 in both
-// axes (preserveAspectRatio="none"), so every layer lines up exactly on
-// top of the others no matter what viewBox/size it was originally saved with.
 function compositeSVG(layers) {
   let combined = `<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg">`;
   layers.forEach(l => {
@@ -636,11 +624,9 @@ function compositeSVG(layers) {
 }
 
 function buildNFTAttributes(layers) {
-  let byFolder = {};
-  layers.forEach(l => { byFolder[l.folder] = l; });
   let attrs = [];
-  FOLDERS.forEach(f => {
-    if (byFolder[f]) attrs.push({ trait_type: FOLDER_LABELS[f], value: byFolder[f].traitValue });
+  layers.forEach(l => {
+    attrs.push({ trait_type: FOLDER_LABELS[l.folder], value: l.traitValue });
   });
   attrs.push({ trait_type: "Attribute Count", value: String(attrs.length) });
   return attrs;
@@ -660,9 +646,6 @@ function findLayerByTrait(traitType, traitValue) {
   return null;
 }
 
-// ============================================================
-// EDIT LAYER
-// ============================================================
 function editLayer(folder, id, currentValue) {
   let layer = layersByFolder[folder].find(l => String(l.id) === String(id));
   if (!layer) { showToast('Layer not found'); return; }
@@ -719,13 +702,9 @@ async function saveLayerEdit(folder, id) {
   updateLivePreview();
 }
 
-// ============================================================
-// MINT MANUAL — SVG ONLY (512x512)
-// ============================================================
 async function startMintManual() {
-  let map = getSelectedLayersByFolder();
-  let hasAny = FOLDERS.some(f => map[f].length > 0);
-  if (!hasAny) {
+  let ordered = getAllSelectedLayersInOrder();
+  if (!ordered.length) {
     showToast('⚠️ প্রথমে লেয়ার সিলেক্ট করুন');
     return;
   }
@@ -761,10 +740,8 @@ async function startMintManual() {
       progEta.innerText = `⏱ ETA: ${Math.round(remaining)}s`;
     }
 
-    // Randomly pick one layer per folder from the selected pool. Retry a
-    // few times to avoid exact duplicate trait combinations when there's
-    // enough headroom in the combination space.
     let picked, comboKey, attempts = 0;
+    let map = getSelectedLayersByFolder();
     do {
       picked = pickRandomLayerSet(map);
       comboKey = picked.map(l => l.folder + ':' + l.id).join('|');
@@ -797,17 +774,13 @@ async function startMintManual() {
   }
 
   nfts.push(...newNFTs);
-  await updateNFTsInFirebase();
+  await updateNFTsInStorage();
   renderCollection();
 
-  showToast(`✅ ${newNFTs.length} NFTs created (SVG 512x512)!`);
+  showToast(`✅ ${newNFTs.length} NFTs created locally!`);
   btn.disabled = false;
   progWrap.classList.add('hidden');
 }
-
-// ============================================================
-// DOWNLOAD FUNCTIONS — SVG only
-// ============================================================
 
 function downloadAllSVG() {
   if (!nfts.length) { showToast('No NFTs found!'); return; }
@@ -957,7 +930,7 @@ function clearSearch() { filteredNFTs = null; document.getElementById('search-ra
 async function deleteAllNFTs() {
   if (confirm('⚠️ Delete ALL NFTs?')) {
     nfts = [];
-    await updateNFTsInFirebase();
+    await updateNFTsInStorage();
     renderCollection();
     showToast('ALL NFTs DELETED');
   }
@@ -966,7 +939,7 @@ async function deleteAllNFTs() {
 async function deleteSingleNFT(id) {
   if (confirm('Delete this NFT?')) {
     nfts = nfts.filter(x => x.id != id);
-    await updateNFTsInFirebase();
+    await updateNFTsInStorage();
     renderCollection();
     showToast('NFT DELETED');
   }
@@ -1161,20 +1134,12 @@ async function addLayerToNFT(nftId, combinedValue) {
   if (!nft.layers) nft.layers = [];
 
   nft.layers.push({ traitType, traitValue, svg, folder });
-
-  let fullLayers = [];
-  for (let l of nft.layers) {
-    let found = findLayerByTrait(l.traitType, l.traitValue);
-    if (found) fullLayers.push({ ...found, folder: l.folder || 'added' });
-    else fullLayers.push({ ...l, folder: l.folder || 'added' });
-  }
-  fullLayers.sort((a, b) => FOLDERS.indexOf(a.folder) - FOLDERS.indexOf(b.folder));
-  let svgString = compositeSVG(fullLayers);
+  let svgString = compositeSVG(nft.layers);
   nft.svg = svgString;
   nft.image = 'data:image/svg+xml;base64,' + btoa(svgString);
-  nft.attributes = buildNFTAttributes(fullLayers);
+  nft.attributes = buildNFTAttributes(nft.layers);
 
-  await updateNFTsInFirebase();
+  await updateNFTsInStorage();
   renderCollection();
   showToast('LAYER ADDED');
   viewNFTDetails(nftId);
@@ -1188,17 +1153,11 @@ async function editNFTLayer(nftId, layerIndex, direction) {
   else if (direction === 'down' && layerIndex < newLayers.length-1) [newLayers[layerIndex], newLayers[layerIndex+1]] = [newLayers[layerIndex+1], newLayers[layerIndex]];
   else return;
   nft.layers = newLayers;
-  let fullLayers = [];
-  for (let l of nft.layers) {
-    let found = findLayerByTrait(l.traitType, l.traitValue);
-    if (found) fullLayers.push({ ...found, folder: l.folder || 'edited' });
-    else fullLayers.push({ ...l, folder: l.folder || 'edited' });
-  }
-  let svgString = compositeSVG(fullLayers);
+  let svgString = compositeSVG(nft.layers);
   nft.svg = svgString;
   nft.image = 'data:image/svg+xml;base64,' + btoa(svgString);
-  nft.attributes = buildNFTAttributes(fullLayers);
-  await updateNFTsInFirebase();
+  nft.attributes = buildNFTAttributes(nft.layers);
+  await updateNFTsInStorage();
   renderCollection();
   showToast('LAYER MOVED');
   viewNFTDetails(nftId);
@@ -1210,17 +1169,11 @@ async function deleteNFTLayer(nftId, layerIndex) {
   let removed = nft.layers[layerIndex];
   if (confirm(`DELETE "${removed.traitType}: ${removed.traitValue}"?`)) {
     nft.layers.splice(layerIndex, 1);
-    let fullLayers = [];
-    for (let l of nft.layers) {
-      let found = findLayerByTrait(l.traitType, l.traitValue);
-      if (found) fullLayers.push({ ...found, folder: l.folder || 'deleted' });
-      else fullLayers.push({ ...l, folder: l.folder || 'deleted' });
-    }
-    let svgString = compositeSVG(fullLayers);
+    let svgString = compositeSVG(nft.layers);
     nft.svg = svgString;
     nft.image = 'data:image/svg+xml;base64,' + btoa(svgString);
-    nft.attributes = buildNFTAttributes(fullLayers);
-    await updateNFTsInFirebase();
+    nft.attributes = buildNFTAttributes(nft.layers);
+    await updateNFTsInStorage();
     renderCollection();
     showToast('REMOVED');
     viewNFTDetails(nftId);
@@ -1246,7 +1199,7 @@ window.App = {
 
 async function init() {
   populateFolderDropdown();
-  await loadNFTsFromFirebase();
+  await loadNFTsFromStorage();
   listenFirebase();
   renderCreateSections();
   updateLivePreview();
