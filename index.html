@@ -4,186 +4,655 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>On-Chain NFT Contract & Layer Downloader</title>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
   <!-- Ethers.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+
   <!-- JSZip for Downloading Files -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <!-- FileSaver CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
+
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6">
 
   <div class="max-w-4xl mx-auto space-y-6">
+
     <!-- Header -->
     <header class="text-center py-4 border-b border-slate-700">
-      <h1 class="text-3xl font-bold text-emerald-400">On-Chain NFT Downloader</h1>
-      <p class="text-slate-400 mt-2">Alchemy API ব্যবহার করে কন্ট্রাক্ট সোর্স কোড ও অনচেন লেয়ার ডাউনলোড করুন</p>
+      <h1 class="text-3xl font-bold text-emerald-400">
+        On-Chain NFT Downloader
+      </h1>
+
+      <p class="text-slate-400 mt-2">
+        Robinhood Chain ব্যবহার করে কন্ট্রাক্ট সোর্স কোড ও অনচেন লেয়ার ডাউনলোড করুন
+      </p>
     </header>
 
     <!-- Form Section -->
     <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4 shadow-lg">
+
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1">Alchemy API Key / RPC URL</label>
-        <input id="apiKey" type="text" placeholder="https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY" 
-               class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 text-sm">
+        <label class="block text-sm font-medium text-slate-300 mb-1">
+          Alchemy API Key / RPC URL
+        </label>
+
+        <input
+          id="apiKey"
+          type="text"
+          placeholder="https://rpc-mainnet.robinhood.com"
+          class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 text-sm"
+        >
+      </div>
+
+      <!-- Robinhood Chain Source Code -->
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">
+          Robinhood Chain Contract Source
+        </label>
+
+        <input
+          id="sourceApi"
+          type="text"
+          value="https://robinhoodchain.blockscout.com/api/"
+          class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 text-sm font-mono"
+        >
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1">Etherscan API Key (সোর্স কোড ডাউনলোডের জন্য)</label>
-        <input id="etherscanKey" type="text" placeholder="Your Etherscan API Key" 
-               class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 text-sm">
-      </div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">
+          NFT Contract Address
+        </label>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1">NFT Contract Address</label>
-        <input id="contractAddress" type="text" value="0x312BE6a98441F9F6e3F6246B13CA19701e0AC3B9" 
-               class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 text-sm font-mono">
+        <input
+          id="contractAddress"
+          type="text"
+          value=""
+          placeholder="0x..."
+          class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 text-sm font-mono"
+        >
       </div>
 
       <div class="flex gap-4 pt-2">
-        <button onclick="fetchContractSource()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-2 px-4 rounded-lg transition">
+
+        <button
+          onclick="fetchContractSource()"
+          class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-2 px-4 rounded-lg transition"
+        >
           1. সোর্স কোড ডাউনলোড
         </button>
-        <button onclick="fetchOnChainLayers()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-2 px-4 rounded-lg transition">
+
+        <button
+          onclick="fetchOnChainLayers()"
+          class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-2 px-4 rounded-lg transition"
+        >
           2. অনচেন লেয়ার/মেটাডেটা ডাউনলোড
         </button>
+
       </div>
     </div>
 
     <!-- Status / Console Log -->
     <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-2">
-      <h2 class="text-lg font-semibold text-slate-200">স্ট্যাটাস ও আউটপুট Logs Log</h2>
-      <pre id="logConsole" class="bg-slate-950 p-4 rounded-lg text-emerald-400 text-xs font-mono h-48 overflow-y-auto whitespace-pre-wrap">ওয়েবসাইট রেডি... API কী দিন এবং ডাউনলোড শুরু করুন।</pre>
+
+      <h2 class="text-lg font-semibold text-slate-200">
+        স্ট্যাটাস ও আউটপুট Logs Log
+      </h2>
+
+      <pre
+        id="logConsole"
+        class="bg-slate-950 p-4 rounded-lg text-emerald-400 text-xs font-mono h-48 overflow-y-auto whitespace-pre-wrap"
+      >ওয়েবসাইট রেডি... Contract Address দিন এবং ডাউনলোড শুরু করুন।</pre>
+
     </div>
   </div>
 
+
   <script>
+
     function log(message) {
+
       const consoleEl = document.getElementById('logConsole');
-      consoleEl.innerText += `\n[${new Date().toLocaleTimeString()}] ${message}`;
+
+      consoleEl.innerText +=
+        `\n[${new Date().toLocaleTimeString()}] ${message}`;
+
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
-    // ১. স্মার্ট কন্ট্রাক্টের সোর্স কোড এবং ABI ডাউনলোড
-    async function fetchContractSource() {
-      const contract = document.getElementById('contractAddress').value.trim();
-      const etherscanKey = document.getElementById('etherscanKey').value.trim();
 
-      if (!etherscanKey) {
-        log("ত্রুটি: Etherscan API Key প্রদান করুন!");
+    // =========================================================
+    // ১. ROBINHOOD CHAIN VERIFIED CONTRACT SOURCE CODE DOWNLOADER
+    // =========================================================
+
+    async function fetchContractSource() {
+
+      const contract =
+        document.getElementById('contractAddress').value.trim();
+
+      const apiBase =
+        document.getElementById('sourceApi').value.trim();
+
+
+      if (!contract) {
+
+        log("ত্রুটি: Contract Address প্রদান করুন!");
+
         return;
       }
 
-      log(`কন্ট্রাক্ট সোর্স কোড ফেচ করা হচ্ছে: ${contract}`);
+
+      if (!ethers.utils.isAddress(contract)) {
+
+        log("ত্রুটি: Contract Address সঠিক নয়!");
+
+        return;
+      }
+
+
+      log(
+        `Robinhood Chain থেকে Contract Source ফেচ করা হচ্ছে: ${contract}`
+      );
+
 
       try {
-        const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${contract}&apikey=${etherscanKey}`;
+
+        const url =
+          `${apiBase}?module=contract&action=getsourcecode&address=${contract}`;
+
+
+        log("Blockscout API request পাঠানো হচ্ছে...");
+
+
         const response = await fetch(url);
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `HTTP Error ${response.status}`
+          );
+        }
+
+
         const data = await response.json();
 
-        if (data.status === "1" && data.result[0].SourceCode) {
-          const zip = new JSZip();
-          const result = data.result[0];
 
-          let sourceCode = result.SourceCode;
-          
-          // চেক করা হচ্ছে সোলেস মাল্টি-ফাইল JSON ফরম্যাটে আছে কিনা
-          if (sourceCode.startsWith('{{') && sourceCode.endsWith('}}')) {
-            sourceCode = sourceCode.slice(1, -1);
-            const parsed = JSON.parse(sourceCode);
-            const sources = parsed.sources || parsed;
-            
-            for (const [filePath, content] of Object.entries(sources)) {
-              zip.file(filePath, content.content);
+        /*
+         * Blockscout API সাধারণত:
+         *
+         * {
+         *   status: "1",
+         *   message: "OK",
+         *   result: [...]
+         * }
+         */
+
+
+        if (
+          !data.result ||
+          !Array.isArray(data.result) ||
+          data.result.length === 0
+        ) {
+
+          log(
+            "ত্রুটি: Contract source পাওয়া যায়নি।"
+          );
+
+          return;
+        }
+
+
+        const result = data.result[0];
+
+
+        if (
+          !result.SourceCode ||
+          result.SourceCode.trim() === ""
+        ) {
+
+          log(
+            "ত্রুটি: এই Contract-এর Verified Source Code পাওয়া যায়নি।"
+          );
+
+          return;
+        }
+
+
+        log("Verified Source Code পাওয়া গেছে!");
+
+
+        const zip = new JSZip();
+
+
+        let sourceCode =
+          result.SourceCode;
+
+
+        // =====================================================
+        // MULTI-FILE SOLIDITY SOURCE
+        // =====================================================
+
+        if (
+          sourceCode.startsWith('{{') &&
+          sourceCode.endsWith('}}')
+        ) {
+
+          try {
+
+            sourceCode =
+              sourceCode.slice(1, -1);
+
+
+            const parsed =
+              JSON.parse(sourceCode);
+
+
+            const sources =
+              parsed.sources || parsed;
+
+
+            for (
+              const [filePath, content]
+              of Object.entries(sources)
+            ) {
+
+              if (
+                content &&
+                typeof content === "object" &&
+                content.content !== undefined
+              ) {
+
+                zip.file(
+                  filePath,
+                  content.content
+                );
+
+              } else {
+
+                zip.file(
+                  filePath,
+                  String(content)
+                );
+
+              }
+
             }
-          } else {
-            zip.file(`${result.ContractName || 'Contract'}.sol`, sourceCode);
+
+
+            log(
+              "Multi-file Solidity project detected."
+            );
+
+          } catch (e) {
+
+            log(
+              "Multi-file JSON parse করা যায়নি। Single source হিসেবে সংরক্ষণ করা হচ্ছে।"
+            );
+
+
+            zip.file(
+              `${result.ContractName || 'Contract'}.sol`,
+              sourceCode
+            );
           }
 
-          // ABI সেভ করা
-          zip.file("ABI.json", result.ABI);
-
-          const blob = await zip.generateAsync({ type: "blob" });
-          saveAs(blob, `${contract}_SourceCode.zip`);
-          log("সফলভাবে সোর্স কোড এবং ABI ডাউনলোড হয়েছে!");
-        } else {
-          log("ত্রুটি: সোর্স কোড পাওয়া যায়নি অথবা কন্ট্রাক্টটি Verified নয়।");
         }
-      } catch (err) {
-        log(`ত্রুটি: ${err.message}`);
+
+
+        // =====================================================
+        // NORMAL SINGLE FILE SOURCE
+        // =====================================================
+
+        else {
+
+          zip.file(
+            `${result.ContractName || 'Contract'}.sol`,
+            sourceCode
+          );
+
+        }
+
+
+        // =====================================================
+        // ABI
+        // =====================================================
+
+        if (result.ABI) {
+
+          zip.file(
+            "ABI.json",
+            result.ABI
+          );
+
+          log("ABI.json যোগ করা হয়েছে।");
+        }
+
+
+        // =====================================================
+        // CONTRACT INFORMATION
+        // =====================================================
+
+        const contractInfo = {
+
+          contractAddress: contract,
+
+          contractName:
+            result.ContractName || "",
+
+          compiler:
+            result.CompilerVersion || "",
+
+          optimizationUsed:
+            result.OptimizationUsed || "",
+
+          runs:
+            result.Runs || "",
+
+          evmVersion:
+            result.EVMVersion || "",
+
+          licenseType:
+            result.LicenseType || "",
+
+          source:
+            "Robinhood Chain Blockscout",
+
+          explorer:
+            `https://robinhoodchain.blockscout.com/address/${contract}`
+
+        };
+
+
+        zip.file(
+          "ContractInfo.json",
+          JSON.stringify(
+            contractInfo,
+            null,
+            2
+          )
+        );
+
+
+        log(
+          "ContractInfo.json যোগ করা হয়েছে।"
+        );
+
+
+        // =====================================================
+        // CREATE ZIP
+        // =====================================================
+
+        const blob =
+          await zip.generateAsync({
+            type: "blob"
+          });
+
+
+        saveAs(
+          blob,
+          `${contract}_RobinhoodChain_SourceCode.zip`
+        );
+
+
+        log(
+          "সফলভাবে Robinhood Chain Source Code + ABI ZIP ডাউনলোড হয়েছে!"
+        );
+
       }
+
+
+      catch (err) {
+
+        console.error(err);
+
+        log(
+          `ত্রুটি: ${err.message}`
+        );
+
+      }
+
     }
 
-    // ২. অনচেন মেটাডেটা ও লেয়ার (SVGs/Data URIs) ডাউনলোড
+
+
+    // =========================================================
+    // ২. ON-CHAIN METADATA & LAYERS
+    // =========================================================
+
     async function fetchOnChainLayers() {
-      const alchemyUrl = document.getElementById('apiKey').value.trim();
-      const contract = document.getElementById('contractAddress').value.trim();
+
+      const alchemyUrl =
+        document.getElementById('apiKey').value.trim();
+
+      const contract =
+        document.getElementById('contractAddress').value.trim();
+
 
       if (!alchemyUrl) {
-        log("ত্রুটি: Alchemy API Key / RPC URL প্রদান করুন!");
+
+        log(
+          "ত্রুটি: Alchemy API Key / RPC URL প্রদান করুন!"
+        );
+
         return;
       }
 
-      log("Alchemy Provider সেটআপ করা হচ্ছে...");
-      const provider = new ethers.providers.JsonRpcProvider(alchemyUrl);
 
-      // স্ট্যান্ডার্ড ERC721 tokenURI ফাংশনের জন্য মিনিমাল ABI
+      if (!contract) {
+
+        log(
+          "ত্রুটি: Contract Address প্রদান করুন!"
+        );
+
+        return;
+      }
+
+
+      log(
+        "Alchemy/RPC Provider সেটআপ করা হচ্ছে..."
+      );
+
+
+      const provider =
+        new ethers.providers.JsonRpcProvider(
+          alchemyUrl
+        );
+
+
       const abi = [
+
         "function tokenURI(uint256 tokenId) view returns (string)",
+
         "function totalSupply() view returns (uint256)"
+
       ];
 
-      const nftContract = new ethers.Contract(contract, abi, provider);
+
+      const nftContract =
+        new ethers.Contract(
+          contract,
+          abi,
+          provider
+        );
+
 
       try {
-        log("অনচেন লেয়ার প্রসেস শুরু হচ্ছে (টোকেন ID 1 থেকে 10 ফেচ করা হচ্ছে)...");
-        const zip = new JSZip();
-        const layersFolder = zip.folder("layers");
 
-        // টেস্ট করার জন্য ১০টি টোকেন চেক করা হচ্ছে (প্রয়োজনে সংখ্যা বাড়াতে পারেন)
-        for (let i = 1; i <= 10; i++) {
+        log(
+          "অনচেন লেয়ার প্রসেস শুরু হচ্ছে (টোকেন ID 1 থেকে 10 ফেচ করা হচ্ছে)..."
+        );
+
+
+        const zip =
+          new JSZip();
+
+
+        const layersFolder =
+          zip.folder("layers");
+
+
+        for (
+          let i = 1;
+          i <= 10;
+          i++
+        ) {
+
           try {
-            log(`Token ID ${i} এর অনচেন URI আনা হচ্ছে...`);
-            const uri = await nftContract.tokenURI(i);
 
-            if (uri.startsWith("data:application/json;base64,")) {
-              // Base64 JSON ডিকোড
-              const jsonBase64 = uri.replace("data:application/json;base64,", "");
-              const decodedJson = atob(jsonBase64);
-              const metadata = JSON.parse(decodedJson);
+            log(
+              `Token ID ${i} এর অনচেন URI আনা হচ্ছে...`
+            );
 
-              // JSON মেটাডেটা সেভ
-              layersFolder.file(`token_${i}.json`, JSON.stringify(metadata, null, 2));
 
-              // SVG / Image লেয়ার থাকলে তা আলাদা করে সেভ করা
-              if (metadata.image && metadata.image.startsWith("data:image/svg+xml;base64,")) {
-                const svgBase64 = metadata.image.replace("data:image/svg+xml;base64,", "");
-                const decodedSvg = atob(svgBase64);
-                layersFolder.file(`token_${i}.svg`, decodedSvg);
-              } else if (metadata.image && metadata.image.startsWith("data:image/svg+xml;utf8,")) {
-                const svgText = decodeURIComponent(metadata.image.replace("data:image/svg+xml;utf8,", ""));
-                layersFolder.file(`token_${i}.svg`, svgText);
+            const uri =
+              await nftContract.tokenURI(i);
+
+
+            if (
+              uri.startsWith(
+                "data:application/json;base64,"
+              )
+            ) {
+
+              const jsonBase64 =
+                uri.replace(
+                  "data:application/json;base64,",
+                  ""
+                );
+
+
+              const decodedJson =
+                atob(jsonBase64);
+
+
+              const metadata =
+                JSON.parse(decodedJson);
+
+
+              layersFolder.file(
+                `token_${i}.json`,
+                JSON.stringify(
+                  metadata,
+                  null,
+                  2
+                )
+              );
+
+
+              if (
+                metadata.image &&
+                metadata.image.startsWith(
+                  "data:image/svg+xml;base64,"
+                )
+              ) {
+
+                const svgBase64 =
+                  metadata.image.replace(
+                    "data:image/svg+xml;base64,",
+                    ""
+                  );
+
+
+                const decodedSvg =
+                  atob(svgBase64);
+
+
+                layersFolder.file(
+                  `token_${i}.svg`,
+                  decodedSvg
+                );
+
               }
 
-              log(`Token ID ${i} সফলভাবে প্রসেস হয়েছে।`);
-            } else {
-              log(`Token ID ${i} Base64 অনচেন ফরম্যাটে নেই: ${uri.substring(0, 30)}...`);
+
+              else if (
+                metadata.image &&
+                metadata.image.startsWith(
+                  "data:image/svg+xml;utf8,"
+                )
+              ) {
+
+                const svgText =
+                  decodeURIComponent(
+                    metadata.image.replace(
+                      "data:image/svg+xml;utf8,",
+                      ""
+                    )
+                  );
+
+
+                layersFolder.file(
+                  `token_${i}.svg`,
+                  svgText
+                );
+
+              }
+
+
+              log(
+                `Token ID ${i} সফলভাবে প্রসেস হয়েছে।`
+              );
+
             }
-          } catch (e) {
-            log(`Token ID ${i} আনার সময়ে সমস্যা হয়েছে।`);
+
+
+            else {
+
+              log(
+                `Token ID ${i} Base64 অনচেন ফরম্যাটে নেই: ${uri.substring(0, 30)}...`
+              );
+
+            }
+
           }
+
+
+          catch (e) {
+
+            log(
+              `Token ID ${i} আনার সময়ে সমস্যা হয়েছে: ${e.message}`
+            );
+
+          }
+
         }
 
-        const blob = await zip.generateAsync({ type: "blob" });
-        saveAs(blob, `${contract}_OnChain_Layers.zip`);
-        log("অনচেন মেটাডেটা ও লেয়ার সাকসেসফুলি জিফ (ZIP) ফাইল আকারে ডাউনলোড হয়েছে!");
 
-      } catch (err) {
-        log(`ত্রুটি: ${err.message}`);
+        const blob =
+          await zip.generateAsync({
+            type: "blob"
+          });
+
+
+        saveAs(
+          blob,
+          `${contract}_OnChain_Layers.zip`
+        );
+
+
+        log(
+          "অনচেন মেটাডেটা ও লেয়ার সফলভাবে ZIP ফাইল আকারে ডাউনলোড হয়েছে!"
+        );
+
       }
+
+
+      catch (err) {
+
+        log(
+          `ত্রুটি: ${err.message}`
+        );
+
+      }
+
     }
+
   </script>
+
 </body>
 </html>
